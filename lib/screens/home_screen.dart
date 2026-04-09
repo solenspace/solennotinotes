@@ -9,6 +9,7 @@ import '../providers/notes.dart';
 import '../providers/search.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/home/empty_state.dart';
+import '../widgets/home/expandable_fab.dart';
 import '../widgets/home/filter_chips_row.dart';
 import '../widgets/home/home_app_bar.dart';
 import '../widgets/home/note_card.dart';
@@ -16,9 +17,15 @@ import '../widgets/home/section_header.dart';
 import '../widgets/sheets/long_press_menu_sheet.dart';
 import 'note_editor_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   static const routeName = '/home-screen';
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
 
   /// Apply title search and filter chip to the visible note list.
   List<Note> _applyFilters(List<Note> source, Search search) {
@@ -48,7 +55,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final notes = context.watch<Notes>();
     final search = context.watch<Search>();
-    final scheme = Theme.of(context).colorScheme;
 
     final pinned = _applyFilters(notes.pinnedNotes, search);
     final unpinned = _applyFilters(notes.unpinnedNotes, search);
@@ -113,23 +119,23 @@ class HomeScreen extends StatelessWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 96)),
         ],
       ),
-      floatingActionButton: OpenContainer(
-        closedElevation: 6,
-        closedShape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: ExpandableFab(
+          onContent: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+            );
+            if (mounted) setState(() {});
+          },
+          onTodo: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NoteEditorScreen(noteType: NoteType.todo)),
+            );
+            if (mounted) setState(() {});
+          },
         ),
-        closedColor: scheme.primary,
-        openColor: scheme.surface,
-        transitionDuration: AppDurations.md,
-        transitionType: ContainerTransitionType.fadeThrough,
-        closedBuilder: (context, openContainer) => SizedBox(
-          width: 56,
-          height: 56,
-          child: Center(
-            child: Icon(Icons.add, color: scheme.onPrimary, size: 28),
-          ),
-        ),
-        openBuilder: (context, _) => const NoteEditorScreen(),
       ),
     );
   }
@@ -160,7 +166,7 @@ class HomeScreen extends StatelessWidget {
           : note.colorBackground,
       openColor: Theme.of(context).colorScheme.surface,
       closedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       transitionDuration: AppDurations.md,
       transitionType: ContainerTransitionType.fadeThrough,
