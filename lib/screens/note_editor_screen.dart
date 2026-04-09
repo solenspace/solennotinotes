@@ -22,6 +22,8 @@ import '../widgets/sheets/note_style_sheet.dart';
 import '../widgets/sheets/reminder_sheet.dart';
 import '../widgets/sheets/tag_sheet.dart';
 
+enum NoteType { content, todo }
+
 /// The unified, single-screen note editor. Replaces the old TabController
 /// (Content / Todo) implementation. Title, body blocks, and tags are all
 /// part of one scrollable column. The toolbar above the keyboard is the
@@ -32,7 +34,10 @@ class NoteEditorScreen extends StatefulWidget {
   /// If non-null, edit an existing note. If null, a new note is created.
   final String? noteId;
 
-  const NoteEditorScreen({super.key, this.noteId});
+  /// The type of note to create when `noteId` is null.
+  final NoteType noteType;
+
+  const NoteEditorScreen({super.key, this.noteId, this.noteType = NoteType.content});
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -71,7 +76,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
     _titleController = TextEditingController(text: _note.title);
     _blocks = _note.blocks.isEmpty
-        ? [newTextBlock()]
+        ? (widget.noteType == NoteType.todo
+            ? [newChecklistBlock()]
+            : [newTextBlock()])
         : _note.blocks.map(EditorBlock.fromMap).toList();
 
     // Autofocus the first block on new notes after the first frame.
@@ -119,10 +126,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _persist();
   }
 
-  void _insertTextBlockBelow(String afterId) {
+  void _insertTextBlockBelow(String afterId, String text) {
     final i = _blocks.indexWhere((b) => b.id == afterId);
     if (i < 0) return;
-    final newBlock = newTextBlock();
+    final newBlock = newTextBlock(text);
     setState(() {
       _blocks.insert(i + 1, newBlock);
     });
@@ -132,10 +139,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     });
   }
 
-  void _insertChecklistBlockBelow(String afterId) {
+  void _insertChecklistBlockBelow(String afterId, String text) {
     final i = _blocks.indexWhere((b) => b.id == afterId);
     if (i < 0) return;
-    final newBlock = newChecklistBlock();
+    final newBlock = newChecklistBlock(text);
     setState(() {
       _blocks.insert(i + 1, newBlock);
     });
@@ -246,11 +253,27 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _note = notes.findByIdOrNull(_note.id) ?? _note;
     final brightness = Theme.of(context).brightness;
     final swatch = NotesColorPalette.swatchFor(_note.colorBackground);
-    final autoTextColor = swatch?.autoTextColor(brightness);
+    
+    // Resolve background based on theme (light/dark)
+    final activeBgColor = swatch?.background(brightness) ?? _note.colorBackground;
+    
+    // Determine text color based on gradient or active background
+    Color computeTextColor() {
+      if (_note.hasGradient && _note.gradient != null) {
+        final avgLuminance = _note.gradient!.colors.first.computeLuminance();
+        return avgLuminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
+      }
+      return swatch?.autoTextColor(brightness) ??
+          (activeBgColor.computeLuminance() > 0.5
+              ? const Color(0xFF1A1A1A)
+              : const Color(0xFFF5F5F5));
+    }
+    
+    final autoTextColor = computeTextColor();
 
     final background = _note.hasGradient && _note.gradient != null
         ? null
-        : _note.colorBackground;
+        : activeBgColor;
 
     final currentBlock = _focusedBlockId == null
         ? (_blocks.isNotEmpty ? _blocks.first : null)
@@ -306,7 +329,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       fit: BoxFit.cover,
                       opacity: 0.5,
                       colorFilter: ColorFilter.mode(
-                        _note.colorBackground,
+                        activeBgColor,
                         BlendMode.softLight,
                       ),
                     ),
@@ -330,7 +353,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             color: autoTextColor,
                           ),
                       cursorColor:
-                          autoTextColor ?? Theme.of(context).colorScheme.primary,
+                          autoTextColor,
                       decoration: InputDecoration(
                         isCollapsed: true,
                         border: InputBorder.none,
@@ -342,8 +365,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         hintText: 'Title',
                         hintStyle:
                             Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: (autoTextColor ?? Colors.grey)
-                                      .withValues(alpha: 0.4),
+                                  color: autoTextColor.withValues(alpha: 0.4),
                                 ),
                       ),
                     ),
@@ -351,8 +373,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     Text(
                       DateFormat('MMM d · HH:mm').format(_note.dateCreated),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: (autoTextColor ?? Colors.grey)
-                                .withValues(alpha: 0.6),
+                            color: autoTextColor.withValues(alpha: 0.6),
                           ),
                     ),
                     if (_note.reminder != null) ...[
@@ -400,7 +421,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             block: block,
             focusNode: _focusFor(block.id),
             onChanged: (_) => _onBlockChanged(),
-            onInsertBelow: () => _insertTextBlockBelow(block.id),
+            onInsertBelow: (text) => _insertTextBlockBelow(block.id, text),
             onDeleteBlock: () => _deleteBlock(block.id),
             textColor: textColor,
           ),
@@ -412,7 +433,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               setState(() => block.checked = v);
               _persist();
             },
-            onInsertBelow: () => _insertChecklistBlockBelow(block.id),
+            onInsertBelow: (text) => _insertChecklistBlockBelow(block.id, text),
             onConvertToText: () {
               final i = _blocks.indexWhere((b) => b.id == block.id);
               if (i < 0) return;
@@ -458,7 +479,8 @@ class _ReminderChip extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -499,7 +521,8 @@ class _TagsRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.full),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
             ),
             alignment: Alignment.center,
             child: Text(
