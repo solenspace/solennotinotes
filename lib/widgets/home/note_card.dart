@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/note.dart';
+import '../../providers/notes.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/notes_color_palette.dart';
 import '../editor/editor_block.dart';
@@ -34,13 +36,25 @@ class _NoteCardState extends State<NoteCard> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final scheme = Theme.of(context).colorScheme;
     final note = widget.note;
     final swatch = NotesColorPalette.swatchFor(note.colorBackground);
-    final textColor = swatch?.autoTextColor(brightness) ??
-        (note.colorBackground.computeLuminance() > 0.5
-            ? const Color(0xFF1A1A1A)
-            : const Color(0xFFF5F5F5));
+    
+    // Resolve background based on theme (light/dark)
+    final activeBgColor = swatch?.background(brightness) ?? note.colorBackground;
+    
+    // Determine text color based on gradient or active background
+    Color computeTextColor() {
+      if (note.hasGradient && note.gradient != null) {
+        final avgLuminance = note.gradient!.colors.first.computeLuminance();
+        return avgLuminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
+      }
+      return swatch?.autoTextColor(brightness) ??
+          (activeBgColor.computeLuminance() > 0.5
+              ? const Color(0xFF1A1A1A)
+              : const Color(0xFFF5F5F5));
+    }
+    
+    final textColor = computeTextColor();
 
     final blocks = note.blocks.isNotEmpty
         ? note.blocks.map(EditorBlock.fromMap).toList()
@@ -74,28 +88,28 @@ class _NoteCardState extends State<NoteCard> {
         curve: AppCurves.standard,
         child: Container(
           decoration: BoxDecoration(
-            color: note.hasGradient ? null : note.colorBackground,
+            color: note.hasGradient ? null : activeBgColor,
             gradient: note.hasGradient ? note.gradient : null,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.sm), // Neo-brutalist tight radius
             image: note.patternImage != null
                 ? DecorationImage(
                     image: AssetImage(note.patternImage!),
                     fit: BoxFit.cover,
                     opacity: 0.4,
                     colorFilter: ColorFilter.mode(
-                      note.colorBackground,
+                      activeBgColor,
                       BlendMode.softLight,
                     ),
                   )
                 : null,
-            border: brightness == Brightness.dark
-                ? Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.3),
-                    width: 1,
-                  )
-                : null,
+            border: Border.all(
+              color: brightness == Brightness.dark 
+                  ? Colors.white.withValues(alpha: 0.15) 
+                  : Colors.black.withValues(alpha: 0.15),
+              width: 1.0, // Thin, sharp border matching the component
+            ),
           ),
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -110,8 +124,8 @@ class _NoteCardState extends State<NoteCard> {
                   ),
                 ),
               if (imageBlocks.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Image.file(
                     File(imageBlocks.first.path),
                     width: double.infinity,
@@ -147,43 +161,60 @@ class _NoteCardState extends State<NoteCard> {
               if (checklistBlocks.isNotEmpty) ...[
                 const Gap(AppSpacing.xs),
                 ...checklistBlocks.take(4).map(
-                      (b) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 1),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              b.checked
-                                  ? Icons.check_box
-                                  : Icons.check_box_outline_blank,
-                              size: 14,
-                              color: textColor.withValues(alpha: 0.85),
-                            ),
-                            const Gap(AppSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                b.text.isEmpty ? 'Untitled task' : b.text,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: textColor.withValues(
-                                          alpha: b.checked ? 0.5 : 0.85),
-                                      decoration: b.checked
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                    ),
+                      (b) => GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          // Locate this block in the original list and toggle it
+                          final updatedBlocks = note.blocks.map((map) {
+                            if (map['id'] == b.id) {
+                              return {
+                                ...map,
+                                'checked': !b.checked,
+                              };
+                            }
+                            return map;
+                          }).toList();
+                          context.read<Notes>().replaceBlocks(note.id, updatedBlocks);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                b.checked
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                size: 18,
+                                color: textColor.withValues(alpha: 0.85),
                               ),
-                            ),
-                          ],
+                              const Gap(AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  b.text.isEmpty ? 'Untitled task' : b.text,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: textColor.withValues(
+                                            alpha: b.checked ? 0.5 : 0.85),
+                                        decoration: b.checked
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                 if (checklistBlocks.length > 4)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       '+${checklistBlocks.length - 4} more',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -205,7 +236,8 @@ class _NoteCardState extends State<NoteCard> {
                       ),
                       decoration: BoxDecoration(
                         color: textColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1.0),
                       ),
                       child: Text(
                         '#$t',
