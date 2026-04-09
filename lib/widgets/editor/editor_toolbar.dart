@@ -35,7 +35,8 @@ class EditorToolbar extends StatelessWidget {
         color: scheme.surfaceContainerLow,
         border: Border(
           top: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.4),
+            color: scheme.outline,
+            width: 1.0,
           ),
         ),
       ),
@@ -137,7 +138,7 @@ class _ToolButtonState extends State<_ToolButton> {
               color: widget.selected
                   ? scheme.primary.withValues(alpha: 0.15)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(
               widget.icon,

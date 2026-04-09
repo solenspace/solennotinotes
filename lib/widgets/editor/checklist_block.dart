@@ -5,6 +5,49 @@ import 'package:gap/gap.dart';
 import '../../theme/app_tokens.dart';
 import 'editor_block.dart';
 
+class _NewlineInterceptor extends TextInputFormatter {
+  final VoidCallback onEnterOnEmpty;
+  final ValueChanged<String> onEnterWithText;
+
+  _NewlineInterceptor({
+    required this.onEnterOnEmpty,
+    required this.onEnterWithText,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // If the user typed a newline (\n)
+    if (newValue.text.contains('\n')) {
+      // If the block is completely empty and they press Enter,
+      // it should exit the checklist format.
+      if (oldValue.text.isEmpty && newValue.text == '\n') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          onEnterOnEmpty();
+        });
+        return oldValue;
+      }
+
+      // Split at the insertion point of the newline
+      final newlineIndex = newValue.text.indexOf('\n');
+      final textBefore = newValue.text.substring(0, newlineIndex);
+      final textAfter = newValue.text.substring(newlineIndex + 1);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onEnterWithText(textAfter);
+      });
+
+      return TextEditingValue(
+        text: textBefore,
+        selection: TextSelection.collapsed(offset: textBefore.length),
+      );
+    }
+    return newValue;
+  }
+}
+
 /// A checkbox + text field row. Pressing Enter adds a sibling checklist
 /// block via [onInsertBelow]. Pressing Backspace at position 0 of empty
 /// text converts the block back to a text block via [onConvertToText].
@@ -13,7 +56,7 @@ class ChecklistBlockWidget extends StatefulWidget {
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
   final ValueChanged<bool> onCheckedChanged;
-  final VoidCallback onInsertBelow;
+  final ValueChanged<String> onInsertBelow;
   final VoidCallback onConvertToText;
   final Color? textColor;
 
@@ -91,8 +134,8 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
                 height: 22,
                 decoration: BoxDecoration(
                   color: widget.block.checked ? color : Colors.transparent,
-                  border: Border.all(color: color.withValues(alpha: 0.6), width: 2),
-                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: color.withValues(alpha: 0.6), width: 1.0),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: widget.block.checked
                     ? Icon(
@@ -115,8 +158,17 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
                   widget.block.text = value;
                   widget.onChanged(value);
                 },
-                onSubmitted: (_) => widget.onInsertBelow(),
-                textInputAction: TextInputAction.newline,
+                inputFormatters: [
+                  _NewlineInterceptor(
+                    onEnterOnEmpty: widget.onConvertToText,
+                    onEnterWithText: (textAfter) {
+                      widget.block.text = _controller.text;
+                      widget.onChanged(_controller.text);
+                      widget.onInsertBelow(textAfter);
+                    },
+                  ),
+                ],
+            textInputAction: TextInputAction.newline,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
                 minLines: 1,

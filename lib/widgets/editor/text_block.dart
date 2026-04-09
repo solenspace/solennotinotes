@@ -4,6 +4,34 @@ import 'package:flutter/services.dart';
 import '../../theme/app_tokens.dart';
 import 'editor_block.dart';
 
+class _NewlineInterceptor extends TextInputFormatter {
+  final ValueChanged<String> onEnter;
+
+  _NewlineInterceptor({required this.onEnter});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.contains('\n')) {
+      final newlineIndex = newValue.text.indexOf('\n');
+      final textBefore = newValue.text.substring(0, newlineIndex);
+      final textAfter = newValue.text.substring(newlineIndex + 1);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onEnter(textAfter);
+      });
+
+      return TextEditingValue(
+        text: textBefore,
+        selection: TextSelection.collapsed(offset: textBefore.length),
+      );
+    }
+    return newValue;
+  }
+}
+
 /// A multi-line text block. Pressing Enter on an empty line at the end
 /// inserts a sibling text block via [onInsertBelow]. Pressing Backspace at
 /// position 0 of an empty block triggers [onDeleteBlock].
@@ -11,7 +39,7 @@ class TextBlockWidget extends StatefulWidget {
   final TextBlock block;
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
-  final VoidCallback onInsertBelow;
+  final ValueChanged<String> onInsertBelow;
   final VoidCallback onDeleteBlock;
   final VoidCallback? onConvertToChecklist;
   final Color? textColor;
@@ -80,7 +108,15 @@ class _TextBlockWidgetState extends State<TextBlockWidget> {
             widget.block.text = value;
             widget.onChanged(value);
           },
-          onSubmitted: (_) => widget.onInsertBelow(),
+          inputFormatters: [
+            _NewlineInterceptor(
+              onEnter: (textAfter) {
+                widget.block.text = _controller.text;
+                widget.onChanged(_controller.text);
+                widget.onInsertBelow(textAfter);
+              },
+            ),
+          ],
           textInputAction: TextInputAction.newline,
           keyboardType: TextInputType.multiline,
           maxLines: null,
