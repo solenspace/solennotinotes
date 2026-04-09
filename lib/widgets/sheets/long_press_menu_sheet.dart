@@ -69,9 +69,9 @@ class _MenuTile extends StatelessWidget {
     final color = destructive ? Colors.redAccent : scheme.onSurface;
     return Material(
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(

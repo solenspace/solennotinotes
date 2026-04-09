@@ -50,7 +50,8 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                   final color = swatch.background(brightness);
                   final selected = !note.hasGradient &&
                       note.patternImage == null &&
-                      note.colorBackground.toARGB32() == color.toARGB32();
+                      (note.colorBackground.toARGB32() == swatch.light.toARGB32() ||
+                       note.colorBackground.toARGB32() == swatch.dark.toARGB32());
                   return _SwatchCircle(
                     color: color,
                     selected: selected,
@@ -135,7 +136,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
             const Gap(AppSpacing.lg),
             InkWell(
               onTap: () => setState(() => _showTextColor = !_showTextColor),
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 child: Row(
@@ -230,12 +231,10 @@ class _SwatchCircle extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: color,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: selected
-                ? scheme.primary
-                : scheme.outlineVariant.withValues(alpha: 0.5),
-            width: selected ? 2.5 : 1,
+            color: selected ? scheme.onSurface : scheme.outline,
+            width: selected ? 2.5 : 1.0,
           ),
         ),
         child: selected
@@ -273,10 +272,10 @@ class _GradientThumb extends StatelessWidget {
         height: 72,
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: selected ? scheme.primary : Colors.transparent,
-            width: selected ? 2.5 : 0,
+            color: selected ? scheme.onSurface : scheme.outline,
+            width: selected ? 2.5 : 1.0,
           ),
         ),
         child: selected
@@ -310,13 +309,13 @@ class _PatternThumb extends StatelessWidget {
         height: 72,
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           image: asset != null
               ? DecorationImage(image: AssetImage(asset!), fit: BoxFit.cover)
               : null,
           border: Border.all(
-            color: selected ? scheme.primary : Colors.transparent,
-            width: selected ? 2.5 : 0,
+            color: selected ? scheme.onSurface : scheme.outline,
+            width: selected ? 2.5 : 1.0,
           ),
         ),
         child: asset == null
