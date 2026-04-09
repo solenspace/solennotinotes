@@ -64,8 +64,9 @@ class UserInfoScreen extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
                     color: scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: scheme.outline, width: 1.0),
                     image: user.profilePicture != null
                         ? DecorationImage(
                             image: FileImage(File(user.profilePicture!.path)),
