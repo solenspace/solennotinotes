@@ -83,8 +83,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'NotiNotes',
-            theme: AppTheme.light(theme.writingFont),
-            darkTheme: AppTheme.dark(theme.writingFont),
+            theme: AppTheme.light(theme.writingFont, theme.appColor),
+            darkTheme: AppTheme.dark(theme.writingFont, theme.appColor),
             themeMode: theme.themeMode,
             home: const HomeScreen(),
             routes: {
