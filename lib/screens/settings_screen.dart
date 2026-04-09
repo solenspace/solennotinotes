@@ -25,9 +25,13 @@ class SettingsScreen extends StatelessWidget {
           Gap(AppSpacing.sm),
           _ThemeModePicker(),
           Gap(AppSpacing.xl),
-          _SectionLabel('Writing font'),
+          _SectionLabel('App color'),
           Gap(AppSpacing.sm),
-          _WritingFontPicker(),
+          _AppColorPicker(),
+          Gap(AppSpacing.xl),
+          _SectionLabel('App font'),
+          Gap(AppSpacing.sm),
+          _AppFontPicker(),
           Gap(AppSpacing.xl),
           _SectionLabel('About'),
           Gap(AppSpacing.sm),
@@ -86,8 +90,48 @@ class _ThemeModePicker extends StatelessWidget {
   }
 }
 
-class _WritingFontPicker extends StatelessWidget {
-  const _WritingFontPicker();
+class _AppColorPicker extends StatelessWidget {
+  const _AppColorPicker();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>();
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: AppThemeColor.values.length,
+        separatorBuilder: (_, __) => const Gap(AppSpacing.md),
+        itemBuilder: (_, i) {
+          final colorEnum = AppThemeColor.values[i];
+          final selected = theme.appColor == colorEnum;
+          return GestureDetector(
+            onTap: () => theme.setAppColor(colorEnum),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorEnum.color,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: selected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outline,
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: selected
+                  ? const Icon(Icons.check, color: Colors.white, size: 24)
+                  : null,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AppFontPicker extends StatelessWidget {
+  const _AppFontPicker();
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +146,15 @@ class _WritingFontPicker extends StatelessWidget {
             color: selected
                 ? scheme.primary.withValues(alpha: 0.12)
                 : scheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              side: BorderSide(
+                color: selected ? scheme.primary : scheme.outline.withValues(alpha: 0.5),
+                width: 1.0,
+              ),
+            ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               onTap: () => context.read<ThemeProvider>().setWritingFont(font),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
@@ -151,7 +201,10 @@ class _AboutTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        side: BorderSide(color: scheme.outline.withValues(alpha: 0.5), width: 1.0),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
