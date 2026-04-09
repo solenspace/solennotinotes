@@ -15,10 +15,10 @@ class AppSpacing {
 
 class AppRadius {
   AppRadius._();
-  static const double sm = 8;
-  static const double md = 12;
-  static const double lg = 16;
-  static const double xl = 24;
+  static const double sm = 4;
+  static const double md = 6;
+  static const double lg = 8;
+  static const double xl = 12;
   static const double full = 999;
 }
 
