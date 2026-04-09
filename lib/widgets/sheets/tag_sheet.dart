@@ -92,7 +92,7 @@ class _TagSheetState extends State<TagSheet> {
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: TagEditor(
                 length: _values.length,
@@ -112,7 +112,8 @@ class _TagSheetState extends State<TagSheet> {
                       horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: scheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: scheme.outline, width: 1.0),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
