@@ -56,6 +56,9 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_lints: ^6.0.0
   build_runner: ^2.4.15
+  custom_lint: ^0.7.0
+  forbidden_imports_lint:
+    path: tools/forbidden_imports_lint
 
 flutter_native_splash:
   color: "#2D2D2D"
