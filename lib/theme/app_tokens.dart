@@ -39,7 +39,7 @@ class AppCurves {
 
 class AppSpring {
   AppSpring._();
-  static final SpringDescription gentle = SpringDescription(
+  static final SpringDescription gentle = const SpringDescription(
     mass: 1,
     stiffness: 180,
     damping: 20,

@@ -24,11 +24,7 @@ class _TagSheetState extends State<TagSheet> {
   @override
   void initState() {
     super.initState();
-    _values = context
-        .read<Notes>()
-        .findById(widget.noteId)
-        .tags
-        .toList(growable: true);
+    _values = context.read<Notes>().findById(widget.noteId).tags.toList(growable: true);
   }
 
   void _addTag(String tag) {
@@ -46,8 +42,7 @@ class _TagSheetState extends State<TagSheet> {
   @override
   Widget build(BuildContext context) {
     final notes = context.read<Notes>();
-    final suggested =
-        notes.getMostUsedTags().where((t) => !_values.contains(t)).toList();
+    final suggested = notes.getMostUsedTags().where((t) => !_values.contains(t)).toList();
     final scheme = Theme.of(context).colorScheme;
 
     return SheetScaffold(
@@ -109,7 +104,9 @@ class _TagSheetState extends State<TagSheet> {
                 tagBuilder: (context, index) => Container(
                   margin: const EdgeInsets.only(right: 6, bottom: 4),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: scheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -127,8 +124,11 @@ class _TagSheetState extends State<TagSheet> {
                       const Gap(4),
                       GestureDetector(
                         onTap: () => _removeTag(index),
-                        child: Icon(Icons.close,
-                            size: 14, color: scheme.primary),
+                        child: Icon(
+                          Icons.close,
+                          size: 14,
+                          color: scheme.primary,
+                        ),
                       ),
                     ],
                   ),

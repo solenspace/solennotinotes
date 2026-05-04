@@ -21,8 +21,7 @@ class ExpandableFab extends StatefulWidget {
   State<ExpandableFab> createState() => _ExpandableFabState();
 }
 
-class _ExpandableFabState extends State<ExpandableFab>
-    with TickerProviderStateMixin {
+class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateMixin {
   static const double _swipeThreshold = 50.0;
   static const double _buttonSpacing = 80.0;
 
@@ -72,15 +71,15 @@ class _ExpandableFabState extends State<ExpandableFab>
   void _onTap() async {
     HapticFeedback.lightImpact();
     setState(() => _showHint = true);
-    
+
     // Quick pop-out animation to show options exist
     // animateTo duration isn't a direct parameter. Need to use duration explicitly if needed.
     _expandController.duration = const Duration(milliseconds: 150);
     await _expandController.animateTo(0.4, curve: Curves.easeOut);
-    
+
     _expandController.duration = const Duration(milliseconds: 200);
     await _expandController.reverse();
-    
+
     // Restore base duration
     _expandController.duration = const Duration(milliseconds: 600);
 
@@ -102,14 +101,14 @@ class _ExpandableFabState extends State<ExpandableFab>
   void _onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
     setState(() {
       _dragX = details.localOffsetFromOrigin.dx;
-      
+
       final absDragX = _dragX.abs();
-      
+
       if (absDragX > _swipeThreshold && !_hasReachedThreshold) {
         _hasReachedThreshold = true;
         HapticFeedback.lightImpact();
       }
-      
+
       if (absDragX > _swipeThreshold) {
         if (_dragX < 0) {
           _selectedDirection = SwipeDirection.left;
@@ -120,14 +119,14 @@ class _ExpandableFabState extends State<ExpandableFab>
         _selectedDirection = null;
       }
     });
-    
+
     _updateScaleAnimations();
   }
 
   void _updateScaleAnimations() {
     final absDragX = _dragX.abs();
     final progress = (absDragX / _swipeThreshold).clamp(0.0, 1.0);
-    
+
     if (_selectedDirection == SwipeDirection.left) {
       _leftScaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
         CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
@@ -158,7 +157,7 @@ class _ExpandableFabState extends State<ExpandableFab>
         widget.onTodo();
       }
     }
-    
+
     _collapse();
   }
 
@@ -178,7 +177,7 @@ class _ExpandableFabState extends State<ExpandableFab>
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    
+
     return SizedBox(
       width: 240,
       height: 140, // Increased height to accommodate hints above buttons
@@ -248,9 +247,9 @@ class _ExpandableFabState extends State<ExpandableFab>
                       child: Text(
                         'Hold and swipe',
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: scheme.surface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                              color: scheme.surface,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ),
                   ),
@@ -261,10 +260,12 @@ class _ExpandableFabState extends State<ExpandableFab>
                   left: 98.0 - (_expandAnimation.value * _buttonSpacing),
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 100),
-                    opacity: _selectedDirection == SwipeDirection.left && _hasReachedThreshold ? 1.0 : 0.0,
+                    opacity: _selectedDirection == SwipeDirection.left && _hasReachedThreshold
+                        ? 1.0
+                        : 0.0,
                     child: Transform.scale(
                       scale: _expandAnimation.value * _leftScaleAnimation.value,
-                      child: _HintLabel(text: 'Content'),
+                      child: const _HintLabel(text: 'Content'),
                     ),
                   ),
                 ),
@@ -274,10 +275,12 @@ class _ExpandableFabState extends State<ExpandableFab>
                   right: 98.0 - (_expandAnimation.value * _buttonSpacing),
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 100),
-                    opacity: _selectedDirection == SwipeDirection.right && _hasReachedThreshold ? 1.0 : 0.0,
+                    opacity: _selectedDirection == SwipeDirection.right && _hasReachedThreshold
+                        ? 1.0
+                        : 0.0,
                     child: Transform.scale(
                       scale: _expandAnimation.value * _rightScaleAnimation.value,
-                      child: _HintLabel(text: 'Todo'),
+                      child: const _HintLabel(text: 'Todo'),
                     ),
                   ),
                 ),
@@ -331,7 +334,7 @@ class CenterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final rotation = expandProgress * 0.125 * 3.14159;
     final scale = 1.0 - (expandProgress * 0.15);
-    
+
     return Transform.scale(
       scale: scale,
       child: Container(
@@ -381,9 +384,9 @@ class _HintLabel extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.surface,
-          fontWeight: FontWeight.w600,
-        ),
+              color: scheme.surface,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

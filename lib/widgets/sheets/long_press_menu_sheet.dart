@@ -23,9 +23,7 @@ class LongPressMenuSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _MenuTile(
-            icon: note.isPinned
-                ? Icons.push_pin
-                : Icons.push_pin_outlined,
+            icon: note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
             label: note.isPinned ? 'Unpin' : 'Pin',
             onTap: () {
               HapticFeedback.selectionClick();

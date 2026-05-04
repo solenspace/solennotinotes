@@ -66,7 +66,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
-          // When expanded, the width is W - 32. 
+          // When expanded, the width is W - 32.
           // With a right margin of 16, it leaves exactly 16px on the left side,
           // perfectly aligning with the AppSpacing.lg (16px) title padding on all devices.
           width: _isSearching ? MediaQuery.of(context).size.width - 32 : 48,
@@ -98,8 +98,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       decoration: InputDecoration(
                         hintText: 'Search notes...',
                         hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
-                        ),
+                              color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,

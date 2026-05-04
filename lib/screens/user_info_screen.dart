@@ -75,8 +75,11 @@ class UserInfoScreen extends StatelessWidget {
                         : null,
                   ),
                   child: user.profilePicture == null
-                      ? Icon(Icons.person_outline,
-                          size: 40, color: scheme.onSurfaceVariant)
+                      ? Icon(
+                          Icons.person_outline,
+                          size: 40,
+                          color: scheme.onSurfaceVariant,
+                        )
                       : null,
                 ),
               ),
@@ -90,8 +93,7 @@ class UserInfoScreen extends StatelessWidget {
                     counterText: '',
                     hintText: 'Your name',
                   ),
-                  onChanged: (name) =>
-                      context.read<UserData>().updateName(name),
+                  onChanged: (name) => context.read<UserData>().updateName(name),
                 ),
               ),
             ],

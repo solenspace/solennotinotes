@@ -77,9 +77,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
         duration: AppDurations.md,
         curve: AppCurves.standard,
         alignment: Alignment.topCenter,
-        child: _showPicker
-            ? _buildPicker(context)
-            : _buildChips(context, hasReminder),
+        child: _showPicker ? _buildPicker(context) : _buildChips(context, hasReminder),
       ),
     );
   }
@@ -87,8 +85,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
   Widget _buildChips(BuildContext context, bool hasReminder) {
     final now = DateTime.now();
     final laterToday = DateTime(now.year, now.month, now.day, 18);
-    final tomorrow = DateTime(now.year, now.month, now.day, 9)
-        .add(const Duration(days: 1));
+    final tomorrow = DateTime(now.year, now.month, now.day, 9).add(const Duration(days: 1));
     final saturday = _nextWeekday(DateTime.monday + 5, 9);
     final nextMonday = _nextWeekday(DateTime.monday, 9);
 
@@ -184,8 +181,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
     final now = DateTime.now();
     int daysAhead = (weekday - now.weekday) % 7;
     if (daysAhead == 0) daysAhead = 7;
-    final target = DateTime(now.year, now.month, now.day, hour)
-        .add(Duration(days: daysAhead));
+    final target = DateTime(now.year, now.month, now.day, hour).add(Duration(days: daysAhead));
     return target;
   }
 }

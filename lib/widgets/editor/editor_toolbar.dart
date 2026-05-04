@@ -135,17 +135,13 @@ class _ToolButtonState extends State<_ToolButton> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: widget.selected
-                  ? scheme.primary.withValues(alpha: 0.15)
-                  : Colors.transparent,
+              color: widget.selected ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(
               widget.icon,
               size: 22,
-              color: widget.selected
-                  ? scheme.primary
-                  : scheme.onSurface.withValues(alpha: 0.85),
+              color: widget.selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85),
             ),
           ),
         ),
