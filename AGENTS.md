@@ -111,3 +111,23 @@ For Flutter web builds, Claude verifies visual changes directly without writing 
 4. Developer reviews screenshots in PR; no Dart test code authored.
 
 This is the canonical visual-regression path for surfaces where golden tests (Spec 27) would be over-engineered.
+
+## Pre-commit hooks (offline-invariant gate)
+
+Lefthook owns `.git/hooks/*`. After cloning, run once:
+
+```bash
+lefthook install
+```
+
+The `pre-commit` block runs three commands in parallel on every commit:
+
+1. `dart format --set-exit-if-changed -l 100` on staged Dart files.
+2. `bash scripts/check-offline.sh` — fast forbidden-imports grep over `lib/` and `test/`, sourced from `scripts/.forbidden-imports.txt`. Honors `scripts/.offline-allowlist`.
+3. `dart run custom_lint` — fires the `forbidden_import` rule from `tools/forbidden_imports_lint/`. (`custom_lint` v0.7 ships its own runner; `analyzer.plugins: [custom_lint]` in `analysis_options.yaml` powers IDE surfacing only.)
+
+Full `flutter analyze` is intentionally **not** in pre-commit while the 61 strict-mode lint-debt items from Spec 01 (see [`progress-tracker.md`](context/progress-tracker.md) "Lint debt") are still open. They land per-file across Specs 04 / 04b / 08; once that backlog is clear, a future spec can promote `flutter analyze --no-pub` to pre-push or pre-commit.
+
+To extend the offline gate with a new banned package, append the import path to `scripts/.forbidden-imports.txt` — both gates pick it up.
+
+Bypass (maintainer-only, with justification): `LEFTHOOK=0 git commit ...`.

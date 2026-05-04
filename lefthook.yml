@@ -9,22 +9,25 @@ pre-commit:
     format:
       glob: "*.dart"
       run: dart format --set-exit-if-changed -l 100 {staged_files}
+    check-offline:
+      # Fast forbidden-imports grep, sourced from scripts/.forbidden-imports.txt.
+      # See specs/02-offline-invariant-ci-gate.md.
+      run: bash scripts/check-offline.sh
+    custom-lint:
+      # Fires the forbidden_import rule from tools/forbidden_imports_lint/.
+      # custom_lint v0.7 is its own runner; analyzer.plugins: [custom_lint]
+      # in analysis_options.yaml powers IDE surfacing only.
+      # Note: full `flutter analyze` is intentionally NOT in pre-commit while
+      # 61 pre-existing strict-mode lint debt items (see progress-tracker.md
+      # "Lint debt") are still open. Resolved per file by Specs 04/04b/08.
+      glob: "*.dart"
+      run: dart run custom_lint
 
 pre-push:
   parallel: false
   commands:
     format:
       run: dart format --set-exit-if-changed -l 100 lib/ test/
-    forbidden-imports:
-      # Enforce the offline invariant — no cloud SDK / HTTP imports under lib/.
-      # See context/code-standards.md "Forbidden imports".
-      run: |
-        if grep -rEn "package:(http|dio|chopper|retrofit|cloud_firestore|firebase_|supabase_|appwrite|amplify_|google_sign_in|sentry|firebase_crashlytics|posthog_flutter|mixpanel_flutter|web_socket_channel)" lib/; then
-          echo ""
-          echo "ERROR: forbidden import detected under lib/."
-          echo "Notinotes is offline-only; see context/code-standards.md 'Forbidden imports'."
-          exit 1
-        fi
 
 commit-msg:
   commands:
