@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/release
 
 .claude/settings.local.json
+.claude/skills/
+.agents/skills/
+node_modules/

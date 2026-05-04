@@ -1,0 +1,42 @@
+# Notinotes git hooks. See https://github.com/evilmartians/lefthook
+#
+# Install: `lefthook install` (run once per clone)
+# Bypass:  `LEFTHOOK=0 git commit ...` (only with maintainer approval)
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed -l 100 {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    format:
+      run: dart format --set-exit-if-changed -l 100 lib/ test/
+    forbidden-imports:
+      # Enforce the offline invariant — no cloud SDK / HTTP imports under lib/.
+      # See context/code-standards.md "Forbidden imports".
+      run: |
+        if grep -rEn "package:(http|dio|chopper|retrofit|cloud_firestore|firebase_|supabase_|appwrite|amplify_|google_sign_in|sentry|firebase_crashlytics|posthog_flutter|mixpanel_flutter|web_socket_channel)" lib/; then
+          echo ""
+          echo "ERROR: forbidden import detected under lib/."
+          echo "Notinotes is offline-only; see context/code-standards.md 'Forbidden imports'."
+          exit 1
+        fi
+
+commit-msg:
+  commands:
+    conventional:
+      # Subject line must be: type(scope?)!?: subject (≤80 chars).
+      # Allowed types: feat fix chore docs refactor test style perf ci build revert.
+      run: |
+        subject=$(head -1 "{1}")
+        if ! printf '%s' "$subject" | grep -qE '^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\([a-z0-9._-]+\))?!?: .{1,80}$'; then
+          echo "ERROR: commit message does not follow conventional commits."
+          echo "Got:    $subject"
+          echo "Expect: <type>(<scope>)?!?: <subject>"
+          echo "Types:  feat fix chore docs refactor test style perf ci build revert"
+          exit 1
+        fi
