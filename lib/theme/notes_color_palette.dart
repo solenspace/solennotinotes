@@ -14,16 +14,13 @@ class NotesSwatch {
   });
 
   /// Returns the swatch color appropriate for the current brightness.
-  Color background(Brightness brightness) =>
-      brightness == Brightness.dark ? dark : light;
+  Color background(Brightness brightness) => brightness == Brightness.dark ? dark : light;
 
   /// Auto-contrast text color computed from luminance.
   /// Cards stay legible without the user picking a font color.
   Color autoTextColor(Brightness brightness) {
     final bg = background(brightness);
-    return bg.computeLuminance() > 0.5
-        ? const Color(0xFF1A1A1A)
-        : const Color(0xFFF5F5F5);
+    return bg.computeLuminance() > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
   }
 }
 
@@ -107,8 +104,7 @@ class NotesColorPalette {
   /// Returns [defaultSwatch] if no match.
   static NotesSwatch? swatchFor(Color color) {
     for (final s in swatches) {
-      if (s.light.toARGB32() == color.toARGB32() ||
-          s.dark.toARGB32() == color.toARGB32()) {
+      if (s.light.toARGB32() == color.toARGB32() || s.dark.toARGB32() == color.toARGB32()) {
         return s;
       }
     }

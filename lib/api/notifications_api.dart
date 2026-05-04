@@ -28,7 +28,6 @@ class TimeZone {
 }
 
 class LocalNotificationService {
-
   static final _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> setup(Function(NotificationResponse) notificationResponse) async {
@@ -87,8 +86,7 @@ class LocalNotificationService {
 
     var soundFile = sound.replaceAll('.mp3', '');
 
-    final notificationSound =
-        sound == '' ? null : RawResourceAndroidNotificationSound(soundFile);
+    final notificationSound = sound == '' ? null : RawResourceAndroidNotificationSound(soundFile);
 
     final androidDetail = AndroidNotificationDetails(
       channel,

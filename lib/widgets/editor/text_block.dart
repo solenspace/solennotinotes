@@ -84,8 +84,7 @@ class _TextBlockWidgetState extends State<TextBlockWidget> {
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controller.text.isEmpty) {
+    if (event.logicalKey == LogicalKeyboardKey.backspace && _controller.text.isEmpty) {
       widget.onDeleteBlock();
       return KeyEventResult.handled;
     }

@@ -41,13 +41,13 @@ class ThemeProvider with ChangeNotifier {
     final box = Hive.box(_boxName);
     final modeIndex = box.get(_themeModeKey, defaultValue: ThemeMode.system.index) as int;
     _themeMode = ThemeMode.values[modeIndex];
-    
+
     final fontIndex = box.get(_writingFontKey, defaultValue: WritingFont.inter.index) as int;
     _writingFont = WritingFont.values[fontIndex];
-    
+
     final colorIndex = box.get(_appThemeColorKey, defaultValue: AppThemeColor.indigo.index) as int;
     _appColor = AppThemeColor.values[colorIndex];
-    
+
     notifyListeners();
   }
 

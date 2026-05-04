@@ -76,9 +76,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
     _titleController = TextEditingController(text: _note.title);
     _blocks = _note.blocks.isEmpty
-        ? (widget.noteType == NoteType.todo
-            ? [newChecklistBlock()]
-            : [newTextBlock()])
+        ? (widget.noteType == NoteType.todo ? [newChecklistBlock()] : [newTextBlock()])
         : _note.blocks.map(EditorBlock.fromMap).toList();
 
     // Autofocus the first block on new notes after the first frame.
@@ -101,12 +99,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     super.dispose();
   }
 
-  FocusNode _focusFor(String id) =>
-      _focusNodes.putIfAbsent(id, () => FocusNode()..addListener(() {
+  FocusNode _focusFor(String id) => _focusNodes.putIfAbsent(
+        id,
+        () => FocusNode()
+          ..addListener(() {
             if (_focusNodes[id]?.hasFocus == true) {
               setState(() => _focusedBlockId = id);
             }
-          }));
+          }),
+      );
 
   void _focusBlock(String id) {
     _focusFor(id).requestFocus();
@@ -253,10 +254,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _note = notes.findByIdOrNull(_note.id) ?? _note;
     final brightness = Theme.of(context).brightness;
     final swatch = NotesColorPalette.swatchFor(_note.colorBackground);
-    
+
     // Resolve background based on theme (light/dark)
     final activeBgColor = swatch?.background(brightness) ?? _note.colorBackground;
-    
+
     // Determine text color based on gradient or active background
     Color computeTextColor() {
       if (_note.hasGradient && _note.gradient != null) {
@@ -268,12 +269,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ? const Color(0xFF1A1A1A)
               : const Color(0xFFF5F5F5));
     }
-    
+
     final autoTextColor = computeTextColor();
 
-    final background = _note.hasGradient && _note.gradient != null
-        ? null
-        : activeBgColor;
+    final background = _note.hasGradient && _note.gradient != null ? null : activeBgColor;
 
     final currentBlock = _focusedBlockId == null
         ? (_blocks.isNotEmpty ? _blocks.first : null)
@@ -352,8 +351,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                             color: autoTextColor,
                           ),
-                      cursorColor:
-                          autoTextColor,
+                      cursorColor: autoTextColor,
                       decoration: InputDecoration(
                         isCollapsed: true,
                         border: InputBorder.none,
@@ -363,10 +361,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         counterText: '',
                         contentPadding: EdgeInsets.zero,
                         hintText: 'Title',
-                        hintStyle:
-                            Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: autoTextColor.withValues(alpha: 0.4),
-                                ),
+                        hintStyle: Theme.of(context).textTheme.displayLarge?.copyWith(
+                              color: autoTextColor.withValues(alpha: 0.4),
+                            ),
                       ),
                     ),
                     const Gap(AppSpacing.xs),

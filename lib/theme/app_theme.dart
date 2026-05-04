@@ -214,7 +214,10 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md), // Changed from 16
-          borderSide: BorderSide(color: scheme.outline.withValues(alpha: 0.5), width: 1.0), // Reduced from 1.5
+          borderSide: BorderSide(
+            color: scheme.outline.withValues(alpha: 0.5),
+            width: 1.0,
+          ), // Reduced from 1.5
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md), // Changed from 16

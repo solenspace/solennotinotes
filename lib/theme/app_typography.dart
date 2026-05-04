@@ -41,13 +41,12 @@ class AppTypography {
     required Brightness brightness,
     required WritingFont writingFont,
   }) {
-    final onSurface =
-        brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A);
+    final onSurface = brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A);
     final onSurfaceMuted = onSurface.withValues(alpha: 0.6);
 
     // Check if the selected font is monospace (JetBrains Mono)
     final isMonospace = writingFont == WritingFont.jetBrainsMono;
-    
+
     // Adjustments for monospace fonts to ensure proper readability in UI contexts
     final double? monospaceLetterSpacing = isMonospace ? 0.0 : null;
     final double monospaceHeightMultiplier = isMonospace ? 1.2 : 1.0;

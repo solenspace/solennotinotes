@@ -84,8 +84,7 @@ class _ThemeModePicker extends StatelessWidget {
         ),
       ],
       selected: {theme.themeMode},
-      onSelectionChanged: (set) =>
-          context.read<ThemeProvider>().setThemeMode(set.first),
+      onSelectionChanged: (set) => context.read<ThemeProvider>().setThemeMode(set.first),
     );
   }
 }
@@ -114,14 +113,14 @@ class _AppColorPicker extends StatelessWidget {
                 color: colorEnum.color,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(
-                  color: selected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outline,
+                  color: selected
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.outline,
                   width: selected ? 2 : 1,
                 ),
               ),
               alignment: Alignment.center,
-              child: selected
-                  ? const Icon(Icons.check, color: Colors.white, size: 24)
-                  : null,
+              child: selected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
             ),
           );
         },
@@ -143,9 +142,7 @@ class _AppFontPicker extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: Material(
-            color: selected
-                ? scheme.primary.withValues(alpha: 0.12)
-                : scheme.surfaceContainerHigh,
+            color: selected ? scheme.primary.withValues(alpha: 0.12) : scheme.surfaceContainerHigh,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
               side: BorderSide(
@@ -180,8 +177,7 @@ class _AppFontPicker extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (selected)
-                      Icon(Icons.check_circle, color: scheme.primary),
+                    if (selected) Icon(Icons.check_circle, color: scheme.primary),
                   ],
                 ),
               ),
