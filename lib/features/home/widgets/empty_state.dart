@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 class EmptyState extends StatelessWidget {
   final String message;

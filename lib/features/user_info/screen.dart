@@ -5,10 +5,11 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../helpers/photo_picker.dart';
-import '../providers/notes.dart';
-import '../providers/user_data.dart';
-import '../theme/app_tokens.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/services/image/image_picker_service.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+
+import 'legacy/user_data_provider.dart';
 
 class UserInfoScreen extends StatelessWidget {
   static const routeName = '/user-info';

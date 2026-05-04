@@ -1,14 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:noti_notes_app/helpers/database_helper.dart';
-import 'package:noti_notes_app/helpers/photo_picker.dart';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:math';
+import 'package:noti_notes_app/models/user.dart';
+import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:uuid/uuid.dart';
-
-import '../models/user.dart';
 
 class UserData with ChangeNotifier {
   User currentUser = User(

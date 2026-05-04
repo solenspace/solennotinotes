@@ -30,20 +30,23 @@ Existing dependencies (`provider`, `flutter_staggered_grid_view`, `material_tag_
 
 ```
 lib/
-├── main.dart                  ← app entry; bootstraps Hive, BLoC providers, routing
-├── app/                       ← MaterialApp, theme glue, global providers
-├── blocs/<feature>/           ← business logic, no widget imports
-├── repositories/<feature>/    ← only layer touching Hive boxes / filesystem / P2P / AI
-├── services/                  ← thin wrappers over native plugins (STT, TTS, P2P, AI runtime, permissions, notifications)
-├── models/                    ← immutable domain models (Note, Todo, Tag, NotiTheme, NotiIdentity, SharePayload, ReceivedItem)
-├── screens/<feature>/         ← pages, composed of widgets, listen to BLoCs
-├── widgets/<feature>/         ← pure UI components, parameterized
+├── main.dart                  ← app entry; bootstraps Hive, providers, routing
+├── app/                       ← MaterialApp, theme glue, route table, global providers
+├── features/<feature>/        ← collocated feature unit
+│   ├── bloc/                  ← BLoCs / Cubits for the feature; no widget imports
+│   ├── repository/            ← Hive + filesystem + native-plugin wrappers for the feature
+│   ├── widgets/               ← UI components used only by this feature
+│   ├── screen.dart            ← single-screen feature (or screens/ if multiple)
+│   └── legacy/                ← Provider-based code in transition; retired in Spec 05+
+├── services/                  ← cross-cutting native wrappers (STT, TTS, P2P, AI, permissions, notifications, image)
+├── models/                    ← immutable domain models shared across features
 ├── theme/                     ← base ThemeData + NotiTheme overlay system
 ├── helpers/                   ← stateless utilities (validators, formatters)
+├── widgets/                   ← shared widgets used by 2+ features
 └── assets/                    ← icons, fonts, pattern images (frozen)
 ```
 
-`api/` and `providers/` (legacy from the imported codebase) will be migrated and removed in feature specs — not in this bootstrap.
+Provider-based files inherited from the imported codebase live under `features/<feature>/legacy/` until Specs 05+ migrate them to `flutter_bloc` and Spec 08 deletes the `legacy/` folders.
 
 ## Storage model
 
