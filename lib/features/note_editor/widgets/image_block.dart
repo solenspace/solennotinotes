@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 /// A full-width image block with a delete button overlay.
 class ImageBlockWidget extends StatelessWidget {

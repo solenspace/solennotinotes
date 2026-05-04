@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 typedef ExpandableFabCallback = void Function();
 

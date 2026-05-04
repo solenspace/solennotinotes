@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/features/home/screen.dart';
+import 'package:noti_notes_app/features/note_editor/screen.dart';
+import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/settings/screen.dart';
+import 'package:noti_notes_app/features/user_info/legacy/user_data_provider.dart';
+import 'package:noti_notes_app/features/user_info/screen.dart';
 import 'package:noti_notes_app/helpers/database_helper.dart';
-import 'package:noti_notes_app/screens/home_screen.dart';
-import 'package:noti_notes_app/screens/note_editor_screen.dart';
-import 'package:noti_notes_app/screens/settings_screen.dart';
+import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
-
-import 'package:noti_notes_app/api/notifications_api.dart';
-
-import './screens/user_info_screen.dart';
-
-import './providers/user_data.dart';
-import './providers/notes.dart';
-import './providers/search.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

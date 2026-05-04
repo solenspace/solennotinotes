@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/notifications_api.dart';
-import '../../providers/notes.dart';
-import '../../theme/app_tokens.dart';
-import 'sheet_scaffold.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/services/notifications/notifications_service.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Quick chips for common reminders + an inline date/time picker for the
 /// "Pick date & time" branch. Replaces the old duration-wheel UI.

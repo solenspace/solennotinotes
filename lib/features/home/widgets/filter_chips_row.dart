@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/search.dart';
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 /// Horizontal row of filter chips below the search bar. Selection is single.
 class FilterChipsRow extends StatelessWidget {
