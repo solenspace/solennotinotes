@@ -98,7 +98,7 @@ class UserData with ChangeNotifier {
   }
 
   Future<void> removeProfilePicture() async {
-    if(currentUser.profilePicture == null) return;
+    if (currentUser.profilePicture == null) return;
     await PhotoPicker.removeImage(currentUser.profilePicture!);
     currentUser.profilePicture = null;
     saveUserToDataBase(currentUser);
@@ -114,9 +114,7 @@ class UserData with ChangeNotifier {
 
     var userDecoded = jsonDecode(userBox.values.first);
     currentUser = User(
-      userDecoded['profilePicture'] != null
-          ? File(userDecoded['profilePicture'])
-          : null,
+      userDecoded['profilePicture'] != null ? File(userDecoded['profilePicture']) : null,
       userDecoded['id'],
       // userDecoded['favoriteColor'],
       name: userDecoded['name'],

@@ -17,7 +17,10 @@ class DbHelper {
   }
 
   static Future<void> insertUpdateData(
-      String boxName, String key, dynamic value) async {
+    String boxName,
+    String key,
+    dynamic value,
+  ) async {
     await Hive.box(boxName).put(key, value);
   }
 

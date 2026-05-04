@@ -28,15 +28,18 @@ class FilterChipsRow extends StatelessWidget {
         itemBuilder: (_, i) {
           final (filter, label, icon) = entries[i];
           final selected = search.filter == filter;
-          
+
           final colorScheme = Theme.of(context).colorScheme;
           final textColor = selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
-          
+
           return FilterChip(
             avatar: Icon(icon, size: 16, color: textColor),
             label: Text(
               label,
-              style: TextStyle(color: textColor, fontWeight: selected ? FontWeight.w600 : FontWeight.normal),
+              style: TextStyle(
+                color: textColor,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
             selected: selected,
             onSelected: (_) => context.read<Search>().setFilter(filter),

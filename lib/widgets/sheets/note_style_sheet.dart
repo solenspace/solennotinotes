@@ -37,7 +37,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SectionLabel('Color'),
+            const _SectionLabel('Color'),
             const Gap(AppSpacing.sm),
             SizedBox(
               height: 48,
@@ -51,7 +51,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                   final selected = !note.hasGradient &&
                       note.patternImage == null &&
                       (note.colorBackground.toARGB32() == swatch.light.toARGB32() ||
-                       note.colorBackground.toARGB32() == swatch.dark.toARGB32());
+                          note.colorBackground.toARGB32() == swatch.dark.toARGB32());
                   return _SwatchCircle(
                     color: color,
                     selected: selected,
@@ -69,7 +69,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
               ),
             ),
             const Gap(AppSpacing.lg),
-            _SectionLabel('Gradient'),
+            const _SectionLabel('Gradient'),
             const Gap(AppSpacing.sm),
             SizedBox(
               height: 72,
@@ -100,7 +100,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
               ),
             ),
             const Gap(AppSpacing.lg),
-            _SectionLabel('Pattern'),
+            const _SectionLabel('Pattern'),
             const Gap(AppSpacing.sm),
             SizedBox(
               height: 72,
@@ -114,9 +114,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                     return _PatternThumb(
                       asset: null,
                       selected: selected,
-                      onTap: () => context
-                          .read<Notes>()
-                          .removeCurrentPattern(widget.noteId),
+                      onTap: () => context.read<Notes>().removeCurrentPattern(widget.noteId),
                     );
                   }
                   final asset = legacy.ColorPicker.patterns[i - 1];
@@ -141,11 +139,9 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 child: Row(
                   children: [
-                    Expanded(child: _SectionLabel('Text color')),
+                    const Expanded(child: _SectionLabel('Text color')),
                     Icon(
-                      _showTextColor
-                          ? Icons.expand_less_rounded
-                          : Icons.expand_more_rounded,
+                      _showTextColor ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                       color: scheme.onSurfaceVariant,
                     ),
                   ],
@@ -167,8 +163,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                           separatorBuilder: (_, __) => const Gap(AppSpacing.md),
                           itemBuilder: (_, i) {
                             final color = NotesTextColorPalette.colors[i];
-                            final selected =
-                                note.fontColor.toARGB32() == color.toARGB32();
+                            final selected = note.fontColor.toARGB32() == color.toARGB32();
                             return _SwatchCircle(
                               color: color,
                               selected: selected,
@@ -241,9 +236,7 @@ class _SwatchCircle extends StatelessWidget {
             ? Icon(
                 Icons.check,
                 size: 20,
-                color: color.computeLuminance() > 0.5
-                    ? Colors.black
-                    : Colors.white,
+                color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
               )
             : null,
       ),
@@ -310,9 +303,8 @@ class _PatternThumb extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          image: asset != null
-              ? DecorationImage(image: AssetImage(asset!), fit: BoxFit.cover)
-              : null,
+          image:
+              asset != null ? DecorationImage(image: AssetImage(asset!), fit: BoxFit.cover) : null,
           border: Border.all(
             color: selected ? scheme.onSurface : scheme.outline,
             width: selected ? 2.5 : 1.0,

@@ -65,11 +65,9 @@ class ImageBlock extends EditorBlock {
   Map<String, dynamic> toMap() => {'type': 'image', 'id': id, 'path': path};
 }
 
-EditorBlock newTextBlock([String text = '']) =>
-    TextBlock(id: const Uuid().v4(), text: text);
+EditorBlock newTextBlock([String text = '']) => TextBlock(id: const Uuid().v4(), text: text);
 
 EditorBlock newChecklistBlock([String text = '']) =>
     ChecklistBlock(id: const Uuid().v4(), text: text);
 
-EditorBlock newImageBlock(String path) =>
-    ImageBlock(id: const Uuid().v4(), path: path);
+EditorBlock newImageBlock(String path) => ImageBlock(id: const Uuid().v4(), path: path);

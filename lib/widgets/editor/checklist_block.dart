@@ -100,8 +100,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controller.text.isEmpty) {
+    if (event.logicalKey == LogicalKeyboardKey.backspace && _controller.text.isEmpty) {
       widget.onConvertToText();
       return KeyEventResult.handled;
     }
@@ -168,7 +167,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
                     },
                   ),
                 ],
-            textInputAction: TextInputAction.newline,
+                textInputAction: TextInputAction.newline,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
                 minLines: 1,

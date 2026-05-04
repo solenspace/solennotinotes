@@ -73,14 +73,10 @@ class Notes with ChangeNotifier {
       _notes.add(
         Note(
           noteDecoded['tags'].cast<String>().toSet(),
-          noteDecoded['imageFile'] != null
-              ? File(noteDecoded['imageFile'])
-              : null,
+          noteDecoded['imageFile'] != null ? File(noteDecoded['imageFile']) : null,
           noteDecoded['patternImage'],
           noteDecoded['todoList'].cast<Map<String, dynamic>>(),
-          noteDecoded['reminder'] != ''
-              ? DateTime.parse(noteDecoded['reminder'])
-              : null,
+          noteDecoded['reminder'] != '' ? DateTime.parse(noteDecoded['reminder']) : null,
           noteDecoded['gradient'] != null && noteDecoded['gradient'] != ''
               ? LinearGradient(
                   colors: [
@@ -125,7 +121,10 @@ class Notes with ChangeNotifier {
 
   void updateNoteOnDataBase(Note note) async {
     await DbHelper.insertUpdateData(
-        DbHelper.notesBoxName, note.id, jsonEncode(note.toJson()));
+      DbHelper.notesBoxName,
+      note.id,
+      jsonEncode(note.toJson()),
+    );
   }
 
   void updateNotesOnDataBase(List<Note> notes) {
@@ -163,9 +162,7 @@ class Notes with ChangeNotifier {
 
   Future<void> removeSelectedNotes(Set<String> ids) async {
     for (var id in ids) {
-      findById(id).imageFile != null
-          ? PhotoPicker.removeImage(findById(id).imageFile!)
-          : null;
+      findById(id).imageFile != null ? PhotoPicker.removeImage(findById(id).imageFile!) : null;
       LocalNotificationService.cancelNotification(findIndex(id));
       _notes.removeWhere((note) => note.id == id);
       DbHelper.deleteData(DbHelper.notesBoxName, id);
@@ -199,17 +196,14 @@ class Notes with ChangeNotifier {
 
   List<Note> filterByTitle(String name) {
     return _notes
-        .where((note) =>
-            note.title.toUpperCase().similarityTo(name.toUpperCase()) > 0.6
-                ? true
-                : false)
+        .where(
+          (note) => note.title.toUpperCase().similarityTo(name.toUpperCase()) > 0.6 ? true : false,
+        )
         .toList();
   }
 
   List<Note> filterByTag(Set<String> tags) {
-    return _notes
-        .where((note) => note.tags.intersection(tags).isNotEmpty ? true : false)
-        .toList();
+    return _notes.where((note) => note.tags.intersection(tags).isNotEmpty ? true : false).toList();
   }
 
   Color findColor(String id) {
@@ -230,8 +224,12 @@ class Notes with ChangeNotifier {
 
   //? Tooling for note changing
   // Convert to switch
-  void toolingNote(String id, ToolingNote tooling, dynamic value,
-      [int index = 0]) {
+  void toolingNote(
+    String id,
+    ToolingNote tooling,
+    dynamic value, [
+    int index = 0,
+  ]) {
     final noteIndex = findIndex(id);
 
     if (noteIndex >= 0) {
@@ -247,9 +245,7 @@ class Notes with ChangeNotifier {
           _notes[noteIndex].tags.add(value);
           break;
         case ToolingNote.removeTag:
-          _notes[noteIndex]
-              .tags
-              .remove(_notes[noteIndex].tags.elementAt(index));
+          _notes[noteIndex].tags.remove(_notes[noteIndex].tags.elementAt(index));
           break;
         case ToolingNote.color:
           _notes[noteIndex].colorBackground = value;

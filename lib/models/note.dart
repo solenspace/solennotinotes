@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 
-
 // How this works:
 /*
 * withTodoList: The todo list with all the contents except the image
@@ -10,14 +9,7 @@ import 'dart:io';
 * normal: normal displaying without todo list and all elements
 */
 
-
-
-enum DisplayMode {
-  withTodoList,
-  withImage,
-  withoutContent,
-  normal
-}
+enum DisplayMode { withTodoList, withImage, withoutContent, normal }
 
 class Note {
   final String id;
@@ -58,7 +50,12 @@ class Note {
       'todoList': todoList,
       'displayMode': displayMode.index,
       'hasGradient': hasGradient,
-      'gradient': gradient == null ? '' : {'colors': gradient?.colors.map((e) => e.toARGB32()).toList(), 'alignment': [gradient!.begin.toString(), gradient!.end.toString()]},
+      'gradient': gradient == null
+          ? ''
+          : {
+              'colors': gradient?.colors.map((e) => e.toARGB32()).toList(),
+              'alignment': [gradient!.begin.toString(), gradient!.end.toString()],
+            },
       'isPinned': isPinned,
       'sortIndex': sortIndex,
       'blocks': blocks,
