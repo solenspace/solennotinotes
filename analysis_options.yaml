@@ -4,6 +4,8 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  plugins:
+    - custom_lint
   language:
     strict-casts: true
     strict-inference: true
@@ -39,3 +41,7 @@ linter:
 # Configure dart format line length.
 formatter:
   page_width: 100
+
+custom_lint:
+  rules:
+    - forbidden_import

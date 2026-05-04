@@ -1,0 +1,4 @@
+# File-path allowlist for offline-invariant exemptions.
+# One file path per line, relative to repo root.
+# Each entry MUST include a comment with the spec number that authorized it.
+# Empty at bootstrap; Spec 19 (llm-model-download) will add the first entry.

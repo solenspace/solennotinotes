@@ -42,7 +42,7 @@ The following must never appear under `lib/`:
 - `package:google_sign_in`, `package:firebase_auth`
 - `package:sentry`, `package:firebase_crashlytics`, `package:posthog_flutter`, `package:mixpanel_flutter`
 
-A grep gate enforces this in CI; spec 0X will add it.
+Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.md): a fast `scripts/check-offline.sh` grep run at pre-commit, and the `forbidden_import` rule in `tools/forbidden_imports_lint/` fired by `flutter analyze`. Both read from `scripts/.forbidden-imports.txt`.
 
 ## flutter_bloc usage
 
