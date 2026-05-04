@@ -38,10 +38,10 @@ class _NoteCardState extends State<NoteCard> {
     final brightness = Theme.of(context).brightness;
     final note = widget.note;
     final swatch = NotesColorPalette.swatchFor(note.colorBackground);
-    
+
     // Resolve background based on theme (light/dark)
     final activeBgColor = swatch?.background(brightness) ?? note.colorBackground;
-    
+
     // Determine text color based on gradient or active background
     Color computeTextColor() {
       if (note.hasGradient && note.gradient != null) {
@@ -53,12 +53,11 @@ class _NoteCardState extends State<NoteCard> {
               ? const Color(0xFF1A1A1A)
               : const Color(0xFFF5F5F5));
     }
-    
+
     final textColor = computeTextColor();
 
-    final blocks = note.blocks.isNotEmpty
-        ? note.blocks.map(EditorBlock.fromMap).toList()
-        : <EditorBlock>[];
+    final blocks =
+        note.blocks.isNotEmpty ? note.blocks.map(EditorBlock.fromMap).toList() : <EditorBlock>[];
 
     final textBlocks = blocks.whereType<TextBlock>().toList();
     final checklistBlocks = blocks.whereType<ChecklistBlock>().toList();
@@ -68,10 +67,7 @@ class _NoteCardState extends State<NoteCard> {
         imageBlocks.isNotEmpty ||
         note.title.isNotEmpty;
 
-    final preview = textBlocks
-        .map((b) => b.text)
-        .where((t) => t.isNotEmpty)
-        .join('\n');
+    final preview = textBlocks.map((b) => b.text).where((t) => t.isNotEmpty).join('\n');
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -103,8 +99,8 @@ class _NoteCardState extends State<NoteCard> {
                   )
                 : null,
             border: Border.all(
-              color: brightness == Brightness.dark 
-                  ? Colors.white.withValues(alpha: 0.15) 
+              color: brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.15)
                   : Colors.black.withValues(alpha: 0.15),
               width: 1.0, // Thin, sharp border matching the component
             ),
@@ -124,8 +120,8 @@ class _NoteCardState extends State<NoteCard> {
                   ),
                 ),
               if (imageBlocks.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Image.file(
                     File(imageBlocks.first.path),
                     width: double.infinity,
@@ -183,9 +179,7 @@ class _NoteCardState extends State<NoteCard> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Icon(
-                                b.checked
-                                    ? Icons.check_box
-                                    : Icons.check_box_outline_blank,
+                                b.checked ? Icons.check_box : Icons.check_box_outline_blank,
                                 size: 18,
                                 color: textColor.withValues(alpha: 0.85),
                               ),
@@ -195,15 +189,11 @@ class _NoteCardState extends State<NoteCard> {
                                   b.text.isEmpty ? 'Untitled task' : b.text,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: textColor.withValues(
-                                            alpha: b.checked ? 0.5 : 0.85),
-                                        decoration: b.checked
-                                            ? TextDecoration.lineThrough
-                                            : null,
+                                          alpha: b.checked ? 0.5 : 0.85,
+                                        ),
+                                        decoration: b.checked ? TextDecoration.lineThrough : null,
                                       ),
                                 ),
                               ),

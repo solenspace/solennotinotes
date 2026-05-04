@@ -26,7 +26,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   /// Apply title search and filter chip to the visible note list.
   List<Note> _applyFilters(List<Note> source, Search search) {
     Iterable<Note> result = source;
@@ -44,8 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
         result = result.where((n) => n.blocks.any((b) => b['type'] == 'checklist'));
         break;
       case NoteFilter.images:
-        result = result.where((n) =>
-            n.blocks.any((b) => b['type'] == 'image') || n.imageFile != null);
+        result = result.where(
+          (n) => n.blocks.any((b) => b['type'] == 'image') || n.imageFile != null,
+        );
         break;
     }
     return result.toList();
@@ -161,9 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return OpenContainer(
       closedElevation: 0,
       openElevation: 0,
-      closedColor: note.hasGradient
-          ? note.colorBackground
-          : note.colorBackground,
+      closedColor: note.hasGradient ? note.colorBackground : note.colorBackground,
       openColor: Theme.of(context).colorScheme.surface,
       closedShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
