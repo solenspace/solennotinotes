@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:provider/provider.dart';
 
-import '../../helpers/color_picker.dart' as legacy;
-import '../../providers/notes.dart';
-import '../../theme/app_tokens.dart';
-import '../../theme/notes_color_palette.dart';
-import 'sheet_scaffold.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/helpers/color_picker.dart' as legacy;
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Unified personalization sheet. Four sections — color, gradient, pattern,
 /// text color — visible at once with vertical scrolling. Changes apply

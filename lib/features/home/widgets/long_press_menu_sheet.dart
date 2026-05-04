@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/notes.dart';
-import '../../theme/app_tokens.dart';
-import 'sheet_scaffold.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
+
+import '../legacy/notes_provider.dart';
 
 /// Bottom sheet shown on long-press of a note card. Replaces the old
 /// screen-wide edit mode with a per-card menu (Pin / Duplicate / Delete).

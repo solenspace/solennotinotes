@@ -3,9 +3,9 @@ import 'package:gap/gap.dart';
 import 'package:material_tag_editor/tag_editor.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/notes.dart';
-import '../../theme/app_tokens.dart';
-import 'sheet_scaffold.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Tag editor in a bottom sheet. Suggested tags are surfaced from the most-
 /// used set across all notes; tapping one adds it instantly. Free input uses

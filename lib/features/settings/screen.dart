@@ -3,9 +3,9 @@ import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../theme/app_tokens.dart';
-import '../theme/app_typography.dart';
-import '../theme/theme_provider.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/app_typography.dart';
+import 'package:noti_notes_app/theme/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const routeName = '/settings';
