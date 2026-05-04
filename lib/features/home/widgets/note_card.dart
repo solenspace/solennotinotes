@@ -6,11 +6,12 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/note.dart';
-import '../../providers/notes.dart';
-import '../../theme/app_tokens.dart';
-import '../../theme/notes_color_palette.dart';
-import '../editor/editor_block.dart';
+import 'package:noti_notes_app/features/note_editor/widgets/editor_block.dart';
+import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/notes_color_palette.dart';
+
+import '../legacy/notes_provider.dart';
 
 /// Visual card for a note in the masonry grid. Designed to read well at small
 /// sizes with auto-contrast text on per-note color backgrounds.

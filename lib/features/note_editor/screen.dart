@@ -7,20 +7,21 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
-import '../helpers/photo_picker.dart';
-import '../models/note.dart';
-import '../providers/notes.dart';
-import '../theme/app_tokens.dart';
-import '../theme/notes_color_palette.dart';
-import '../widgets/editor/checklist_block.dart';
-import '../widgets/editor/editor_block.dart';
-import '../widgets/editor/editor_toolbar.dart';
-import '../widgets/editor/image_block.dart';
-import '../widgets/editor/note_app_bar.dart';
-import '../widgets/editor/text_block.dart';
-import '../widgets/sheets/note_style_sheet.dart';
-import '../widgets/sheets/reminder_sheet.dart';
-import '../widgets/sheets/tag_sheet.dart';
+import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/services/image/image_picker_service.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/notes_color_palette.dart';
+
+import 'widgets/checklist_block.dart';
+import 'widgets/editor_block.dart';
+import 'widgets/editor_toolbar.dart';
+import 'widgets/image_block.dart';
+import 'widgets/note_app_bar.dart';
+import 'widgets/note_style_sheet.dart';
+import 'widgets/reminder_sheet.dart';
+import 'widgets/tag_sheet.dart';
+import 'widgets/text_block.dart';
 
 enum NoteType { content, todo }
 

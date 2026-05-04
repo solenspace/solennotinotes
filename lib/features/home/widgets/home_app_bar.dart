@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/search.dart';
-import '../../providers/user_data.dart';
-import '../../screens/settings_screen.dart';
-import '../../screens/user_info_screen.dart';
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/settings/screen.dart';
+import 'package:noti_notes_app/features/user_info/legacy/user_data_provider.dart';
+import 'package:noti_notes_app/features/user_info/screen.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 /// Large collapsing app bar with greeting, profile/settings actions, and a
 /// persistent search field at the bottom edge.

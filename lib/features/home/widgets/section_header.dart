@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
 
 /// Lightweight section title used between Pinned and Notes lists.
 class SectionHeader extends StatelessWidget {

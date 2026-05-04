@@ -71,41 +71,20 @@ Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.m
 
 ```
 lib/
-├── main.dart
-├── app/                   ← MaterialApp, route table, global providers
-├── blocs/<feature>/
-│   ├── <feature>_bloc.dart       (or _cubit.dart)
-│   ├── <feature>_event.dart      (when a Bloc, not Cubit)
-│   └── <feature>_state.dart
-├── repositories/<feature>/
-│   ├── <feature>_repository.dart
-│   └── <feature>_data_source.dart   (Hive / fs / plugin wrapper)
-├── services/
-│   ├── ai/llm_service.dart
-│   ├── ai/whisper_service.dart
-│   ├── ai/device_capability_service.dart
-│   ├── speech/stt_service.dart
-│   ├── speech/tts_service.dart
-│   ├── share/peer_service.dart
-│   ├── share/payload_codec.dart
-│   ├── notifications/notifications_service.dart
-│   └── permissions/permissions_service.dart
-├── models/
-│   ├── note.dart
-│   ├── todo.dart
-│   ├── tag.dart
-│   ├── noti_theme.dart
-│   ├── noti_identity.dart
-│   ├── share_payload.dart
-│   └── received_item.dart
-├── screens/<feature>/
-├── widgets/<feature>/
-├── theme/
-│   ├── app_theme.dart
-│   ├── noti_theme.dart
-│   └── tokens.dart
-├── helpers/
-└── assets/
+├── main.dart                  ← app entry; bootstraps Hive, providers, routing
+├── app/                       ← MaterialApp, theme glue, route table, global providers
+├── features/<feature>/        ← collocated feature unit
+│   ├── bloc/                  ← BLoCs / Cubits for the feature; no widget imports
+│   ├── repository/            ← Hive + filesystem + native-plugin wrappers for the feature
+│   ├── widgets/               ← UI components used only by this feature
+│   ├── screen.dart            ← single-screen feature (or screens/ if multiple)
+│   └── legacy/                ← Provider-based code in transition; retired in Spec 05+
+├── services/                  ← cross-cutting native wrappers (STT, TTS, P2P, AI, permissions, notifications, image)
+├── models/                    ← immutable domain models shared across features
+├── theme/                     ← base ThemeData + NotiTheme overlay system
+├── helpers/                   ← stateless utilities (validators, formatters)
+├── widgets/                   ← shared widgets used by 2+ features
+└── assets/                    ← icons, fonts, pattern images (frozen)
 ```
 
 Imports: relative within a feature folder, absolute (`package:noti_notes_app/...`) across features.

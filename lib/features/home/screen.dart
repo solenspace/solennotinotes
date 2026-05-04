@@ -4,18 +4,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 
-import '../models/note.dart';
-import '../providers/notes.dart';
-import '../providers/search.dart';
-import '../theme/app_tokens.dart';
-import '../widgets/home/empty_state.dart';
-import '../widgets/home/expandable_fab.dart';
-import '../widgets/home/filter_chips_row.dart';
-import '../widgets/home/home_app_bar.dart';
-import '../widgets/home/note_card.dart';
-import '../widgets/home/section_header.dart';
-import '../widgets/sheets/long_press_menu_sheet.dart';
-import 'note_editor_screen.dart';
+import 'package:noti_notes_app/features/note_editor/screen.dart';
+import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/theme/app_tokens.dart';
+
+import 'legacy/notes_provider.dart';
+import 'widgets/empty_state.dart';
+import 'widgets/expandable_fab.dart';
+import 'widgets/filter_chips_row.dart';
+import 'widgets/home_app_bar.dart';
+import 'widgets/long_press_menu_sheet.dart';
+import 'widgets/note_card.dart';
+import 'widgets/section_header.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home-screen';

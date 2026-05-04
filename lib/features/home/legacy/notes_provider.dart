@@ -1,16 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:noti_notes_app/helpers/aligment.dart';
-import 'package:noti_notes_app/helpers/database_helper.dart';
-import 'package:noti_notes_app/helpers/photo_picker.dart';
-import 'package:string_similarity/string_similarity.dart';
-// import 'package:hive_flutter/hive_flutter.dart';
 // ignore: depend_on_referenced_packages
 import 'package:collection/collection.dart';
-import 'dart:io';
-import 'dart:convert';
-
-import '../models/note.dart';
-import '../api/notifications_api.dart';
+import 'package:noti_notes_app/helpers/alignment.dart';
+import 'package:noti_notes_app/helpers/database_helper.dart';
+import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/services/image/image_picker_service.dart';
+import 'package:noti_notes_app/services/notifications/notifications_service.dart';
+import 'package:string_similarity/string_similarity.dart';
 
 enum ToolingNote {
   addTag,
