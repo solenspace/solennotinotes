@@ -54,6 +54,8 @@ Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.m
 - BLoCs **never** import from `widgets/` or `screens/`. Tests assert this with `import_lint`-like grep.
 - Tests use a hand-rolled `Fake<Resource>Repository` exposing a controllable broadcast stream. Fakes live at `test/repositories/<resource>/fake_<resource>_repository.dart`. Each event handler has at least one expectation.
 - A `LoggingBlocObserver` may be registered in `main.dart` under `kDebugMode` only — never in release builds (offline invariant 1: nothing leaves the device).
+- Per-route BLoCs are mounted via `BlocProvider.create` inside the screen's `build` (or a `MaterialPageRoute.builder`). The BLoC's lifetime equals the route's. Initial-load events fire from the cascade in `create:` (`..add(InitEvent())`).
+- Side-effect signals (route pop, snackbars, navigation) ride on a one-shot boolean field in state; `BlocListener` reacts and the next state resets the flag. BLoCs do not import `BuildContext`.
 
 ## Repository layer
 

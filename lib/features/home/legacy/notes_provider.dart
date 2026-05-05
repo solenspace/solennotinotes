@@ -233,6 +233,7 @@ class Notes with ChangeNotifier {
     }
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void addImageToNote(String id, File? image) {
     toolingNote(
       id,
@@ -241,6 +242,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void removeImageFromNote(String id) {
     toolingNote(
       id,
@@ -249,6 +251,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void addTagToNote(String tag, String id) {
     toolingNote(
       id,
@@ -257,6 +260,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void removeTagsFromNote(int index, String id) {
     toolingNote(
       id,
@@ -266,6 +270,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void changeCurrentColor(String id, Color color) {
     toolingNote(
       id,
@@ -274,6 +279,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void changeCurrentPattern(String id, String? pattern) {
     toolingNote(
       id,
@@ -282,6 +288,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void removeCurrentPattern(String id) {
     toolingNote(
       id,
@@ -290,6 +297,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void changeCurrentFontColor(String id, Color color) {
     toolingNote(
       id,
@@ -298,6 +306,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void changeCurrentDisplay(String id, DisplayMode mode) {
     toolingNote(
       id,
@@ -306,6 +315,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void changeCurrentGradient(String id, LinearGradient gradient) {
     toolingNote(
       id,
@@ -314,6 +324,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void addReminder(String id, DateTime dateTime) {
     toolingNote(
       id,
@@ -322,6 +333,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void removeReminder(String id) {
     toolingNote(
       id,
@@ -330,6 +342,7 @@ class Notes with ChangeNotifier {
     );
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void toggleTask(String id, int index) {
     final noteIndex = findIndex(id);
     if (noteIndex >= 0) {
@@ -340,6 +353,7 @@ class Notes with ChangeNotifier {
     }
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void addTask(String id) {
     final noteIndex = findIndex(id);
     if (noteIndex >= 0) {
@@ -352,6 +366,7 @@ class Notes with ChangeNotifier {
     }
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void removeTask(String id, int index) {
     final noteIndex = findIndex(id);
     if (noteIndex >= 0) {
@@ -361,6 +376,7 @@ class Notes with ChangeNotifier {
     }
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void updateTask(String id, int index, String content) {
     final noteIndex = findIndex(id);
     if (noteIndex >= 0) {
@@ -374,6 +390,7 @@ class Notes with ChangeNotifier {
     return findById(id).hasGradient;
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void switchGradient(String id) {
     findById(id).hasGradient = !findById(id).hasGradient;
     updateNoteOnDataBase(findById(id));
@@ -387,7 +404,7 @@ class Notes with ChangeNotifier {
   @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   List<Note> get unpinnedNotes => _notes.where((n) => !n.isPinned).toList();
 
-  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
+  @Deprecated('migrated to NotesListBloc and NoteEditorBloc; remove in Spec 08')
   void togglePin(String id) {
     final i = findIndex(id);
     if (i < 0) return;
@@ -398,6 +415,7 @@ class Notes with ChangeNotifier {
 
   //? Block-based editor mutations (used by the unified editor)
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void replaceBlocks(String id, List<Map<String, dynamic>> blocks) {
     final i = findIndex(id);
     if (i < 0) return;
@@ -406,6 +424,7 @@ class Notes with ChangeNotifier {
     notifyListeners();
   }
 
+  @Deprecated('migrated to NoteEditorBloc; remove in Spec 08')
   void updateTitle(String id, String title) {
     final i = findIndex(id);
     if (i < 0) return;
@@ -414,7 +433,7 @@ class Notes with ChangeNotifier {
     notifyListeners();
   }
 
-  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
+  @Deprecated('migrated to NotesListBloc and NoteEditorBloc; remove in Spec 08')
   void deleteNote(String id) {
     final i = findIndex(id);
     if (i < 0) return;

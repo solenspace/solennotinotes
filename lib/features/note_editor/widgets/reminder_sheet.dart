@@ -1,11 +1,14 @@
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 
-import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
@@ -42,43 +45,49 @@ class _ReminderSheetState extends State<ReminderSheet> {
     await _ensurePermission();
     if (!mounted) return;
 
-    final notes = context.read<Notes>();
-    notes.addReminder(widget.noteId, date);
-    final note = notes.findById(widget.noteId);
-    final index = notes.findIndex(widget.noteId);
+    final bloc = context.read<NoteEditorBloc>();
+    final note = bloc.state.note;
+    if (note == null) return;
+
+    bloc.add(ReminderSet(date));
+
     final body = note.title.isEmpty ? 'a note' : note.title;
     final service = LocalNotificationService();
     service.addNotification(
-      index,
+      notificationIdForNote(note.id),
       service.notificationMessage(body, ''),
       body,
       date,
-      widget.noteId,
+      note.id,
       channel: 'reminders',
     );
     if (mounted) Navigator.of(context).pop();
   }
 
   void _cancelReminder() {
-    final notes = context.read<Notes>();
-    notes.removeReminder(widget.noteId);
-    LocalNotificationService.cancelNotification(notes.findIndex(widget.noteId));
+    final bloc = context.read<NoteEditorBloc>();
+    final note = bloc.state.note;
+    if (note == null) return;
+    bloc.add(const ReminderRemoved());
+    LocalNotificationService.cancelNotification(notificationIdForNote(note.id));
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final note = context.watch<Notes>().findById(widget.noteId);
-    final hasReminder = note.reminder != null;
-
-    return SheetScaffold(
-      title: 'Remind me',
-      child: AnimatedSize(
-        duration: AppDurations.md,
-        curve: AppCurves.standard,
-        alignment: Alignment.topCenter,
-        child: _showPicker ? _buildPicker(context) : _buildChips(context, hasReminder),
-      ),
+    return BlocBuilder<NoteEditorBloc, NoteEditorState>(
+      builder: (context, state) {
+        final hasReminder = state.note?.reminder != null;
+        return SheetScaffold(
+          title: 'Remind me',
+          child: AnimatedSize(
+            duration: AppDurations.md,
+            curve: AppCurves.standard,
+            alignment: Alignment.topCenter,
+            child: _showPicker ? _buildPicker(context) : _buildChips(context, hasReminder),
+          ),
+        );
+      },
     );
   }
 
