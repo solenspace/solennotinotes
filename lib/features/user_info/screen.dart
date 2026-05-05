@@ -5,7 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
+import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
@@ -45,9 +46,9 @@ class UserInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserCubit>().state.user;
-    final notes = context.watch<Notes>();
+    final notesState = context.watch<NotesListBloc>().state;
     final scheme = Theme.of(context).colorScheme;
-    final mostUsed = notes.getMostUsedTags();
+    final mostUsed = _topFiveTags(notesState.notes);
 
     if (user == null) {
       return const Scaffold(body: SizedBox.shrink());
@@ -105,7 +106,7 @@ class UserInfoScreen extends StatelessWidget {
           ),
           const Gap(AppSpacing.xl),
           Text(
-            '${notes.notesCount} notes on this device',
+            '${notesState.notes.length} notes on this device',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const Gap(AppSpacing.xl),
@@ -141,4 +142,15 @@ class UserInfoScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Set<String> _topFiveTags(List<Note> notes) {
+  final counts = <String, int>{};
+  for (final note in notes) {
+    for (final tag in note.tags) {
+      counts[tag] = (counts[tag] ?? 0) + 1;
+    }
+  }
+  final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+  return sorted.take(5).map((e) => e.key).toSet();
 }
