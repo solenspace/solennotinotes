@@ -191,7 +191,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Future<void> _addImage() async {
-    final picked = await PhotoPicker.pickImage(ImageSource.gallery, 80);
+    final picked = await const ImagePickerService().pickImage(ImageSource.gallery, 80);
     if (picked == null) return;
     final block = newImageBlock(picked.path);
     setState(() => _blocks.add(block));

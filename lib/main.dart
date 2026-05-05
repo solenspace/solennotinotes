@@ -8,6 +8,8 @@ import 'package:noti_notes_app/features/settings/screen.dart';
 import 'package:noti_notes_app/features/user_info/legacy/user_data_provider.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
 import 'package:noti_notes_app/helpers/database_helper.dart';
+import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
+import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/theme_provider.dart';
@@ -16,34 +18,33 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await DbHelper.initBox(DbHelper.notesBoxName);
+  final notesRepository = HiveNotesRepository();
+  await notesRepository.init();
   await DbHelper.initBox(DbHelper.userBoxName);
   await ThemeProvider.ensureBoxOpen();
 
-  runApp(const MyApp());
+  runApp(MyApp(notesRepository: notesRepository));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.notesRepository});
+
+  final NotesRepository notesRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  late Notes notes;
-  late UserData userData;
-  late ThemeProvider themeProvider;
+  late final UserData userData;
+  late final ThemeProvider themeProvider;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    notes = Notes();
     userData = UserData();
     themeProvider = ThemeProvider()..load();
-    notes.loadNotesFromDataBase();
     userData.loadUserFromDataBase();
-    notes.sortByDateCreated();
     if (userData.curentUserData.name != '') {
       userData.randomGreetings(userData.curentUserData);
     }
@@ -70,8 +71,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<NotesRepository>.value(value: widget.notesRepository),
         ChangeNotifierProvider(create: (_) => userData),
-        ChangeNotifierProvider(create: (_) => notes),
+        ChangeNotifierProvider(
+          create: (ctx) {
+            final notes = Notes(repository: ctx.read<NotesRepository>());
+            notes.loadNotesFromDataBase().then((_) => notes.sortByDateCreated());
+            return notes;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => Search()),
         ChangeNotifierProvider.value(value: themeProvider),
       ],
