@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 
 import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
-import 'legacy/user_data_provider.dart';
+import 'cubit/user_cubit.dart';
 
 class UserInfoScreen extends StatelessWidget {
   static const routeName = '/user-info';
@@ -38,16 +38,20 @@ class UserInfoScreen extends StatelessWidget {
     if (source == null) return;
     final file = await const ImagePickerService().pickImage(source, 80);
     if (file != null && context.mounted) {
-      context.read<UserData>().updateProfilePicture(file);
+      await context.read<UserCubit>().updatePhoto(file);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserData>().curentUserData;
+    final user = context.watch<UserCubit>().state.user;
     final notes = context.watch<Notes>();
     final scheme = Theme.of(context).colorScheme;
     final mostUsed = notes.getMostUsedTags();
+
+    if (user == null) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -94,7 +98,7 @@ class UserInfoScreen extends StatelessWidget {
                     counterText: '',
                     hintText: 'Your name',
                   ),
-                  onChanged: (name) => context.read<UserData>().updateName(name),
+                  onChanged: (name) => context.read<UserCubit>().updateName(name),
                 ),
               ),
             ],

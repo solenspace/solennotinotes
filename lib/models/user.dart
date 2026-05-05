@@ -23,4 +23,14 @@ class User {
       'profilePicture': profilePicture?.path,
     };
   }
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    final picturePath = json['profilePicture'] as String?;
+    return User(
+      picturePath != null ? File(picturePath) : null,
+      json['id'] as String,
+      name: json['name'] as String,
+      bornDate: DateTime.parse(json['bornDate'] as String),
+    );
+  }
 }
