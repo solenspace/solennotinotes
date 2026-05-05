@@ -57,7 +57,7 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
 - `notes` — primary note records keyed by uuid
 - `tags` — tag definitions (name, color)
 - `themes` — saved NotiTheme presets
-- `noti_identity` — single record: this user's noti (name, signature, palette, pattern, generated keypair for share signing)
+- `noti_identity` — single record: this user's noti (id, displayName, bornDate, profilePicture, signaturePalette, signaturePatternKey, signatureAccent, signatureTagline). Migrated from legacy `user_v2` on first launch after Spec 09. Cryptographic keypair for share-payload signing is added by the future P2P share spec.
 - `settings` — app-level preferences
 - `received_inbox` — incoming shares awaiting accept/discard
 
