@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
-import 'package:provider/provider.dart';
 
-import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
+import 'package:noti_notes_app/features/search/cubit/search_state.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
 /// Horizontal row of filter chips below the search bar. Selection is single.
@@ -11,7 +12,7 @@ class FilterChipsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final search = context.watch<Search>();
+    final search = context.watch<SearchCubit>().state;
     final entries = const [
       (NoteFilter.all, 'All', Icons.notes_outlined),
       (NoteFilter.reminders, 'Reminders', Icons.notifications_outlined),
@@ -42,7 +43,7 @@ class FilterChipsRow extends StatelessWidget {
               ),
             ),
             selected: selected,
-            onSelected: (_) => context.read<Search>().setFilter(filter),
+            onSelected: (_) => context.read<SearchCubit>().setFilter(filter),
             showCheckmark: false,
             backgroundColor: colorScheme.surfaceContainerHighest,
             selectedColor: colorScheme.primary,
