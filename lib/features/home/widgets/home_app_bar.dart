@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
-import 'package:provider/provider.dart';
 
-import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
-import 'package:noti_notes_app/features/user_info/legacy/user_data_provider.dart';
+import 'package:noti_notes_app/features/user_info/cubit/user_cubit.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
@@ -33,9 +33,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    final userData = context.watch<UserData>();
-    final user = userData.curentUserData;
-    final greeting = userData.greeting();
+    final userState = context.watch<UserCubit>().state;
+    final user = userState.user;
+    final greeting = userState.greeting;
     final scheme = Theme.of(context).colorScheme;
 
     return SliverAppBar(
@@ -54,7 +54,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
         title: LayoutBuilder(
           builder: (context, constraints) {
             return Text(
-              user.name.isEmpty ? greeting : '$greeting, ${user.name}',
+              greeting,
               style: Theme.of(context).textTheme.displayMedium,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -87,12 +87,13 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: (value) {
+                        final cubit = context.read<SearchCubit>();
                         if (value.isEmpty) {
-                          context.read<Search>().deactivateSearch();
+                          cubit.deactivate();
                         } else {
-                          context.read<Search>().activateSearchByTitle();
+                          cubit.activateByTitle();
                         }
-                        context.read<Search>().setSearchQuery(value);
+                        cubit.setQuery(value);
                       },
                       style: Theme.of(context).textTheme.bodyLarge,
                       decoration: InputDecoration(
@@ -122,8 +123,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     } else {
                       _searchFocusNode.unfocus();
                       _searchController.clear();
-                      context.read<Search>().deactivateSearch();
-                      context.read<Search>().setSearchQuery('');
+                      context.read<SearchCubit>().deactivate();
                     }
                   });
                 },
@@ -156,14 +156,14 @@ class _HomeAppBarState extends State<HomeAppBar> {
                         color: scheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(color: scheme.outline, width: 1.0),
-                        image: user.profilePicture != null
+                        image: user?.profilePicture != null
                             ? DecorationImage(
-                                image: FileImage(File(user.profilePicture!.path)),
+                                image: FileImage(File(user!.profilePicture!.path)),
                                 fit: BoxFit.cover,
                               )
                             : null,
                       ),
-                      child: user.profilePicture == null
+                      child: user?.profilePicture == null
                           ? Icon(Icons.person_outline, color: scheme.onSurfaceVariant, size: 20)
                           : null,
                     ),

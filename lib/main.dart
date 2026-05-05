@@ -8,13 +8,14 @@ import 'package:noti_notes_app/features/home/bloc/notes_list_event.dart';
 import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
 import 'package:noti_notes_app/features/home/screen.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
-import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
-import 'package:noti_notes_app/features/user_info/legacy/user_data_provider.dart';
+import 'package:noti_notes_app/features/user_info/cubit/user_cubit.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
-import 'package:noti_notes_app/helpers/database_helper.dart';
 import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
+import 'package:noti_notes_app/repositories/user/hive_user_repository.dart';
+import 'package:noti_notes_app/repositories/user/user_repository.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/theme_provider.dart';
@@ -28,35 +29,40 @@ void main() async {
   }
 
   final notesRepository = HiveNotesRepository();
+  final userRepository = HiveUserRepository();
   await notesRepository.init();
-  await DbHelper.initBox(DbHelper.userBoxName);
+  await userRepository.init();
   await ThemeProvider.ensureBoxOpen();
 
-  runApp(MyApp(notesRepository: notesRepository));
+  runApp(
+    MyApp(
+      notesRepository: notesRepository,
+      userRepository: userRepository,
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key, required this.notesRepository});
+  const MyApp({
+    super.key,
+    required this.notesRepository,
+    required this.userRepository,
+  });
 
   final NotesRepository notesRepository;
+  final UserRepository userRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  late final UserData userData;
   late final ThemeProvider themeProvider;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    userData = UserData();
     themeProvider = ThemeProvider()..load();
-    userData.loadUserFromDataBase();
-    if (userData.curentUserData.name != '') {
-      userData.randomGreetings(userData.curentUserData);
-    }
 
     Future.delayed(Duration.zero).then(
       (_) {
@@ -81,10 +87,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<NotesRepository>.value(value: widget.notesRepository),
+        RepositoryProvider<UserRepository>.value(value: widget.userRepository),
       ],
       child: MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => userData),
           ChangeNotifierProvider(
             create: (ctx) {
               final notes = Notes(repository: ctx.read<NotesRepository>());
@@ -93,12 +99,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               return notes;
             },
           ),
-          ChangeNotifierProvider(create: (_) => Search()),
           ChangeNotifierProvider.value(value: themeProvider),
         ],
-        child: BlocProvider<NotesListBloc>(
-          create: (ctx) => NotesListBloc(repository: ctx.read<NotesRepository>())
-            ..add(const NotesListSubscribed()),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (ctx) => NotesListBloc(repository: ctx.read<NotesRepository>())
+                ..add(const NotesListSubscribed()),
+            ),
+            BlocProvider(create: (_) => SearchCubit()),
+            BlocProvider(
+              create: (ctx) => UserCubit(repository: ctx.read<UserRepository>())..load(),
+            ),
+          ],
           child: Consumer<ThemeProvider>(
             builder: (context, theme, _) {
               return MaterialApp(
