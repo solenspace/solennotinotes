@@ -1,12 +1,11 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:collection/collection.dart';
-import 'package:noti_notes_app/helpers/alignment.dart';
-import 'package:noti_notes_app/helpers/database_helper.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:string_similarity/string_similarity.dart';
@@ -27,6 +26,15 @@ enum ToolingNote {
 }
 
 class Notes with ChangeNotifier {
+  Notes({
+    required NotesRepository repository,
+    ImagePickerService imageService = const ImagePickerService(),
+  })  : _repository = repository,
+        _imageService = imageService;
+
+  final NotesRepository _repository;
+  final ImagePickerService _imageService;
+
   final List<Note> _notes = [];
   bool editMode = false;
   Set<String> notesToDelete = {};
@@ -43,9 +51,7 @@ class Notes with ChangeNotifier {
     return editMode;
   }
 
-  void clearBox() {
-    DbHelper.clearBox(DbHelper.notesBoxName);
-  }
+  Future<void> clearBox() => _repository.clear();
 
   //? Modes on note editing
 
@@ -61,51 +67,10 @@ class Notes with ChangeNotifier {
 
   //? Load all notes from database
 
-  void loadNotesFromDataBase() {
-    final notesBox = DbHelper.getBox(DbHelper.notesBoxName);
-    if (notesBox.values.isEmpty) {
-      return;
-    }
-    for (var note in notesBox.values) {
-      var noteDecoded = jsonDecode(note);
-      // print('Gradient: ${noteDecoded['gradient']}');
-      _notes.add(
-        Note(
-          noteDecoded['tags'].cast<String>().toSet(),
-          noteDecoded['imageFile'] != null ? File(noteDecoded['imageFile']) : null,
-          noteDecoded['patternImage'],
-          noteDecoded['todoList'].cast<Map<String, dynamic>>(),
-          noteDecoded['reminder'] != '' ? DateTime.parse(noteDecoded['reminder']) : null,
-          noteDecoded['gradient'] != null && noteDecoded['gradient'] != ''
-              ? LinearGradient(
-                  colors: [
-                    Color(noteDecoded['gradient']['colors'][0]),
-                    Color(noteDecoded['gradient']['colors'][1]),
-                  ],
-                  begin: toAlignment(noteDecoded['gradient']['alignment'][0]),
-                  end: toAlignment(noteDecoded['gradient']['alignment'][1]),
-                )
-              : null,
-          id: noteDecoded['id'],
-          title: noteDecoded['title'],
-          content: noteDecoded['content'],
-          dateCreated: DateTime.parse(noteDecoded['dateCreated']),
-          colorBackground: Color(noteDecoded['colorBackground']),
-          fontColor: Color(noteDecoded['fontColor']),
-          displayMode: DisplayMode.values[noteDecoded['displayMode']],
-          hasGradient: noteDecoded['hasGradient'],
-          isPinned: noteDecoded['isPinned'] ?? false,
-          sortIndex: noteDecoded['sortIndex'],
-          blocks: noteDecoded['blocks'] != null
-              ? (noteDecoded['blocks'] as List)
-                  .cast<Map>()
-                  .map((m) => m.cast<String, dynamic>())
-                  .toList()
-              : null,
-        ),
-      );
-    }
-    // _notes = _notes.reversed.toList(); This idk if it actually works
+  Future<void> loadNotesFromDataBase() async {
+    _notes
+      ..clear()
+      ..addAll(await _repository.getAll());
     notifyListeners();
   }
 
@@ -118,19 +83,12 @@ class Notes with ChangeNotifier {
 
   //? Update database
 
-  void updateNoteOnDataBase(Note note) async {
-    await DbHelper.insertUpdateData(
-      DbHelper.notesBoxName,
-      note.id,
-      jsonEncode(note.toJson()),
-    );
-  }
+  Future<void> updateNoteOnDataBase(Note note) => _repository.save(note);
 
   void updateNotesOnDataBase(List<Note> notes) {
     for (var note in notes) {
       updateNoteOnDataBase(note);
     }
-    // notifyListeners();
   }
 
   //? Note creation
@@ -161,22 +119,12 @@ class Notes with ChangeNotifier {
 
   Future<void> removeSelectedNotes(Set<String> ids) async {
     for (var id in ids) {
-      findById(id).imageFile != null ? PhotoPicker.removeImage(findById(id).imageFile!) : null;
       LocalNotificationService.cancelNotification(findIndex(id));
       _notes.removeWhere((note) => note.id == id);
-      DbHelper.deleteData(DbHelper.notesBoxName, id);
+      await _repository.delete(id);
     }
     notifyListeners();
   }
-
-  // Future<void> removeNoteById(String id) async {
-  //   findById(id).imageFile != null
-  //       ? PhotoPicker.removeImage(findById(id).imageFile!)
-  //       : null;
-  //   _notes.removeWhere((note) => note.id == id);
-  //   DbHelper.deleteData(DbHelper.notesBoxName, id);
-  //   notifyListeners();
-  // }
 
   //? Note Updating for temporal memory
 
@@ -237,7 +185,7 @@ class Notes with ChangeNotifier {
           _notes[noteIndex].imageFile = File(value.path);
           break;
         case ToolingNote.removeImage:
-          PhotoPicker.removeImage(_notes[noteIndex].imageFile!);
+          _imageService.removeImage(_notes[noteIndex].imageFile!);
           _notes[noteIndex].imageFile = value;
           break;
         case ToolingNote.addTag:
@@ -458,12 +406,9 @@ class Notes with ChangeNotifier {
   void deleteNote(String id) {
     final i = findIndex(id);
     if (i < 0) return;
-    if (_notes[i].imageFile != null) {
-      PhotoPicker.removeImage(_notes[i].imageFile!);
-    }
     LocalNotificationService.cancelNotification(i);
     _notes.removeAt(i);
-    DbHelper.deleteData(DbHelper.notesBoxName, id);
+    unawaited(_repository.delete(id));
     notifyListeners();
   }
 

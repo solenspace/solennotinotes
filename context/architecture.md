@@ -34,10 +34,11 @@ lib/
 ├── app/                       ← MaterialApp, theme glue, route table, global providers
 ├── features/<feature>/        ← collocated feature unit
 │   ├── bloc/                  ← BLoCs / Cubits for the feature; no widget imports
-│   ├── repository/            ← Hive + filesystem + native-plugin wrappers for the feature
+│   ├── repository/            ← feature-private data, only this feature reads/writes
 │   ├── widgets/               ← UI components used only by this feature
 │   ├── screen.dart            ← single-screen feature (or screens/ if multiple)
 │   └── legacy/                ← Provider-based code in transition; retired in Spec 05+
+├── repositories/<resource>/   ← cross-cutting domain data (Note, Tag, Theme, NotiIdentity, …)
 ├── services/                  ← cross-cutting native wrappers (STT, TTS, P2P, AI, permissions, notifications, image)
 ├── models/                    ← immutable domain models shared across features
 ├── theme/                     ← base ThemeData + NotiTheme overlay system
@@ -47,6 +48,8 @@ lib/
 ```
 
 Provider-based files inherited from the imported codebase live under `features/<feature>/legacy/` until Specs 05+ migrate them to `flutter_bloc` and Spec 08 deletes the `legacy/` folders.
+
+A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a domain resource that is consumed by two or more features (e.g. `Note` is read by home, note_editor, search, and the future share flow). A **feature-private repository** (under `lib/features/<feature>/repository/`) is consumed only by its parent feature. When in doubt, start feature-private and promote to cross-cutting if a second feature needs to read it.
 
 ## Storage model
 
@@ -90,7 +93,7 @@ Provider-based files inherited from the imported codebase live under `features/<
 ## Data flow examples
 
 ### Save a text note
-`NoteEditorScreen` → dispatches `SaveNoteRequested` → `NoteEditorBloc` → `NoteRepository.save(note)` → `HiveDataSource` writes to `notes` box → emits `NoteSaved` → screen pops or shows confirmation.
+`NoteEditorScreen` → BLoC (Spec 05) → `NotesRepository.save(note)` → `HiveNotesRepository` writes to `notes_v2` box (typed adapters land in Spec 04b) → `box.watch()` re-emits the snapshot → `watchAll()` consumers refresh.
 
 ### Receive a shared note
 `SharePeerService` (P2P transport) emits `IncomingPayload(bytes)` → `ShareInboxBloc` decodes manifest → validates signature → writes assets to disk → inserts a record into `received_inbox` Hive box → UI reflects the new inbox count → user opens preview → on accept, `ShareInboxBloc` calls `NoteRepository.importFromShare(...)` to merge.
