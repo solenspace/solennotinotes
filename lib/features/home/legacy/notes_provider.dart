@@ -36,7 +36,9 @@ class Notes with ChangeNotifier {
   final ImagePickerService _imageService;
 
   final List<Note> _notes = [];
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   bool editMode = false;
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   Set<String> notesToDelete = {};
 
   List<Note> get notes {
@@ -47,7 +49,9 @@ class Notes with ChangeNotifier {
     return _notes.length;
   }
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   bool get isEditMode {
+    // ignore: deprecated_member_use_from_same_package
     return editMode;
   }
 
@@ -55,12 +59,16 @@ class Notes with ChangeNotifier {
 
   //? Modes on note editing
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   void activateEditMode() {
+    // ignore: deprecated_member_use_from_same_package
     editMode = true;
     notifyListeners();
   }
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   void deactivateEditMode() {
+    // ignore: deprecated_member_use_from_same_package
     editMode = false;
     notifyListeners();
   }
@@ -374,9 +382,12 @@ class Notes with ChangeNotifier {
 
   //? Pinning
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   List<Note> get pinnedNotes => _notes.where((n) => n.isPinned).toList();
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   List<Note> get unpinnedNotes => _notes.where((n) => !n.isPinned).toList();
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   void togglePin(String id) {
     final i = findIndex(id);
     if (i < 0) return;
@@ -403,6 +414,7 @@ class Notes with ChangeNotifier {
     notifyListeners();
   }
 
+  @Deprecated('migrated to NotesListBloc; remove in Spec 08')
   void deleteNote(String id) {
     final i = findIndex(id);
     if (i < 0) return;

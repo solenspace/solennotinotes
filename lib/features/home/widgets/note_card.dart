@@ -2,16 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 import 'package:noti_notes_app/features/note_editor/widgets/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 import 'package:noti_notes_app/theme/notes_color_palette.dart';
 
-import '../legacy/notes_provider.dart';
+import '../bloc/notes_list_bloc.dart';
+import '../bloc/notes_list_event.dart';
 
 /// Visual card for a note in the masonry grid. Designed to read well at small
 /// sizes with auto-contrast text on per-note color backgrounds.
@@ -172,7 +173,9 @@ class _NoteCardState extends State<NoteCard> {
                             }
                             return map;
                           }).toList();
-                          context.read<Notes>().replaceBlocks(note.id, updatedBlocks);
+                          context
+                              .read<NotesListBloc>()
+                              .add(NoteBlocksReplaced(note.id, updatedBlocks));
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
