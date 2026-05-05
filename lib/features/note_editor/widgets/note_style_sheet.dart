@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
-import 'package:provider/provider.dart';
 
-import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
+import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/helpers/color_picker.dart' as legacy;
+import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 import 'package:noti_notes_app/theme/notes_color_palette.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
@@ -26,8 +29,21 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final notes = context.watch<Notes>();
-    final note = notes.findById(widget.noteId);
+    return BlocBuilder<NoteEditorBloc, NoteEditorState>(
+      builder: (context, state) {
+        final note = state.note;
+        if (note == null) {
+          return const SheetScaffold(
+            title: 'Style',
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return _buildContent(context, note);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, Note note) {
     final brightness = Theme.of(context).brightness;
     final scheme = Theme.of(context).colorScheme;
 
@@ -57,11 +73,11 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                     selected: selected,
                     onTap: () {
                       HapticFeedback.selectionClick();
-                      final notesP = context.read<Notes>();
-                      notesP.changeCurrentColor(widget.noteId, color);
-                      if (note.hasGradient) notesP.switchGradient(widget.noteId);
+                      final bloc = context.read<NoteEditorBloc>();
+                      bloc.add(BackgroundColorChanged(color));
+                      if (note.hasGradient) bloc.add(const GradientToggled());
                       if (note.patternImage != null) {
-                        notesP.removeCurrentPattern(widget.noteId);
+                        bloc.add(const PatternImageRemoved());
                       }
                     },
                   );
@@ -86,13 +102,13 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                     gradient: gradient,
                     selected: selected,
                     onTap: () {
-                      final notesP = context.read<Notes>();
-                      notesP.changeCurrentGradient(widget.noteId, gradient);
+                      final bloc = context.read<NoteEditorBloc>();
+                      bloc.add(GradientChanged(gradient));
                       if (!note.hasGradient) {
-                        notesP.switchGradient(widget.noteId);
+                        bloc.add(const GradientToggled());
                       }
                       if (note.patternImage != null) {
-                        notesP.removeCurrentPattern(widget.noteId);
+                        bloc.add(const PatternImageRemoved());
                       }
                     },
                   );
@@ -114,7 +130,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                     return _PatternThumb(
                       asset: null,
                       selected: selected,
-                      onTap: () => context.read<Notes>().removeCurrentPattern(widget.noteId),
+                      onTap: () => context.read<NoteEditorBloc>().add(const PatternImageRemoved()),
                     );
                   }
                   final asset = legacy.ColorPicker.patterns[i - 1];
@@ -123,9 +139,9 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                     asset: asset,
                     selected: selected,
                     onTap: () {
-                      final notesP = context.read<Notes>();
-                      notesP.changeCurrentPattern(widget.noteId, asset);
-                      if (note.hasGradient) notesP.switchGradient(widget.noteId);
+                      final bloc = context.read<NoteEditorBloc>();
+                      bloc.add(PatternImageSet(asset));
+                      if (note.hasGradient) bloc.add(const GradientToggled());
                     },
                   );
                 },
@@ -167,9 +183,8 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                             return _SwatchCircle(
                               color: color,
                               selected: selected,
-                              onTap: () => context
-                                  .read<Notes>()
-                                  .changeCurrentFontColor(widget.noteId, color),
+                              onTap: () =>
+                                  context.read<NoteEditorBloc>().add(FontColorChanged(color)),
                             );
                           },
                         ),
