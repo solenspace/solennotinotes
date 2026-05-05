@@ -95,6 +95,9 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
 ### Save a text note
 `NoteEditorScreen` → BLoC (Spec 05) → `NotesRepository.save(note)` → `HiveNotesRepository` writes to `notes_v2` box (typed adapters land in Spec 04b) → `box.watch()` re-emits the snapshot → `watchAll()` consumers refresh.
 
+### Load + render the home screen
+`HomeScreen` mounts → `BlocProvider` creates `NotesListBloc` and dispatches `NotesListSubscribed` → BLoC subscribes to `repository.watchAll()` → `HiveNotesRepository` yields the current snapshot → BLoC emits `ready` state → `BlocBuilder` rebuilds the masonry grid via `state.pinnedNotes` / `state.unpinnedNotes`. Subsequent `repository.save(...)` / `repository.delete(...)` calls (from any feature) trigger re-emits via `box.watch()` → BLoC re-emits with the fresh list → grid rebuilds.
+
 ### Receive a shared note
 `SharePeerService` (P2P transport) emits `IncomingPayload(bytes)` → `ShareInboxBloc` decodes manifest → validates signature → writes assets to disk → inserts a record into `received_inbox` Hive box → UI reflects the new inbox count → user opens preview → on accept, `ShareInboxBloc` calls `NoteRepository.importFromShare(...)` to merge.
 

@@ -1,15 +1,16 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:provider/provider.dart';
 
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
-import 'legacy/notes_provider.dart';
+import 'bloc/notes_list_bloc.dart';
+import 'bloc/notes_list_state.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/expandable_fab.dart';
 import 'widgets/filter_chips_row.dart';
@@ -54,90 +55,95 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final notes = context.watch<Notes>();
     final search = context.watch<Search>();
 
-    final pinned = _applyFilters(notes.pinnedNotes, search);
-    final unpinned = _applyFilters(notes.unpinnedNotes, search);
-    final isEmpty = pinned.isEmpty && unpinned.isEmpty;
+    return BlocBuilder<NotesListBloc, NotesListState>(
+      builder: (context, state) {
+        final pinned = _applyFilters(state.pinnedNotes, search);
+        final unpinned = _applyFilters(state.unpinnedNotes, search);
+        final isEmpty = pinned.isEmpty && unpinned.isEmpty;
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          const HomeAppBar(),
-          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-          const SliverToBoxAdapter(child: FilterChipsRow()),
-          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-          if (isEmpty)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: EmptyState(),
-            )
-          else ...[
-            if (pinned.isNotEmpty) ...[
-              const SliverToBoxAdapter(child: SectionHeader('Pinned')),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                ),
-                sliver: SliverMasonryGrid.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  childCount: pinned.length,
-                  itemBuilder: (context, i) => _buildAnimated(
-                    context,
-                    pinned[i],
-                    i,
+        return Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              const HomeAppBar(),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+              const SliverToBoxAdapter(child: FilterChipsRow()),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+              if (isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(),
+                )
+              else ...[
+                if (pinned.isNotEmpty) ...[
+                  const SliverToBoxAdapter(child: SectionHeader('Pinned')),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    sliver: SliverMasonryGrid.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSpacing.md,
+                      crossAxisSpacing: AppSpacing.md,
+                      childCount: pinned.length,
+                      itemBuilder: (context, i) => _buildAnimated(
+                        context,
+                        pinned[i],
+                        i,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                ],
+                if (unpinned.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SectionHeader(
+                      pinned.isNotEmpty ? 'Notes' : 'All notes',
+                    ),
+                  ),
+                if (unpinned.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    sliver: SliverMasonryGrid.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSpacing.md,
+                      crossAxisSpacing: AppSpacing.md,
+                      childCount: unpinned.length,
+                      itemBuilder: (context, i) => _buildAnimated(
+                        context,
+                        unpinned[i],
+                        pinned.length + i,
+                      ),
+                    ),
+                  ),
+              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
-            if (unpinned.isNotEmpty)
-              SliverToBoxAdapter(
-                child: SectionHeader(
-                  pinned.isNotEmpty ? 'Notes' : 'All notes',
-                ),
-              ),
-            if (unpinned.isNotEmpty)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                ),
-                sliver: SliverMasonryGrid.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  childCount: unpinned.length,
-                  itemBuilder: (context, i) => _buildAnimated(
-                    context,
-                    unpinned[i],
-                    pinned.length + i,
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: ExpandableFab(
+              onContent: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+                );
+                if (mounted) setState(() {});
+              },
+              onTodo: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NoteEditorScreen(noteType: NoteType.todo),
                   ),
-                ),
-              ),
-          ],
-          const SliverToBoxAdapter(child: SizedBox(height: 96)),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: ExpandableFab(
-          onContent: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
-            );
-            if (mounted) setState(() {});
-          },
-          onTodo: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NoteEditorScreen(noteType: NoteType.todo)),
-            );
-            if (mounted) setState(() {});
-          },
-        ),
-      ),
+                );
+                if (mounted) setState(() {});
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
