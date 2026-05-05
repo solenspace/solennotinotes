@@ -1,12 +1,15 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
-import 'package:provider/provider.dart';
 
 import 'package:noti_notes_app/theme/app_tokens.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
-import '../legacy/notes_provider.dart';
+import '../bloc/notes_list_bloc.dart';
+import '../bloc/notes_list_event.dart';
+import '../bloc/notes_list_state.dart';
 
 /// Bottom sheet shown on long-press of a note card. Replaces the old
 /// screen-wide edit mode with a per-card menu (Pin / Duplicate / Delete).
@@ -16,35 +19,46 @@ class LongPressMenuSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final note = context.read<Notes>().findById(noteId);
-    return SheetScaffold(
-      title: note.title.isEmpty ? 'Untitled note' : note.title,
-      maxHeightFactor: 0.5,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _MenuTile(
-            icon: note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-            label: note.isPinned ? 'Unpin' : 'Pin',
-            onTap: () {
-              HapticFeedback.selectionClick();
-              context.read<Notes>().togglePin(noteId);
-              Navigator.of(context).pop();
-            },
+    return BlocBuilder<NotesListBloc, NotesListState>(
+      builder: (context, state) {
+        final note = state.notes.firstWhereOrNull((n) => n.id == noteId);
+        if (note == null) {
+          return const SheetScaffold(
+            title: 'Untitled note',
+            maxHeightFactor: 0.5,
+            child: SizedBox.shrink(),
+          );
+        }
+        return SheetScaffold(
+          title: note.title.isEmpty ? 'Untitled note' : note.title,
+          maxHeightFactor: 0.5,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuTile(
+                icon: note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                label: note.isPinned ? 'Unpin' : 'Pin',
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.read<NotesListBloc>().add(PinToggled(noteId));
+                  Navigator.of(context).pop();
+                },
+              ),
+              const Gap(AppSpacing.xs),
+              _MenuTile(
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                destructive: true,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.read<NotesListBloc>().add(NoteDeleted(noteId));
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
           ),
-          const Gap(AppSpacing.xs),
-          _MenuTile(
-            icon: Icons.delete_outline,
-            label: 'Delete',
-            destructive: true,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              context.read<Notes>().deleteNote(noteId);
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -46,12 +46,14 @@ Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.m
 
 ## flutter_bloc usage
 
-- One BLoC (or Cubit) per feature screen or per cohesive workflow.
-- `<Feature>Cubit` for simple state-only flows; `<Feature>Bloc` when there are discrete events.
-- States are immutable, prefer `Equatable` or `freezed` (introduce per spec).
-- BLoCs receive repositories via constructor; provided in the tree via `RepositoryProvider`.
+- Default to `Bloc` over `Cubit` when there are 3+ user-driven triggers; reserve `Cubit` for trivial state-only flows.
+- State classes extend `Equatable`. `freezed` is introduced only when union types appear.
+- Stream-driven BLoCs use `emit.forEach(stream, onData: ..., onError: ...)` to bridge repository streams into state. The handler is awaited so the subscription is owned by the bloc-base lifecycle.
+- `RepositoryProvider` (re-exported by `flutter_bloc`) is the canonical injection mechanism for repositories. Plain `Provider` is used only for legacy `ChangeNotifier` instances during the migration window.
+- BLoCs receive repositories (and any platform side-effects that aren't pure functions, e.g. notification cancellation) via constructor. Defaults point at the production implementation; tests pass fakes/recording lambdas.
 - BLoCs **never** import from `widgets/` or `screens/`. Tests assert this with `import_lint`-like grep.
-- Every BLoC has a unit test using `bloc_test`.
+- Tests use a hand-rolled `Fake<Resource>Repository` exposing a controllable broadcast stream. Fakes live at `test/repositories/<resource>/fake_<resource>_repository.dart`. Each event handler has at least one expectation.
+- A `LoggingBlocObserver` may be registered in `main.dart` under `kDebugMode` only — never in release builds (offline invariant 1: nothing leaves the device).
 
 ## Repository layer
 
