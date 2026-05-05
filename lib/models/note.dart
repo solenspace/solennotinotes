@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:noti_notes_app/helpers/alignment.dart';
 
 // How this works:
 /*
@@ -81,4 +83,43 @@ class Note {
     this.sortIndex,
     List<Map<String, dynamic>>? blocks,
   }) : blocks = blocks ?? [];
+
+  factory Note.fromJson(Map<String, dynamic> json) {
+    final dynamic rawReminder = json['reminder'];
+    final dynamic rawGradient = json['gradient'];
+    final dynamic rawBlocks = json['blocks'];
+    return Note(
+      (json['tags'] as List).cast<String>().toSet(),
+      json['imageFile'] != null ? File(json['imageFile'] as String) : null,
+      json['patternImage'] as String?,
+      (json['todoList'] as List).cast<Map<String, dynamic>>(),
+      rawReminder != null && rawReminder != '' ? DateTime.parse(rawReminder as String) : null,
+      rawGradient != null && rawGradient != ''
+          ? LinearGradient(
+              colors: [
+                Color((rawGradient as Map)['colors'][0] as int),
+                Color(rawGradient['colors'][1] as int),
+              ],
+              begin: toAlignment(rawGradient['alignment'][0] as String),
+              end: toAlignment(rawGradient['alignment'][1] as String),
+            )
+          : null,
+      id: json['id'] as String,
+      title: json['title'] as String,
+      content: json['content'] as String,
+      dateCreated: DateTime.parse(json['dateCreated'] as String),
+      colorBackground: Color(json['colorBackground'] as int),
+      fontColor: Color(json['fontColor'] as int),
+      displayMode: DisplayMode.values[json['displayMode'] as int],
+      hasGradient: json['hasGradient'] as bool,
+      isPinned: (json['isPinned'] as bool?) ?? false,
+      sortIndex: json['sortIndex'] as int?,
+      blocks: rawBlocks != null
+          ? (rawBlocks as List)
+              .cast<Map<dynamic, dynamic>>()
+              .map((m) => m.cast<String, dynamic>())
+              .toList()
+          : null,
+    );
+  }
 }

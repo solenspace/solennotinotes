@@ -55,10 +55,12 @@ Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.m
 
 ## Repository layer
 
-- The only layer that talks to Hive boxes, the filesystem, native plugins, or platform channels.
-- One repository per resource: `NoteRepository`, `TagRepository`, `ThemeRepository`, `NotiIdentityRepository`, `ShareRepository`, `ReceivedInboxRepository`, `AiAssistRepository`, `SttRepository`, `TtsRepository`.
-- Each repository returns immutable models; never raw Hive objects.
-- Streams (e.g. `watchNotes()`) close cleanly when listeners detach.
+- Cross-cutting domain repositories live at `lib/repositories/<resource>/`. Feature-private repositories live at `lib/features/<feature>/repository/`. When a second feature needs to read a feature-private resource, promote it to cross-cutting.
+- Each repository is an abstract class; concrete implementations are siblings (e.g. `notes_repository.dart` + `hive_notes_repository.dart`).
+- Methods return immutable models and primitives — never raw Hive objects, raw `Map`s, or `Box` references.
+- Future API for one-shot operations (`getAll`, `save`, `delete`); Stream API (`watchAll`) for collection observation. Streams are driven by `box.watch()`, emit the full snapshot on each change, and must close cleanly when no listener remains.
+- Repositories own ALL native side effects of their resource (Hive writes, file deletes, future P2P send). They DO NOT own user-facing notifications, telemetry, or BLoC orchestration.
+- Tests for repositories use a real Hive box opened against a temp dir (no mocking Hive). Mocking happens at the `NotesRepository` interface in BLoC tests.
 
 ## Models
 
@@ -75,10 +77,11 @@ lib/
 ├── app/                       ← MaterialApp, theme glue, route table, global providers
 ├── features/<feature>/        ← collocated feature unit
 │   ├── bloc/                  ← BLoCs / Cubits for the feature; no widget imports
-│   ├── repository/            ← Hive + filesystem + native-plugin wrappers for the feature
+│   ├── repository/            ← feature-private data, only this feature reads/writes
 │   ├── widgets/               ← UI components used only by this feature
 │   ├── screen.dart            ← single-screen feature (or screens/ if multiple)
 │   └── legacy/                ← Provider-based code in transition; retired in Spec 05+
+├── repositories/<resource>/   ← cross-cutting domain data (Note, Tag, Theme, NotiIdentity, …)
 ├── services/                  ← cross-cutting native wrappers (STT, TTS, P2P, AI, permissions, notifications, image)
 ├── models/                    ← immutable domain models shared across features
 ├── theme/                     ← base ThemeData + NotiTheme overlay system

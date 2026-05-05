@@ -36,7 +36,7 @@ class UserInfoScreen extends StatelessWidget {
       ),
     );
     if (source == null) return;
-    final file = await PhotoPicker.pickImage(source, 80);
+    final file = await const ImagePickerService().pickImage(source, 80);
     if (file != null && context.mounted) {
       context.read<UserData>().updateProfilePicture(file);
     }
