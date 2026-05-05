@@ -5,7 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import 'package:noti_notes_app/features/note_editor/screen.dart';
-import 'package:noti_notes_app/features/search/legacy/search_provider.dart';
+import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
+import 'package:noti_notes_app/features/search/cubit/search_state.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
@@ -29,10 +30,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   /// Apply title search and filter chip to the visible note list.
-  List<Note> _applyFilters(List<Note> source, Search search) {
+  List<Note> _applyFilters(List<Note> source, SearchState search) {
     Iterable<Note> result = source;
-    if (search.searchQuery.isNotEmpty) {
-      final q = search.searchQuery.toLowerCase();
+    if (search.query.isNotEmpty) {
+      final q = search.query.toLowerCase();
       result = result.where((n) => n.title.toLowerCase().contains(q));
     }
     switch (search.filter) {
@@ -55,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final search = context.watch<Search>();
+    final search = context.watch<SearchCubit>().state;
 
     return BlocBuilder<NotesListBloc, NotesListState>(
       builder: (context, state) {

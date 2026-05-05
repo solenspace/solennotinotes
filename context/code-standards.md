@@ -65,6 +65,9 @@ Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.m
 - Future API for one-shot operations (`getAll`, `save`, `delete`); Stream API (`watchAll`) for collection observation. Streams are driven by `box.watch()`, emit the full snapshot on each change, and must close cleanly when no listener remains.
 - Repositories own ALL native side effects of their resource (Hive writes, file deletes, future P2P send). They DO NOT own user-facing notifications, telemetry, or BLoC orchestration.
 - Tests for repositories use a real Hive box opened against a temp dir (no mocking Hive). Mocking happens at the `NotesRepository` interface in BLoC tests.
+- Single-record repositories (e.g. `UserRepository`) follow the same pattern: abstract interface + Hive impl + `@visibleForTesting` `withBox` constructor + `getCurrent()`/`watch()` paired API. Box-key lifecycle (e.g. `'user_v2'` / `'userFromDevice'`) and on-disk image cleanup live behind the interface.
+- The "trivial state-only" Cubit pattern (no async, no streams) is acceptable for pure UI state machines. `SearchCubit` is the canonical example. When a Cubit grows async work or needs cancellation, promote it to a Bloc.
+- When a cubit owns a mutable domain model (e.g. legacy `User`/`Note` without `copyWith`), clone the model into a fresh instance before emitting state. Reusing the same reference makes Equatable's `==` see no change and silently suppresses the emit. Cloning becomes redundant once the model is migrated to immutable + `copyWith` (future adapter spec).
 
 ## Models
 
