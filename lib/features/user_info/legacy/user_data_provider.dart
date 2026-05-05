@@ -99,7 +99,7 @@ class UserData with ChangeNotifier {
 
   Future<void> removeProfilePicture() async {
     if (currentUser.profilePicture == null) return;
-    await PhotoPicker.removeImage(currentUser.profilePicture!);
+    await const ImagePickerService().removeImage(currentUser.profilePicture!);
     currentUser.profilePicture = null;
     saveUserToDataBase(currentUser);
 

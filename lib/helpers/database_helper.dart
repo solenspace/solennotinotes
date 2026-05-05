@@ -2,8 +2,8 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class DbHelper {
   // v2 boxes — bumped from v1 to wipe legacy storage on first launch of the
-  // redesigned app. Old `notes` and `user` boxes are simply ignored.
-  static String notesBoxName = 'notes_v2';
+  // redesigned app. Old `user` box is simply ignored.
+  // The notes box (`notes_v2`) is now owned by HiveNotesRepository.
   static String userBoxName = 'user_v2';
   static String settingsBoxName = 'settings_v2';
 
