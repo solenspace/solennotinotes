@@ -6,7 +6,8 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
-import 'package:noti_notes_app/features/user_info/cubit/user_cubit.dart';
+import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
+import 'package:noti_notes_app/features/user_info/cubit/noti_identity_state.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
 import 'package:noti_notes_app/theme/app_tokens.dart';
 
@@ -33,9 +34,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    final userState = context.watch<UserCubit>().state;
-    final user = userState.user;
-    final greeting = userState.greeting;
+    final NotiIdentityState identityState = context.watch<NotiIdentityCubit>().state;
+    final identity = identityState.identity;
+    final greeting = identityState.greetingFor(DateTime.now());
     final scheme = Theme.of(context).colorScheme;
 
     return SliverAppBar(
@@ -156,14 +157,16 @@ class _HomeAppBarState extends State<HomeAppBar> {
                         color: scheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(color: scheme.outline, width: 1.0),
-                        image: user?.profilePicture != null
+                        image: identity?.profilePicture != null
                             ? DecorationImage(
-                                image: FileImage(File(user!.profilePicture!.path)),
+                                image: FileImage(
+                                  File(identity!.profilePicture!.path),
+                                ),
                                 fit: BoxFit.cover,
                               )
                             : null,
                       ),
-                      child: user?.profilePicture == null
+                      child: identity?.profilePicture == null
                           ? Icon(Icons.person_outline, color: scheme.onSurfaceVariant, size: 20)
                           : null,
                     ),
