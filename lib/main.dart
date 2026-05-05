@@ -9,12 +9,12 @@ import 'package:noti_notes_app/features/home/screen.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
-import 'package:noti_notes_app/features/user_info/cubit/user_cubit.dart';
+import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
 import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
-import 'package:noti_notes_app/repositories/user/hive_user_repository.dart';
-import 'package:noti_notes_app/repositories/user/user_repository.dart';
+import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
+import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/theme_provider.dart';
@@ -28,15 +28,15 @@ void main() async {
   }
 
   final notesRepository = HiveNotesRepository();
-  final userRepository = HiveUserRepository();
+  final notiIdentityRepository = HiveNotiIdentityRepository();
   await notesRepository.init();
-  await userRepository.init();
+  await notiIdentityRepository.init();
   await ThemeProvider.ensureBoxOpen();
 
   runApp(
     MyApp(
       notesRepository: notesRepository,
-      userRepository: userRepository,
+      notiIdentityRepository: notiIdentityRepository,
     ),
   );
 }
@@ -45,11 +45,11 @@ class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.notesRepository,
-    required this.userRepository,
+    required this.notiIdentityRepository,
   });
 
   final NotesRepository notesRepository;
-  final UserRepository userRepository;
+  final NotiIdentityRepository notiIdentityRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -86,7 +86,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<NotesRepository>.value(value: widget.notesRepository),
-        RepositoryProvider<UserRepository>.value(value: widget.userRepository),
+        RepositoryProvider<NotiIdentityRepository>.value(
+          value: widget.notiIdentityRepository,
+        ),
       ],
       // TODO(spec-10-theme-tokens): migrate ThemeProvider to a ThemeBloc/Cubit
       // and remove the `provider` package along with this ChangeNotifierProvider.
@@ -100,7 +102,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ),
             BlocProvider(create: (_) => SearchCubit()),
             BlocProvider(
-              create: (ctx) => UserCubit(repository: ctx.read<UserRepository>())..load(),
+              create: (ctx) => NotiIdentityCubit(
+                repository: ctx.read<NotiIdentityRepository>(),
+              )..load(),
             ),
           ],
           child: Consumer<ThemeProvider>(
