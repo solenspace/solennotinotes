@@ -5,7 +5,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:noti_notes_app/app/logging_bloc_observer.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_event.dart';
-import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
 import 'package:noti_notes_app/features/home/screen.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
@@ -89,18 +88,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<NotesRepository>.value(value: widget.notesRepository),
         RepositoryProvider<UserRepository>.value(value: widget.userRepository),
       ],
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (ctx) {
-              final notes = Notes(repository: ctx.read<NotesRepository>());
-              // ignore: deprecated_member_use_from_same_package
-              notes.loadNotesFromDataBase().then((_) => notes.sortByDateCreated());
-              return notes;
-            },
-          ),
-          ChangeNotifierProvider.value(value: themeProvider),
-        ],
+      // TODO(spec-10-theme-tokens): migrate ThemeProvider to a ThemeBloc/Cubit
+      // and remove the `provider` package along with this ChangeNotifierProvider.
+      child: ChangeNotifierProvider<ThemeProvider>.value(
+        value: themeProvider,
         child: MultiBlocProvider(
           providers: [
             BlocProvider(
