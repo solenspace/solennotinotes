@@ -1,5 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:noti_notes_app/app/logging_bloc_observer.dart';
+import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
+import 'package:noti_notes_app/features/home/bloc/notes_list_event.dart';
 import 'package:noti_notes_app/features/home/legacy/notes_provider.dart';
 import 'package:noti_notes_app/features/home/screen.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
@@ -17,6 +22,10 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (kDebugMode) {
+    Bloc.observer = const LoggingBlocObserver();
+  }
 
   final notesRepository = HiveNotesRepository();
   await notesRepository.init();
@@ -69,37 +78,46 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiRepositoryProvider(
       providers: [
-        Provider<NotesRepository>.value(value: widget.notesRepository),
-        ChangeNotifierProvider(create: (_) => userData),
-        ChangeNotifierProvider(
-          create: (ctx) {
-            final notes = Notes(repository: ctx.read<NotesRepository>());
-            notes.loadNotesFromDataBase().then((_) => notes.sortByDateCreated());
-            return notes;
-          },
-        ),
-        ChangeNotifierProvider(create: (_) => Search()),
-        ChangeNotifierProvider.value(value: themeProvider),
+        RepositoryProvider<NotesRepository>.value(value: widget.notesRepository),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, theme, _) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'NotiNotes',
-            theme: AppTheme.light(theme.writingFont, theme.appColor),
-            darkTheme: AppTheme.dark(theme.writingFont, theme.appColor),
-            themeMode: theme.themeMode,
-            home: const HomeScreen(),
-            routes: {
-              HomeScreen.routeName: (context) => const HomeScreen(),
-              NoteEditorScreen.routeName: (context) => const NoteEditorScreen(),
-              UserInfoScreen.routeName: (context) => const UserInfoScreen(),
-              SettingsScreen.routeName: (context) => const SettingsScreen(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => userData),
+          ChangeNotifierProvider(
+            create: (ctx) {
+              final notes = Notes(repository: ctx.read<NotesRepository>());
+              // ignore: deprecated_member_use_from_same_package
+              notes.loadNotesFromDataBase().then((_) => notes.sortByDateCreated());
+              return notes;
             },
-          );
-        },
+          ),
+          ChangeNotifierProvider(create: (_) => Search()),
+          ChangeNotifierProvider.value(value: themeProvider),
+        ],
+        child: BlocProvider<NotesListBloc>(
+          create: (ctx) => NotesListBloc(repository: ctx.read<NotesRepository>())
+            ..add(const NotesListSubscribed()),
+          child: Consumer<ThemeProvider>(
+            builder: (context, theme, _) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'NotiNotes',
+                theme: AppTheme.light(theme.writingFont, theme.appColor),
+                darkTheme: AppTheme.dark(theme.writingFont, theme.appColor),
+                themeMode: theme.themeMode,
+                home: const HomeScreen(),
+                routes: {
+                  HomeScreen.routeName: (context) => const HomeScreen(),
+                  NoteEditorScreen.routeName: (context) => const NoteEditorScreen(),
+                  UserInfoScreen.routeName: (context) => const UserInfoScreen(),
+                  SettingsScreen.routeName: (context) => const SettingsScreen(),
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
