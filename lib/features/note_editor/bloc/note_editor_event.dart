@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/services/speech/tts_models.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
 
@@ -292,6 +293,66 @@ final class DictationFinalEmitted extends NoteEditorEvent {
   final double confidence;
   @override
   List<Object?> get props => [text, confidence];
+}
+
+// — Read aloud (TTS) —
+
+/// Tap on the editor toolbar's "Read note" button (when [blockIndex] is
+/// null) or on a focused-block's read affordance (when [blockIndex] is the
+/// block's position in `note.blocks`). The bloc extracts the readable
+/// blocks (text + checklist with non-empty content), starts at the
+/// requested index (or 0 when null), pipes each block through
+/// [TtsService.speak], and advances on the synthesizer's terminal event.
+final class ReadAloudRequested extends NoteEditorEvent {
+  const ReadAloudRequested({this.blockIndex});
+
+  /// Index into `note.blocks`, not into the readable-blocks list. When
+  /// null, read the whole note from the first readable block.
+  final int? blockIndex;
+
+  @override
+  List<Object?> get props => [blockIndex];
+}
+
+/// Tap on the read-aloud overlay's pause button. iOS pauses mid-utterance
+/// via `AVSpeechSynthesizer.pauseSpeaking(at:)`; Android maps `pause()` to
+/// `stop()` (no native resume primitive — see open question 20).
+final class ReadAloudPaused extends NoteEditorEvent {
+  const ReadAloudPaused();
+}
+
+/// Tap on the read-aloud overlay's resume button after a pause. Calls
+/// [TtsService.speak] again with the current block's text — iOS picks up
+/// mid-utterance, Android restarts the current block.
+final class ReadAloudResumed extends NoteEditorEvent {
+  const ReadAloudResumed();
+}
+
+/// Tap on the read-aloud overlay's stop button (or any other cancel
+/// surface). Calls [TtsService.stop] and clears all read-aloud state.
+final class ReadAloudStopped extends NoteEditorEvent {
+  const ReadAloudStopped();
+}
+
+/// Internal: bridges a per-word [TtsProgress] sample into the bloc's event
+/// loop. Same synthetic-event pattern as [DictationPartialEmitted] —
+/// dispatching from the listener lets the bloc emit through its standard
+/// handler path instead of capturing a closed [Emitter].
+final class ReadAloudProgressEmitted extends NoteEditorEvent {
+  const ReadAloudProgressEmitted(this.progress);
+
+  final TtsProgress progress;
+
+  @override
+  List<Object?> get props => [progress];
+}
+
+/// Internal: bridges the synthesizer's terminal block-completion event
+/// (the [TtsService.speak] stream's last event) into the bloc's event
+/// loop. The handler advances to the next readable block or finishes the
+/// session if the readable list is exhausted.
+final class ReadAloudBlockCompleted extends NoteEditorEvent {
+  const ReadAloudBlockCompleted();
 }
 
 // — Pin / delete —

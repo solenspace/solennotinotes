@@ -31,4 +31,27 @@ abstract class SettingsRepository {
   Future<bool> getSttOfflineCapable();
 
   Future<void> setSttOfflineCapable(bool value);
+
+  /// Preferred TTS voice name (Spec 16). `null` = use the OS default voice.
+  /// The voice is resolved against [TtsService.availableVoices] at speak
+  /// time; an unknown name silently falls back to the OS default.
+  ///
+  /// Stored as separate KV pairs (mirroring [getSttOfflineCapable]) rather
+  /// than folded into [Settings] so theme/font writes do not rewrite TTS
+  /// keys. The future settings-overhaul spec surfaces these in the UI.
+  Future<String?> getTtsVoice();
+
+  Future<void> setTtsVoice(String? value);
+
+  /// TTS speech rate. Plugin bounds are roughly `[0.1, 2.0]`; the wrapper
+  /// clamps. Defaults to `1.0` (engine native rate).
+  Future<double> getTtsRate();
+
+  Future<void> setTtsRate(double value);
+
+  /// TTS pitch. Plugin bounds are `[0.5, 2.0]`; the wrapper clamps.
+  /// Defaults to `1.0` (engine native pitch).
+  Future<double> getTtsPitch();
+
+  Future<void> setTtsPitch(double value);
 }

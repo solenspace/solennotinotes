@@ -24,6 +24,7 @@ import '../../../repositories/noti_identity/fake_noti_identity_repository.dart';
 import '../../../repositories/notes/fake_notes_repository.dart';
 import '../../../services/permissions/fake_permissions_service.dart';
 import '../../../services/speech/fake_stt_service.dart';
+import '../../../services/speech/fake_tts_service.dart';
 
 Note _buildNote({
   required String id,
@@ -110,6 +111,7 @@ Future<NoteEditorBloc> _readyBloc({
   FakeAudioRepository? audioRepository,
   FakePermissionsService? permissionsService,
   FakeSttService? sttService,
+  FakeTtsService? ttsService,
 }) async {
   fake.emit([seed]);
   final bloc = NoteEditorBloc(
@@ -118,6 +120,7 @@ Future<NoteEditorBloc> _readyBloc({
     audio: audioRepository ?? FakeAudioRepository(),
     permissions: permissionsService ?? FakePermissionsService(),
     stt: sttService ?? FakeSttService(),
+    tts: ttsService ?? FakeTtsService(),
     imageService: imageService,
     cancelNotification: cancelledNotificationIds.add,
   );
@@ -176,6 +179,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -194,6 +198,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -222,6 +227,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -248,6 +254,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -272,6 +279,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -311,6 +319,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -835,6 +844,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -923,6 +933,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -963,6 +974,7 @@ void main() {
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
         stt: FakeSttService(),
+        tts: FakeTtsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -1398,6 +1410,335 @@ void main() {
       // invariant 8).
       expect(stt.cancelCount, greaterThanOrEqualTo(1));
       await stt.dispose();
+    });
+  });
+
+  group('NoteEditorBloc — TTS read aloud', () {
+    Note noteWithTextBlocks(List<String> texts) {
+      return _buildNote(
+        id: 'r1',
+        blocks: [
+          for (final t in texts) <String, dynamic>{'type': 'text', 'id': 'b-$t', 'text': t},
+        ],
+      );
+    }
+
+    test('empty note → no speak; surfaces "Nothing to read." snackbar', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'empty', blocks: const []),
+        ttsService: tts,
+      );
+
+      // The handler emits twice: errorMessage set, then cleared. Drain
+      // both so the listener catches the transition.
+      final emissions = await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 2,
+      );
+
+      expect(tts.speakCalls, isEmpty);
+      expect(emissions.first.errorMessage, 'Nothing to read.');
+      expect(emissions.last.errorMessage, isNull);
+      expect(bloc.state.isReadingAloud, isFalse);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('single block → speaks once; progress and completion clear state', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['hello world']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['hello world']);
+      expect(bloc.state.isReadingAloud, isTrue);
+      expect(bloc.state.currentReadBlockIndex, 0);
+
+      await _drain(
+        bloc,
+        () async => tts.emitProgress(text: 'hello world', start: 0, end: 5, word: 'hello'),
+        expectedCount: 1,
+      );
+      expect(bloc.state.readProgress?.word, 'hello');
+
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isReadingAloud, isFalse);
+      expect(bloc.state.currentReadBlockIndex, isNull);
+      expect(bloc.state.readProgress, isNull);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('multi-block → block index advances on per-block completion', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['first', 'second', 'third']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['first']);
+      expect(bloc.state.currentReadBlockIndex, 0);
+
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['first', 'second']);
+      expect(bloc.state.currentReadBlockIndex, 1);
+
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['first', 'second', 'third']);
+      expect(bloc.state.currentReadBlockIndex, 2);
+
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isReadingAloud, isFalse);
+      expect(bloc.state.currentReadBlockIndex, isNull);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('blockIndex starts mid-note and only reads from there forward', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['alpha', 'beta', 'gamma']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested(blockIndex: 1)),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['beta']);
+      expect(bloc.state.currentReadBlockIndex, 1);
+
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['beta', 'gamma']);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('pause toggles state; resume issues a fresh speak for current block', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['paused-block']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudPaused()),
+        expectedCount: 1,
+      );
+      expect(tts.pauseCount, 1);
+      expect(bloc.state.isReadAloudPaused, isTrue);
+      expect(bloc.state.isReadingAloud, isTrue);
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudResumed()),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isReadAloudPaused, isFalse);
+      expect(tts.speakCalls, ['paused-block', 'paused-block']);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('synthetic block-completion while paused stays on current block', () async {
+      // Mirrors Android's pause behavior: the plugin's pause() maps to
+      // stop(), which fires the cancel handler and bridges to a synthetic
+      // ReadAloudBlockCompleted. The bloc must respect the paused flag
+      // and NOT advance.
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['first', 'second']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudPaused()),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isReadAloudPaused, isTrue);
+
+      // The synthetic completion arrives from the still-open subscription.
+      // The bloc handler should drain it without advancing block index.
+      await tts.emitBlockCompleted();
+      // Give the bloc's event loop a tick to process the synthetic event.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(bloc.state.currentReadBlockIndex, 0);
+      expect(bloc.state.isReadAloudPaused, isTrue);
+      // Speak was called only once — the advance never happened.
+      expect(tts.speakCalls, ['first']);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('stop during read calls _tts.stop and clears state', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['one', 'two']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudStopped()),
+        expectedCount: 1,
+      );
+      expect(tts.stopCount, 1);
+      expect(bloc.state.isReadingAloud, isFalse);
+      expect(bloc.state.currentReadBlockIndex, isNull);
+      // Subsequent block-completed events from stale subscription must
+      // not advance block index — the bloc clears its buffer on stop.
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('checklist blocks render with done/todo prefix', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(
+          id: 'check',
+          blocks: [
+            <String, dynamic>{
+              'type': 'checklist',
+              'id': 'c1',
+              'text': 'buy milk',
+              'checked': false,
+            },
+            <String, dynamic>{
+              'type': 'checklist',
+              'id': 'c2',
+              'text': 'water plants',
+              'checked': true,
+            },
+          ],
+        ),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls.first, 'todo: buy milk');
+      await _drain(
+        bloc,
+        () async => tts.emitBlockCompleted(),
+        expectedCount: 1,
+      );
+      expect(tts.speakCalls, ['todo: buy milk', 'done: water plants']);
+      await bloc.close();
+      await tts.dispose();
+    });
+
+    test('close() while reading cancels subscription and stops tts', () async {
+      final tts = FakeTtsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: noteWithTextBlocks(['close-me']),
+        ttsService: tts,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const ReadAloudRequested()),
+        expectedCount: 1,
+      );
+      expect(tts.isSpeaking, isTrue);
+
+      await bloc.close();
+
+      // close() must call _tts.stop() while speaking (invariant 8).
+      expect(tts.stopCount, greaterThanOrEqualTo(1));
+      await tts.dispose();
     });
   });
 }
