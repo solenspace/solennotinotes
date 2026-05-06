@@ -49,3 +49,7 @@ package:amplitude_flutter
 
 # Banned post-Spec-10 (last consumer migrated to BLoC + RepositoryProvider).
 package:provider
+
+# Spec 15: hygiene gate — STT consumers go through SttService.
+# Allowed inside lib/services/speech/ via scripts/.offline-allowlist.
+package:speech_to_text

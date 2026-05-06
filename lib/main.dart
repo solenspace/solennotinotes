@@ -24,6 +24,8 @@ import 'package:noti_notes_app/repositories/settings/hive_settings_repository.da
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
+import 'package:noti_notes_app/services/speech/stt_capability_probe.dart';
+import 'package:noti_notes_app/services/speech/stt_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,12 +45,21 @@ void main() async {
   // identity record.
   await settingsRepository.init(identityRepository: notiIdentityRepository);
 
+  // Cold-start STT capability probe (Spec 15). The probe is conservative —
+  // any failure path resolves false so the dictation UI hides itself rather
+  // than risk a network fallback. Result is cached in `settings_v2` so
+  // subsequent cold starts skip the plugin handshake.
+  final sttOfflineCapable = await const SttCapabilityProbe().probe();
+  await settingsRepository.setSttOfflineCapable(sttOfflineCapable);
+  final sttService = PluginSttService(isOfflineCapable: sttOfflineCapable);
+
   runApp(
     MyApp(
       notesRepository: notesRepository,
       notiIdentityRepository: notiIdentityRepository,
       settingsRepository: settingsRepository,
       audioRepository: audioRepository,
+      sttService: sttService,
     ),
   );
 }
@@ -60,12 +71,14 @@ class MyApp extends StatefulWidget {
     required this.notiIdentityRepository,
     required this.settingsRepository,
     required this.audioRepository,
+    required this.sttService,
   });
 
   final NotesRepository notesRepository;
   final NotiIdentityRepository notiIdentityRepository;
   final SettingsRepository settingsRepository;
   final AudioRepository audioRepository;
+  final SttService sttService;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -103,6 +116,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
         RepositoryProvider<SettingsRepository>.value(value: widget.settingsRepository),
         RepositoryProvider<AudioRepository>.value(value: widget.audioRepository),
+        RepositoryProvider<SttService>.value(value: widget.sttService),
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),

@@ -18,7 +18,7 @@
 | Audio capture | `record` 5.x | M4A/AAC-LC at 64 kbps mono; amplitude stream feeds the live meter and the pre-rendered waveform |
 | Audio playback | `audioplayers` 6.x | `DeviceFileSource` playback for audio blocks; offline-only |
 | P2P transport | `flutter_nearby_connections` | Apple Multipeer + Android Nearby Connections; messages, bytes, files |
-| STT | `speech_to_text` | Native dictation; offline where the device supports it |
+| STT | `speech_to_text` 7.x via `SttService` wrapper | Native dictation, `onDevice: true` enforced on every recognition request; cold-start `SttCapabilityProbe` caches `sttOfflineCapable: bool` in `settings_v2`, dictation UI hides itself when the probe returns false (Spec 15) |
 | TTS | `flutter_tts` | Native text-to-speech; fully offline |
 | On-device LLM | `fllama` (llama.cpp + GGUF) — to validate per spec | Summarize, rewrite, suggest titles |
 | On-device whisper | TBD per spec (whisper.cpp binding) | Audio note → text transcription |
@@ -60,7 +60,7 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
 - `tags` — tag definitions (name, color)
 - `themes` — saved NotiTheme presets
 - `noti_identity` — single record: this user's noti (id, displayName, bornDate, profilePicture, signaturePalette, signaturePatternKey, signatureAccent, signatureTagline). Migrated from legacy `user_v2` on first launch after Spec 09. Cryptographic keypair for share-payload signing is added by the future P2P share spec.
-- `settings` — app-level preferences
+- `settings` — app-level preferences (themeMode, writingFont, plus the `sttOfflineCapable: bool` capability cache written by Spec 15's startup probe)
 - `received_inbox` — incoming shares awaiting accept/discard
 
 ### Filesystem layout
@@ -114,3 +114,6 @@ Route push mounts `NoteEditorBloc` → BLoC emits `ready` with the `Note` → ed
 
 ### Capture an audio note
 Editor toolbar mic long-press → `NoteEditorBloc._onAudioCaptureRequested` → `PermissionsService.microphoneStatus` (and `requestMicrophone` if not granted) → on success, `AudioRepository.startCapture(noteId)` opens a recorder writing to `<docs>/notes/<id>/audio/<uuid>.m4a` and returns an `AudioCaptureSession` → bloc subscribes to `amplitudeStream` and bridges samples through the synthetic `AudioAmplitudeSampled` event so each sample lands on the bloc's event loop (a direct `emit` from the listener would race with handler completion) → release fires `AudioCaptureStopped` → repository finalizes (downsamples to an 80-bucket waveform, applies the 10 MB cap as a `truncated` flag) → bloc emits a one-shot `committedAudioBlock` → screen consumes via `BlocListener`, appends to its local `_blocks` list, and dispatches `BlocksReplaced` → `NotesRepository.save` → `notes_v2` snapshot re-emits to the home grid. Bloc never mutates `note.blocks` directly; the screen owns block-list state, mirroring the image-block flow.
+
+### Dictate into a text block
+Editor toolbar dictation long-press → `NoteEditorBloc._onDictationStarted` → if `SttService.isOfflineCapable` is false, emits the one-shot `dictationUnavailableExplainerRequested` and returns → otherwise the same `PermissionsService` mic gate as audio capture → on success, subscribes to `SttService.startDictation(localeId)` (a `Stream<SttRecognitionEvent>`) and bridges each event through the synthetic `DictationPartialEmitted` / `DictationFinalEmitted` events (sealed switch) → `_onDictationPartialEmitted` updates `state.dictationDraft` for the in-flight italic preview banner → recognizer's terminal `SttFinalResult` (or user-driven `_onDictationStopped`) routes through `_onDictationFinalEmitted`, which emits the one-shot `committedDictationText` → screen's `_appendDictationText` mutates the last `TextBlock` (or appends a new one) and dispatches `BlocksReplaced`. Closing the bloc cancels the recognizer subscription and calls `SttService.cancel()` if listening (invariant 8). On no-text final results (silence timeout / empty utterance) the bloc clears state but does not surface the commit signal.

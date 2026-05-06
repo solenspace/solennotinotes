@@ -26,6 +26,7 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _themeModeKey = 'themeMode';
   static const String _writingFontKey = 'writingFont';
   static const String _legacyAppColorKey = 'appThemeColor';
+  static const String _sttOfflineCapableKey = 'sttOfflineCapable';
 
   Box<dynamic>? _box;
   StreamController<Settings>? _controller;
@@ -80,6 +81,18 @@ class HiveSettingsRepository implements SettingsRepository {
     await box.put(_themeModeKey, settings.themeMode.index);
     await box.put(_writingFontKey, settings.writingFont.index);
     _broadcaster.add(settings);
+  }
+
+  @override
+  Future<bool> getSttOfflineCapable() async {
+    final box = _openBox;
+    return box.get(_sttOfflineCapableKey, defaultValue: false) as bool;
+  }
+
+  @override
+  Future<void> setSttOfflineCapable(bool value) async {
+    final box = _openBox;
+    await box.put(_sttOfflineCapableKey, value);
   }
 
   Future<void> _migrateLegacyAppColor(

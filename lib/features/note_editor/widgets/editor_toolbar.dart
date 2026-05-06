@@ -26,6 +26,12 @@ class EditorToolbar extends StatelessWidget {
   /// toolbar stays presentational; the button owns its own bloc wiring.
   final Widget? audioCaptureButton;
 
+  /// Optional dictation affordance (e.g. `DictationButton`). Sibling to the
+  /// audio capture slot; the button hides itself when STT is unavailable
+  /// offline so an absent affordance is the steady state on incapable
+  /// devices.
+  final Widget? dictationButton;
+
   const EditorToolbar({
     super.key,
     required this.currentBlockIsChecklist,
@@ -37,6 +43,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onOpenTagSheet,
     required this.onDoneEditing,
     this.audioCaptureButton,
+    this.dictationButton,
   });
 
   @override
@@ -80,6 +87,10 @@ class EditorToolbar extends StatelessWidget {
             if (audioCaptureButton != null) ...[
               const Gap(SpacingPrimitives.xs),
               audioCaptureButton!,
+            ],
+            if (dictationButton != null) ...[
+              const Gap(SpacingPrimitives.xs),
+              dictationButton!,
             ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(

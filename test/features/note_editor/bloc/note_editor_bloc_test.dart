@@ -23,6 +23,7 @@ import '../../../repositories/audio/fake_audio_repository.dart';
 import '../../../repositories/noti_identity/fake_noti_identity_repository.dart';
 import '../../../repositories/notes/fake_notes_repository.dart';
 import '../../../services/permissions/fake_permissions_service.dart';
+import '../../../services/speech/fake_stt_service.dart';
 
 Note _buildNote({
   required String id,
@@ -108,6 +109,7 @@ Future<NoteEditorBloc> _readyBloc({
   required Note seed,
   FakeAudioRepository? audioRepository,
   FakePermissionsService? permissionsService,
+  FakeSttService? sttService,
 }) async {
   fake.emit([seed]);
   final bloc = NoteEditorBloc(
@@ -115,6 +117,7 @@ Future<NoteEditorBloc> _readyBloc({
     identityRepository: identityRepository,
     audio: audioRepository ?? FakeAudioRepository(),
     permissions: permissionsService ?? FakePermissionsService(),
+    stt: sttService ?? FakeSttService(),
     imageService: imageService,
     cancelNotification: cancelledNotificationIds.add,
   );
@@ -172,6 +175,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -189,6 +193,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -216,6 +221,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -241,6 +247,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -264,6 +271,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -302,6 +310,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -825,6 +834,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -912,6 +922,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -951,6 +962,7 @@ void main() {
         identityRepository: identityRepository,
         audio: FakeAudioRepository(),
         permissions: FakePermissionsService(),
+        stt: FakeSttService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -1199,6 +1211,193 @@ void main() {
 
       expect(audio.cancelledIds, [sessionId]);
       await audio.dispose();
+    });
+  });
+
+  group('NoteEditorBloc — STT dictation', () {
+    test('DictationStarted on offline-incapable device fires explainer flag', () async {
+      final stt = FakeSttService(offlineCapable: false);
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        sttService: stt,
+      );
+
+      final emissions = await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+
+      expect(emissions.single.dictationUnavailableExplainerRequested, isTrue);
+      expect(emissions.single.isDictating, isFalse);
+      expect(stt.startedLocaleIds, isEmpty);
+      await stt.dispose();
+      await bloc.close();
+    });
+
+    test('DictationStarted with mic permanently denied fires permission explainer', () async {
+      final permissions = FakePermissionsService()..microphone = PermissionResult.permanentlyDenied;
+      final stt = FakeSttService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        permissionsService: permissions,
+        sttService: stt,
+      );
+
+      final emissions = await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+
+      expect(emissions.single.audioPermissionExplainerRequested, isTrue);
+      expect(emissions.single.isDictating, isFalse);
+      expect(stt.startedLocaleIds, isEmpty);
+      await stt.dispose();
+      await bloc.close();
+    });
+
+    test('happy path: partial → final commits committedDictationText', () async {
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final stt = FakeSttService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        permissionsService: permissions,
+        sttService: stt,
+      );
+
+      // Start dictation.
+      await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isDictating, isTrue);
+      expect(bloc.state.dictationDraft, isEmpty);
+      expect(stt.startedLocaleIds, hasLength(1));
+
+      // Partial result flows through the synthetic-event bridge.
+      stt.emitPartial('hello');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(bloc.state.dictationDraft, 'hello');
+
+      // Final result clears the draft and surfaces the one-shot commit.
+      stt.emitFinal('hello world');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(bloc.state.isDictating, isFalse);
+      expect(bloc.state.dictationDraft, isNull);
+      expect(bloc.state.committedDictationText, 'hello world');
+      // Screen owns block-list mutations; the bloc never persists.
+      expect(fake.savedNotes, isEmpty);
+      await stt.dispose();
+      await bloc.close();
+    });
+
+    test('DictationCancelled mid-session resets state without committing', () async {
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final stt = FakeSttService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        permissionsService: permissions,
+        sttService: stt,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+      stt.emitPartial('half-formed');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const DictationCancelled()),
+        expectedCount: 1,
+      );
+
+      expect(stt.cancelCount, 1);
+      expect(bloc.state.isDictating, isFalse);
+      expect(bloc.state.dictationDraft, isNull);
+      expect(bloc.state.committedDictationText, isNull);
+      await stt.dispose();
+      await bloc.close();
+    });
+
+    test('empty final result does not surface committedDictationText', () async {
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final stt = FakeSttService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        permissionsService: permissions,
+        sttService: stt,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+
+      // Recognizer emitted a final with no captured speech (e.g. silence
+      // timeout). The bloc clears state but does not surface a commit
+      // signal — the screen has nothing to append.
+      stt.emitFinal('   ');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(bloc.state.isDictating, isFalse);
+      expect(bloc.state.committedDictationText, isNull);
+      await stt.dispose();
+      await bloc.close();
+    });
+
+    test('close() cancels in-flight dictation and the recognizer subscription', () async {
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final stt = FakeSttService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        permissionsService: permissions,
+        sttService: stt,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const DictationStarted()),
+        expectedCount: 1,
+      );
+      // FakeSttService flips isListening to true on startDictation.
+      expect(stt.isListening, isTrue);
+
+      await bloc.close();
+
+      // close() must call _stt.cancel() while listening (architecture
+      // invariant 8).
+      expect(stt.cancelCount, greaterThanOrEqualTo(1));
+      await stt.dispose();
     });
   });
 }
