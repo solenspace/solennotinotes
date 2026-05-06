@@ -51,6 +51,8 @@
 		<false/>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Notinotes uses the microphone to record audio notes and dictation. Audio never leaves your device.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>Notinotes uses on-device speech recognition to type what you say. Recognition runs entirely on this device and never leaves it.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Notinotes uses the camera to capture photos for image notes. Photos stay on your device.</string>
 		<key>NSPhotoLibraryUsageDescription</key>

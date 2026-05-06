@@ -16,6 +16,7 @@ import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
+import 'package:noti_notes_app/services/speech/stt_service.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 import 'package:noti_notes_app/widgets/permissions/permission_explainer_sheet.dart';
@@ -27,6 +28,7 @@ import 'note_type.dart';
 import 'widgets/audio_block_view.dart';
 import 'widgets/audio_capture_button.dart';
 import 'widgets/checklist_block.dart';
+import 'widgets/dictation_button.dart';
 import 'widgets/editor_toolbar.dart';
 import 'widgets/from_sender_chip.dart';
 import 'widgets/image_block.dart';
@@ -61,6 +63,7 @@ class NoteEditorScreen extends StatelessWidget {
         identityRepository: ctx.read<NotiIdentityRepository>(),
         audio: ctx.read<AudioRepository>(),
         permissions: ctx.read<PermissionsService>(),
+        stt: ctx.read<SttService>(),
       )..add(EditorOpened(noteId: noteId, noteType: noteType)),
       child: _NoteEditorView(noteType: noteType),
     );
@@ -212,6 +215,28 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     _persistBlocks();
   }
 
+  /// Appends a dictated transcription to the active text block, or creates
+  /// one when the last block is non-text or the editor is empty. Mirrors the
+  /// audio-block commit flow: the bloc surfaces a one-shot string, the
+  /// screen owns the actual block-list mutation, then [_persistBlocks]
+  /// rounds the change back through `BlocksReplaced`.
+  void _appendDictationText(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    if (_blocks.isEmpty) {
+      setState(() => _blocks.add(newTextBlock(trimmed)));
+    } else {
+      final last = _blocks.last;
+      if (last is TextBlock) {
+        final separator = last.text.isEmpty ? '' : ' ';
+        setState(() => last.text = '${last.text}$separator$trimmed');
+      } else {
+        setState(() => _blocks.add(newTextBlock(trimmed)));
+      }
+    }
+    _persistBlocks();
+  }
+
   void _deleteAudioBlock(String audioId) {
     final i = _blocks.indexWhere((b) => b is AudioBlock && b.id == audioId);
     if (i < 0) return;
@@ -232,6 +257,20 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
       body: 'Notinotes records audio notes locally on your device. '
           'Enable microphone access in Settings to record voice notes.',
       result: PermissionResult.permanentlyDenied,
+      service: context.read<PermissionsService>(),
+    );
+  }
+
+  void _showDictationUnavailableExplainer() {
+    PermissionExplainerSheet.show(
+      context,
+      title: 'Dictation unavailable',
+      body: 'Speech recognition needs to run entirely on this device, but '
+          'this device does not support offline recognition for your '
+          'language. Notinotes will not use cloud recognition.',
+      // No actual permission to repair: this is a capability hard-gate.
+      // `restricted` surfaces a single "OK" path with no Settings button.
+      result: PermissionResult.restricted,
       service: context.read<PermissionsService>(),
     );
   }
@@ -269,6 +308,9 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
         return (next.popRequested && !prev.popRequested) ||
             (next.committedAudioBlock != null) ||
             (next.audioPermissionExplainerRequested && !prev.audioPermissionExplainerRequested) ||
+            (next.committedDictationText != null) ||
+            (next.dictationUnavailableExplainerRequested &&
+                !prev.dictationUnavailableExplainerRequested) ||
             (next.errorMessage != null && next.errorMessage != prev.errorMessage);
       },
       listener: (ctx, state) {
@@ -279,9 +321,16 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
         if (state.audioPermissionExplainerRequested) {
           _showMicrophoneExplainer();
         }
-        final committed = state.committedAudioBlock;
-        if (committed != null) {
-          _appendAudioBlock(committed);
+        if (state.dictationUnavailableExplainerRequested) {
+          _showDictationUnavailableExplainer();
+        }
+        final committedAudio = state.committedAudioBlock;
+        if (committedAudio != null) {
+          _appendAudioBlock(committedAudio);
+        }
+        final committedText = state.committedDictationText;
+        if (committedText != null) {
+          _appendDictationText(committedText);
         }
         final err = state.errorMessage;
         if (err != null) {
@@ -454,6 +503,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                           ],
                         ),
                       ),
+                      const _DictationDraftBanner(),
                       EditorToolbar(
                         currentBlockIsChecklist: currentIsChecklist,
                         onToggleChecklist: _convertCurrentBlock,
@@ -469,6 +519,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                           _persistBlocks();
                         },
                         audioCaptureButton: const AudioCaptureButton(),
+                        dictationButton: const DictationButton(),
                       ),
                     ],
                   ),
@@ -524,6 +575,64 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
             onDelete: () => _deleteAudioBlock(block.id),
             onReRecord: () => _reRecordAudio(block.id),
           ),
+      },
+    );
+  }
+}
+
+/// In-flight dictation feedback pinned above the toolbar. Renders the
+/// recognizer's growing partial transcription as muted italic text so the
+/// user has immediate "we hear you" confirmation. Hidden when not dictating.
+class _DictationDraftBanner extends StatelessWidget {
+  const _DictationDraftBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<NoteEditorBloc, NoteEditorState>(
+      buildWhen: (a, b) => a.isDictating != b.isDictating || a.dictationDraft != b.dictationDraft,
+      builder: (ctx, state) {
+        if (!state.isDictating) return const SizedBox.shrink();
+        final tokens = ctx.tokens;
+        final draft = state.dictationDraft;
+        final preview = (draft == null || draft.isEmpty) ? 'Listening…' : draft;
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.spacing.lg,
+            vertical: tokens.spacing.xs,
+          ),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.spacing.md,
+              vertical: tokens.spacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: tokens.colors.surfaceVariant.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+              border: Border.all(
+                color: tokens.colors.accent.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.record_voice_over_rounded,
+                  size: 16,
+                  color: tokens.colors.accent,
+                ),
+                Gap(tokens.spacing.xs),
+                Expanded(
+                  child: Text(
+                    preview,
+                    style: tokens.text.bodySm.copyWith(
+                      color: tokens.colors.onSurfaceMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

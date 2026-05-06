@@ -13,6 +13,8 @@ import 'package:noti_notes_app/services/audio/audio_capture_session.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
+import 'package:noti_notes_app/services/speech/stt_models.dart';
+import 'package:noti_notes_app/services/speech/stt_service.dart';
 import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
@@ -35,12 +37,14 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     required NotiIdentityRepository identityRepository,
     required AudioRepository audio,
     required PermissionsService permissions,
+    required SttService stt,
     ImagePickerService? imageService,
     CancelNotification? cancelNotification,
   })  : _repository = repository,
         _identityRepository = identityRepository,
         _audio = audio,
         _permissions = permissions,
+        _stt = stt,
         _imageService = imageService ?? const ImagePickerService(),
         _cancelNotification = cancelNotification ?? LocalNotificationService.cancelNotification,
         super(const NoteEditorState()) {
@@ -82,17 +86,25 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     on<AudioCaptureCancelled>(_onAudioCaptureCancelled);
     on<AudioBlockRemoved>(_onAudioBlockRemoved);
     on<AudioAmplitudeSampled>(_onAudioAmplitudeSampled);
+    on<DictationStarted>(_onDictationStarted);
+    on<DictationStopped>(_onDictationStopped);
+    on<DictationCancelled>(_onDictationCancelled);
+    on<DictationPartialEmitted>(_onDictationPartialEmitted);
+    on<DictationFinalEmitted>(_onDictationFinalEmitted);
   }
 
   final NotesRepository _repository;
   final NotiIdentityRepository _identityRepository;
   final AudioRepository _audio;
   final PermissionsService _permissions;
+  final SttService _stt;
   final ImagePickerService _imageService;
   final CancelNotification _cancelNotification;
 
   AudioCaptureSession? _activeAudioSession;
   StreamSubscription<double>? _amplitudeSub;
+
+  StreamSubscription<SttRecognitionEvent>? _dictationSub;
 
   Future<void> _onEditorOpened(
     EditorOpened event,
@@ -561,6 +573,110 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     await _audio.delete(noteId: note.id, audioId: event.audioId);
   }
 
+  Future<void> _onDictationStarted(
+    DictationStarted event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null || state.isDictating) return;
+
+    if (!_stt.isOfflineCapable) {
+      emit(state.copyWith(dictationUnavailableExplainerRequested: true));
+      return;
+    }
+
+    final status = await _permissions.microphoneStatus();
+    if (status.isFinalDenial) {
+      emit(state.copyWith(audioPermissionExplainerRequested: true));
+      return;
+    }
+    if (!status.isUsable) {
+      final result = await _permissions.requestMicrophone();
+      if (!result.isUsable) {
+        if (result.isFinalDenial) {
+          emit(state.copyWith(audioPermissionExplainerRequested: true));
+        } else {
+          // Two-emission snackbar pattern (see _onAudioCaptureRequested).
+          emit(state.copyWith(errorMessage: 'Microphone permission needed to dictate.'));
+          emit(state.copyWith(clearError: true));
+        }
+        return;
+      }
+    }
+
+    await _dictationSub?.cancel();
+    _dictationSub = _stt.startDictation().listen(
+      (recognition) {
+        if (isClosed) return;
+        switch (recognition) {
+          case SttPartialResult(:final text):
+            add(DictationPartialEmitted(text));
+          case SttFinalResult(:final text, :final confidence):
+            add(DictationFinalEmitted(text: text, confidence: confidence));
+        }
+      },
+      // Recognizer errors (audio session preempted, recognizer service
+      // crashed, etc.) discard the in-flight session — same conservative
+      // policy as audio capture.
+      onError: (Object _, StackTrace __) {
+        if (!isClosed) add(const DictationCancelled());
+      },
+      cancelOnError: true,
+    );
+
+    emit(state.copyWith(isDictating: true, dictationDraft: ''));
+  }
+
+  Future<void> _onDictationStopped(
+    DictationStopped event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isDictating) return;
+    // The recognizer will emit one trailing final result; the listener
+    // routes it through DictationFinalEmitted, which clears state and
+    // surfaces the committedDictationText one-shot.
+    await _stt.stop();
+  }
+
+  Future<void> _onDictationCancelled(
+    DictationCancelled event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isDictating && _dictationSub == null) return;
+    await _dictationSub?.cancel();
+    _dictationSub = null;
+    await _stt.cancel();
+    emit(state.copyWith(isDictating: false, clearDictationDraft: true));
+  }
+
+  Future<void> _onDictationPartialEmitted(
+    DictationPartialEmitted event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isDictating) return;
+    emit(state.copyWith(dictationDraft: event.text));
+  }
+
+  Future<void> _onDictationFinalEmitted(
+    DictationFinalEmitted event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    await _dictationSub?.cancel();
+    _dictationSub = null;
+    final trimmed = event.text.trim();
+    emit(
+      state.copyWith(
+        isDictating: false,
+        clearDictationDraft: true,
+        // One-shot: only set when the recognizer produced something. An
+        // empty result (e.g. offline-incapable defence-in-depth path or
+        // a stopped session that captured no speech) leaves the field
+        // null so the screen does not append blank text.
+        committedDictationText: trimmed.isEmpty ? null : trimmed,
+      ),
+    );
+  }
+
   @override
   Future<void> close() async {
     await _amplitudeSub?.cancel();
@@ -569,6 +685,11 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     if (session != null) {
       _activeAudioSession = null;
       await _audio.cancel(session);
+    }
+    await _dictationSub?.cancel();
+    _dictationSub = null;
+    if (_stt.isListening) {
+      await _stt.cancel();
     }
     return super.close();
   }
