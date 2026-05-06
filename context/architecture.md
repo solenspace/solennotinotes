@@ -15,7 +15,8 @@
 | Reminders | `flutter_local_notifications` + `timezone` + `flutter_timezone` | Local OS notifications (no push server) |
 | Permissions | `permission_handler` 12.x via `PermissionsService` wrapper | Point-of-use permission orchestration; consumers receive a typed `PermissionResult`, never raw plugin output |
 | Image capture | `image_picker` + `flutter_image_compress` | Camera/gallery + size cap |
-| Audio capture | TBD per spec | Voice notes (offline-only) |
+| Audio capture | `record` 5.x | M4A/AAC-LC at 64 kbps mono; amplitude stream feeds the live meter and the pre-rendered waveform |
+| Audio playback | `audioplayers` 6.x | `DeviceFileSource` playback for audio blocks; offline-only |
 | P2P transport | `flutter_nearby_connections` | Apple Multipeer + Android Nearby Connections; messages, bytes, files |
 | STT | `speech_to_text` | Native dictation; offline where the device supports it |
 | TTS | `flutter_tts` | Native text-to-speech; fully offline |
@@ -110,3 +111,6 @@ Route push mounts `NoteEditorBloc` → BLoC emits `ready` with the `Note` → ed
 
 ### On-device AI summarize
 `NoteScreen` → `AiAssistBloc` checks `DeviceCapabilityService.canRunSmallLlm()` → if true, calls `LlmService.summarize(noteText)` → service streams tokens from local llama.cpp runtime → BLoC emits `AssistResultStreaming(token)` → screen appends to a draft → on completion the user accepts/rejects.
+
+### Capture an audio note
+Editor toolbar mic long-press → `NoteEditorBloc._onAudioCaptureRequested` → `PermissionsService.microphoneStatus` (and `requestMicrophone` if not granted) → on success, `AudioRepository.startCapture(noteId)` opens a recorder writing to `<docs>/notes/<id>/audio/<uuid>.m4a` and returns an `AudioCaptureSession` → bloc subscribes to `amplitudeStream` and bridges samples through the synthetic `AudioAmplitudeSampled` event so each sample lands on the bloc's event loop (a direct `emit` from the listener would race with handler completion) → release fires `AudioCaptureStopped` → repository finalizes (downsamples to an 80-bucket waveform, applies the 10 MB cap as a `truncated` flag) → bloc emits a one-shot `committedAudioBlock` → screen consumes via `BlocListener`, appends to its local `_blocks` list, and dispatches `BlocksReplaced` → `NotesRepository.save` → `notes_v2` snapshot re-emits to the home grid. Bloc never mutates `note.blocks` directly; the screen owns block-list state, mirroring the image-block flow.

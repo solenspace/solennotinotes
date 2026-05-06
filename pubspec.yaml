@@ -51,6 +51,8 @@ dependencies:
   bloc: ^9.0.0
   equatable: ^2.0.7
   characters: ^1.4.0
+  record: ^5.1.2
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +64,10 @@ dev_dependencies:
   custom_lint: ^0.7.0
   forbidden_imports_lint:
     path: tools/forbidden_imports_lint
+  # Test-only: explicit deps for path_provider mocking in repository tests.
+  # Both ride along as transitive deps of path_provider already.
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
 
 flutter_native_splash:
   color: "#2D2D2D"

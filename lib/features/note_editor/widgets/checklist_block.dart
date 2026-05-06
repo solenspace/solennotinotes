@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
-
-import 'editor_block.dart';
 
 class _NewlineInterceptor extends TextInputFormatter {
   final VoidCallback onEnterOnEmpty;

@@ -8,17 +8,21 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart'
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
+import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/models/noti_identity.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
+import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
+import '../../../repositories/audio/fake_audio_repository.dart';
 import '../../../repositories/noti_identity/fake_noti_identity_repository.dart';
 import '../../../repositories/notes/fake_notes_repository.dart';
+import '../../../services/permissions/fake_permissions_service.dart';
 
 Note _buildNote({
   required String id,
@@ -102,11 +106,15 @@ Future<NoteEditorBloc> _readyBloc({
   required _RecordingImageService imageService,
   required List<int> cancelledNotificationIds,
   required Note seed,
+  FakeAudioRepository? audioRepository,
+  FakePermissionsService? permissionsService,
 }) async {
   fake.emit([seed]);
   final bloc = NoteEditorBloc(
     repository: fake,
     identityRepository: identityRepository,
+    audio: audioRepository ?? FakeAudioRepository(),
+    permissions: permissionsService ?? FakePermissionsService(),
     imageService: imageService,
     cancelNotification: cancelledNotificationIds.add,
   );
@@ -162,6 +170,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -177,6 +187,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -202,6 +214,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -225,6 +239,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -246,6 +262,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -282,6 +300,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -803,6 +823,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -888,6 +910,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -925,6 +949,8 @@ void main() {
       final bloc = NoteEditorBloc(
         repository: fake,
         identityRepository: identityRepository,
+        audio: FakeAudioRepository(),
+        permissions: FakePermissionsService(),
         imageService: imageService,
         cancelNotification: cancelledNotificationIds.add,
       );
@@ -959,6 +985,220 @@ void main() {
       // collapses on the next rebuild.
       expect(bloc.state.note?.toOverlay().fromIdentityId, isNull);
       await bloc.close();
+    });
+  });
+
+  group('NoteEditorBloc — audio capture', () {
+    test('AudioCaptureRequested with mic granted starts a session', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 1,
+      );
+
+      expect(audio.startedSessions, hasLength(1));
+      expect(bloc.state.isCapturingAudio, isTrue);
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('AudioCaptureRequested with mic denied → request → still denied → errorMessage', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.denied;
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      // Two emissions: set errorMessage, then clear it (so the same denial
+      // re-fires the snackbar listener on a retry — see bloc handler).
+      final emissions = await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 2,
+      );
+
+      expect(permissions.requestLog, contains('microphone'));
+      expect(audio.startedSessions, isEmpty);
+      expect(emissions.first.errorMessage, 'Microphone permission needed to record.');
+      expect(emissions.last.errorMessage, isNull);
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('AudioCaptureRequested with mic permanentlyDenied raises explainer flag', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.permanentlyDenied;
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      final emissions = await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 1,
+      );
+
+      // microphoneStatus returns permanentlyDenied → handler short-circuits
+      // before requestMicrophone is even called.
+      expect(permissions.requestLog, isEmpty);
+      expect(audio.startedSessions, isEmpty);
+      expect(emissions.last.audioPermissionExplainerRequested, isTrue);
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('AudioCaptureStopped finalizes and emits committedAudioBlock', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      audio.finalizeReturn = AudioBlock(
+        id: 'a1',
+        path: '/fake/n1/a1.m4a',
+        durationMs: 1234,
+        amplitudePeaks: const [0.1, 0.2, 0.3],
+      );
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      // Start session.
+      await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 1,
+      );
+      expect(bloc.state.isCapturingAudio, isTrue);
+
+      // Stop → commit.
+      final stopped = await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureStopped()),
+        expectedCount: 1,
+      );
+      expect(stopped.last.committedAudioBlock?.id, 'a1');
+      expect(stopped.last.committedAudioBlock?.durationMs, 1234);
+      expect(stopped.last.isCapturingAudio, isFalse);
+      expect(stopped.last.currentAmplitude, isNull);
+      // Bloc never mutates note.blocks itself — that's the screen's job.
+      expect(fake.savedNotes, isEmpty);
+
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('AudioCaptureCancelled discards the session and clears state', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 1,
+      );
+      final sessionId = audio.startedSessions.single.id;
+
+      final cancelled = await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureCancelled()),
+        expectedCount: 1,
+      );
+
+      expect(audio.cancelledIds, [sessionId]);
+      expect(cancelled.last.isCapturingAudio, isFalse);
+      expect(cancelled.last.currentAmplitude, isNull);
+      expect(cancelled.last.committedAudioBlock, isNull);
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('AudioBlockRemoved deletes the file (no note.blocks mutation)', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService();
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      bloc.add(const AudioBlockRemoved('a1'));
+      // Allow the handler to run.
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      expect(audio.deletedAssets, hasLength(1));
+      expect(audio.deletedAssets.single.noteId, 'n1');
+      expect(audio.deletedAssets.single.audioId, 'a1');
+      // Screen owns block-list mutations + persistence.
+      expect(fake.savedNotes, isEmpty);
+      await audio.dispose();
+      await bloc.close();
+    });
+
+    test('close() cancels in-flight session and amplitude subscription', () async {
+      final audio = FakeAudioRepository();
+      final permissions = FakePermissionsService()..microphone = PermissionResult.granted;
+      final bloc = await _readyBloc(
+        fake: fake,
+        identityRepository: identityRepository,
+        imageService: imageService,
+        cancelledNotificationIds: cancelledNotificationIds,
+        seed: _buildNote(id: 'n1'),
+        audioRepository: audio,
+        permissionsService: permissions,
+      );
+
+      await _drain(
+        bloc,
+        () async => bloc.add(const AudioCaptureRequested()),
+        expectedCount: 1,
+      );
+      final sessionId = audio.startedSessions.single.id;
+
+      await bloc.close();
+
+      expect(audio.cancelledIds, [sessionId]);
+      await audio.dispose();
     });
   });
 }

@@ -7,20 +7,26 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
+import 'package:noti_notes_app/repositories/audio/audio_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
+import 'package:noti_notes_app/services/permissions/permission_result.dart';
+import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
+import 'package:noti_notes_app/widgets/permissions/permission_explainer_sheet.dart';
 
 import 'bloc/note_editor_bloc.dart';
 import 'bloc/note_editor_event.dart';
 import 'bloc/note_editor_state.dart';
 import 'note_type.dart';
+import 'widgets/audio_block_view.dart';
+import 'widgets/audio_capture_button.dart';
 import 'widgets/checklist_block.dart';
-import 'widgets/editor_block.dart';
 import 'widgets/editor_toolbar.dart';
 import 'widgets/from_sender_chip.dart';
 import 'widgets/image_block.dart';
@@ -53,6 +59,8 @@ class NoteEditorScreen extends StatelessWidget {
       create: (ctx) => NoteEditorBloc(
         repository: ctx.read<NotesRepository>(),
         identityRepository: ctx.read<NotiIdentityRepository>(),
+        audio: ctx.read<AudioRepository>(),
+        permissions: ctx.read<PermissionsService>(),
       )..add(EditorOpened(noteId: noteId, noteType: noteType)),
       child: _NoteEditorView(noteType: noteType),
     );
@@ -199,6 +207,35 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     _persistBlocks();
   }
 
+  void _appendAudioBlock(AudioBlock block) {
+    setState(() => _blocks.add(block));
+    _persistBlocks();
+  }
+
+  void _deleteAudioBlock(String audioId) {
+    final i = _blocks.indexWhere((b) => b is AudioBlock && b.id == audioId);
+    if (i < 0) return;
+    setState(() => _blocks.removeAt(i));
+    _persistBlocks();
+    context.read<NoteEditorBloc>().add(AudioBlockRemoved(audioId));
+  }
+
+  void _reRecordAudio(String audioId) {
+    _deleteAudioBlock(audioId);
+    context.read<NoteEditorBloc>().add(const AudioCaptureRequested());
+  }
+
+  void _showMicrophoneExplainer() {
+    PermissionExplainerSheet.show(
+      context,
+      title: 'Microphone access needed',
+      body: 'Notinotes records audio notes locally on your device. '
+          'Enable microphone access in Settings to record voice notes.',
+      result: PermissionResult.permanentlyDenied,
+      service: context.read<PermissionsService>(),
+    );
+  }
+
   Future<void> _openReminderSheet(String noteId) async {
     final bloc = context.read<NoteEditorBloc>();
     await showModalBottomSheet<void>(
@@ -228,8 +265,29 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<NoteEditorBloc, NoteEditorState>(
-      listenWhen: (prev, next) => next.popRequested && !prev.popRequested,
-      listener: (ctx, state) => Navigator.of(ctx).pop(),
+      listenWhen: (prev, next) {
+        return (next.popRequested && !prev.popRequested) ||
+            (next.committedAudioBlock != null) ||
+            (next.audioPermissionExplainerRequested && !prev.audioPermissionExplainerRequested) ||
+            (next.errorMessage != null && next.errorMessage != prev.errorMessage);
+      },
+      listener: (ctx, state) {
+        if (state.popRequested) {
+          Navigator.of(ctx).pop();
+          return;
+        }
+        if (state.audioPermissionExplainerRequested) {
+          _showMicrophoneExplainer();
+        }
+        final committed = state.committedAudioBlock;
+        if (committed != null) {
+          _appendAudioBlock(committed);
+        }
+        final err = state.errorMessage;
+        if (err != null) {
+          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(err)));
+        }
+      },
       builder: (ctx, state) {
         switch (state.status) {
           case NoteEditorStatus.notFound:
@@ -410,6 +468,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                           FocusScope.of(themedCtx).unfocus();
                           _persistBlocks();
                         },
+                        audioCaptureButton: const AudioCaptureButton(),
                       ),
                     ],
                   ),
@@ -459,6 +518,11 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
         ImageBlock() => ImageBlockWidget(
             path: block.path,
             onDelete: () => _deleteImageBlock(block.id),
+          ),
+        AudioBlock() => AudioBlockView(
+            block: block,
+            onDelete: () => _deleteAudioBlock(block.id),
+            onReRecord: () => _reRecordAudio(block.id),
           ),
       },
     );

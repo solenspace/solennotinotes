@@ -203,6 +203,51 @@ final class TaskContentUpdatedAtIndex extends NoteEditorEvent {
   List<Object?> get props => [index, content];
 }
 
+// — Audio capture —
+
+/// Long-press start (or tap-to-toggle on) on the editor's mic button.
+/// The bloc gates the actual recorder start on a microphone permission
+/// check; if permission is unavailable an error or explainer-sheet flag
+/// is emitted instead.
+final class AudioCaptureRequested extends NoteEditorEvent {
+  const AudioCaptureRequested();
+}
+
+/// Long-press release (or second tap) on the mic button. The bloc
+/// finalizes the active capture session into an [AudioBlock] and surfaces
+/// it as a one-shot `committedAudioBlock` signal in state — the screen
+/// owns the actual `note.blocks` mutation, mirroring the image-block flow.
+final class AudioCaptureStopped extends NoteEditorEvent {
+  const AudioCaptureStopped();
+}
+
+/// Slide-to-cancel during a hold-to-record gesture. Discards the temp
+/// file and resets capture state without producing a block.
+final class AudioCaptureCancelled extends NoteEditorEvent {
+  const AudioCaptureCancelled();
+}
+
+/// Removes the on-disk audio asset for [audioId]. The screen separately
+/// removes the block from its local list and dispatches [BlocksReplaced]
+/// — this event is file-lifecycle only.
+final class AudioBlockRemoved extends NoteEditorEvent {
+  const AudioBlockRemoved(this.audioId);
+  final String audioId;
+  @override
+  List<Object?> get props => [audioId];
+}
+
+/// Internal: bridges the recorder's amplitude `Stream<double>` into the
+/// bloc's event loop. The listener fires after `_onAudioCaptureRequested`
+/// has already returned, so its `Emitter` is closed; dispatching a fresh
+/// event lets the bloc emit a new state via the standard handler path.
+final class AudioAmplitudeSampled extends NoteEditorEvent {
+  const AudioAmplitudeSampled(this.amplitude);
+  final double amplitude;
+  @override
+  List<Object?> get props => [amplitude];
+}
+
 // — Pin / delete —
 
 final class PinToggled extends NoteEditorEvent {
