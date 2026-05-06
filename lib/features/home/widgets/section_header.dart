@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Lightweight section title used between Pinned and Notes lists.
 class SectionHeader extends StatelessWidget {
@@ -11,10 +11,10 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.sm,
+        SpacingPrimitives.lg,
+        SpacingPrimitives.lg,
+        SpacingPrimitives.lg,
+        SpacingPrimitives.sm,
       ),
       child: Text(
         label.toUpperCase(),

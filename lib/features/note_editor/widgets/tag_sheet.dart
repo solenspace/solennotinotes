@@ -7,7 +7,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Tag editor in a bottom sheet. Suggested tags are surfaced from the most-
@@ -83,10 +83,10 @@ class _TagSheetState extends State<TagSheet> {
                           color: scheme.onSurfaceVariant,
                         ),
                   ),
-                  const Gap(AppSpacing.sm),
+                  const Gap(SpacingPrimitives.sm),
                   Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
+                    spacing: SpacingPrimitives.sm,
+                    runSpacing: SpacingPrimitives.sm,
                     children: suggested
                         .map(
                           (tag) => ActionChip(
@@ -96,7 +96,7 @@ class _TagSheetState extends State<TagSheet> {
                         )
                         .toList(),
                   ),
-                  const Gap(AppSpacing.lg),
+                  const Gap(SpacingPrimitives.lg),
                 ],
                 Text(
                   'YOUR TAGS',
@@ -105,12 +105,12 @@ class _TagSheetState extends State<TagSheet> {
                         color: scheme.onSurfaceVariant,
                       ),
                 ),
-                const Gap(AppSpacing.sm),
+                const Gap(SpacingPrimitives.sm),
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(SpacingPrimitives.md),
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                   ),
                   child: TagEditor(
                     length: tags.length,
@@ -132,7 +132,7 @@ class _TagSheetState extends State<TagSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: scheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                         border: Border.all(color: scheme.outline, width: 1.0),
                       ),
                       child: Row(
@@ -158,7 +158,7 @@ class _TagSheetState extends State<TagSheet> {
                     ),
                   ),
                 ),
-                const Gap(AppSpacing.md),
+                const Gap(SpacingPrimitives.md),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// A full-width image block with a delete button overlay.
 class ImageBlockWidget extends StatelessWidget {
@@ -19,9 +19,9 @@ class ImageBlockWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(vertical: SpacingPrimitives.sm),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
         child: Stack(
           children: [
             Image.file(
@@ -36,8 +36,8 @@ class ImageBlockWidget extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: AppSpacing.sm,
-              right: AppSpacing.sm,
+              top: SpacingPrimitives.sm,
+              right: SpacingPrimitives.sm,
               child: Material(
                 color: Colors.black.withValues(alpha: 0.5),
                 shape: const CircleBorder(),

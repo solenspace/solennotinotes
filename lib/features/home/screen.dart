@@ -8,7 +8,7 @@ import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/search/cubit/search_state.dart';
 import 'package:noti_notes_app/models/note.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 import 'bloc/notes_list_bloc.dart';
 import 'bloc/notes_list_state.dart';
@@ -68,9 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
           body: CustomScrollView(
             slivers: [
               const HomeAppBar(),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+              const SliverToBoxAdapter(child: SizedBox(height: SpacingPrimitives.sm)),
               const SliverToBoxAdapter(child: FilterChipsRow()),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+              const SliverToBoxAdapter(child: SizedBox(height: SpacingPrimitives.md)),
               if (isEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,
@@ -81,12 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SliverToBoxAdapter(child: SectionHeader('Pinned')),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
+                      horizontal: SpacingPrimitives.lg,
                     ),
                     sliver: SliverMasonryGrid.count(
                       crossAxisCount: 2,
-                      mainAxisSpacing: AppSpacing.md,
-                      crossAxisSpacing: AppSpacing.md,
+                      mainAxisSpacing: SpacingPrimitives.md,
+                      crossAxisSpacing: SpacingPrimitives.md,
                       childCount: pinned.length,
                       itemBuilder: (context, i) => _buildAnimated(
                         context,
@@ -105,12 +105,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (unpinned.isNotEmpty)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
+                      horizontal: SpacingPrimitives.lg,
                     ),
                     sliver: SliverMasonryGrid.count(
                       crossAxisCount: 2,
-                      mainAxisSpacing: AppSpacing.md,
-                      crossAxisSpacing: AppSpacing.md,
+                      mainAxisSpacing: SpacingPrimitives.md,
+                      crossAxisSpacing: SpacingPrimitives.md,
                       childCount: unpinned.length,
                       itemBuilder: (context, i) => _buildAnimated(
                         context,
@@ -152,16 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return _buildOpenContainerCard(context, note)
         .animate()
         .fadeIn(
-          duration: AppDurations.md,
+          duration: DurationPrimitives.standard,
           delay: Duration(milliseconds: 40 * index),
-          curve: AppCurves.standard,
+          curve: CurvePrimitives.calm,
         )
         .slideY(
           begin: 0.08,
           end: 0,
-          duration: AppDurations.md,
+          duration: DurationPrimitives.standard,
           delay: Duration(milliseconds: 40 * index),
-          curve: AppCurves.standard,
+          curve: CurvePrimitives.calm,
         );
   }
 
@@ -172,9 +172,9 @@ class _HomeScreenState extends State<HomeScreen> {
       closedColor: note.hasGradient ? note.colorBackground : note.colorBackground,
       openColor: Theme.of(context).colorScheme.surface,
       closedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
       ),
-      transitionDuration: AppDurations.md,
+      transitionDuration: DurationPrimitives.standard,
       transitionType: ContainerTransitionType.fadeThrough,
       closedBuilder: (context, openContainer) => NoteCard(
         note: note,

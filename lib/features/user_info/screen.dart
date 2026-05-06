@@ -9,7 +9,7 @@ import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/noti_identity.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 
 import 'cubit/noti_identity_cubit.dart';
@@ -60,8 +60,8 @@ class UserInfoScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: SpacingPrimitives.lg,
+          vertical: SpacingPrimitives.md,
         ),
         children: [
           Row(
@@ -73,7 +73,7 @@ class UserInfoScreen extends StatelessWidget {
                   height: 80,
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                     border: Border.all(color: scheme.outline, width: 1.0),
                     image: identity.profilePicture != null
                         ? DecorationImage(
@@ -91,7 +91,7 @@ class UserInfoScreen extends StatelessWidget {
                       : null,
                 ),
               ),
-              const Gap(AppSpacing.lg),
+              const Gap(SpacingPrimitives.lg),
               Expanded(
                 child: TextFormField(
                   initialValue: identity.displayName,
@@ -106,17 +106,17 @@ class UserInfoScreen extends StatelessWidget {
               ),
             ],
           ),
-          const Gap(AppSpacing.xl),
+          const Gap(SpacingPrimitives.xl),
           Text(
             '${notesState.notes.length} notes on this device',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const Gap(AppSpacing.xl),
+          const Gap(SpacingPrimitives.xl),
           // Spec 09 plumbing: minimal controls so the data layer is
           // exercisable end-to-end. Spec 11 (noti-theme-overlay) replaces
           // these with the proper signature editor.
           _SignaturePlumbing(identity: identity),
-          const Gap(AppSpacing.xl),
+          const Gap(SpacingPrimitives.xl),
           Text(
             'TAGS YOU USE THE MOST',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -124,7 +124,7 @@ class UserInfoScreen extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
           ),
-          const Gap(AppSpacing.sm),
+          const Gap(SpacingPrimitives.sm),
           if (mostUsed.isEmpty)
             Text(
               'No tags yet.',
@@ -134,8 +134,8 @@ class UserInfoScreen extends StatelessWidget {
             )
           else
             Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: SpacingPrimitives.sm,
+              runSpacing: SpacingPrimitives.sm,
               children: mostUsed
                   .map(
                     (t) => Chip(
@@ -169,10 +169,10 @@ class _SignaturePlumbing extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('SIGNATURE PALETTE', style: sectionLabelStyle),
-        const Gap(AppSpacing.sm),
+        const Gap(SpacingPrimitives.sm),
         Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: SpacingPrimitives.sm,
+          runSpacing: SpacingPrimitives.sm,
           children: NotiIdentityDefaults.starterPalettes.map((palette) {
             final selected = _palettesEqual(identity.signaturePalette, palette);
             return GestureDetector(
@@ -180,7 +180,7 @@ class _SignaturePlumbing extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                   border: Border.all(
                     color: selected ? scheme.primary : scheme.outline,
                     width: selected ? 2 : 1,
@@ -196,7 +196,7 @@ class _SignaturePlumbing extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(horizontal: 1),
                           decoration: BoxDecoration(
                             color: c,
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(RadiusPrimitives.xs),
                           ),
                         ),
                       )
@@ -206,9 +206,9 @@ class _SignaturePlumbing extends StatelessWidget {
             );
           }).toList(),
         ),
-        const Gap(AppSpacing.lg),
+        const Gap(SpacingPrimitives.lg),
         Text('SIGNATURE PATTERN', style: sectionLabelStyle),
-        const Gap(AppSpacing.sm),
+        const Gap(SpacingPrimitives.sm),
         DropdownButton<String?>(
           value: NotiPatternKey.fromString(identity.signaturePatternKey)?.name,
           isExpanded: true,
@@ -227,9 +227,9 @@ class _SignaturePlumbing extends StatelessWidget {
           ],
           onChanged: cubit.updatePatternKey,
         ),
-        const Gap(AppSpacing.lg),
+        const Gap(SpacingPrimitives.lg),
         Text('SIGNATURE ACCENT', style: sectionLabelStyle),
-        const Gap(AppSpacing.sm),
+        const Gap(SpacingPrimitives.sm),
         TextFormField(
           initialValue: identity.signatureAccent ?? '',
           maxLength: 8, // grapheme-counted in cubit; allow combining marks
@@ -246,9 +246,9 @@ class _SignaturePlumbing extends StatelessWidget {
             }
           },
         ),
-        const Gap(AppSpacing.lg),
+        const Gap(SpacingPrimitives.lg),
         Text('SIGNATURE TAGLINE', style: sectionLabelStyle),
-        const Gap(AppSpacing.sm),
+        const Gap(SpacingPrimitives.sm),
         TextFormField(
           initialValue: identity.signatureTagline,
           maxLength: 60,

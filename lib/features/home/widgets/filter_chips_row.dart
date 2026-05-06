@@ -4,7 +4,7 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/search/cubit/search_state.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Horizontal row of filter chips below the search bar. Selection is single.
 class FilterChipsRow extends StatelessWidget {
@@ -23,9 +23,9 @@ class FilterChipsRow extends StatelessWidget {
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: SpacingPrimitives.lg),
         itemCount: entries.length,
-        separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
+        separatorBuilder: (_, __) => const Gap(SpacingPrimitives.sm),
         itemBuilder: (_, i) {
           final (filter, label, icon) = entries[i];
           final selected = search.filter == filter;

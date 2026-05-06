@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 typedef ExpandableFabCallback = void Function();
 
@@ -42,12 +42,12 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     super.initState();
     _expandController = AnimationController(
       duration: const Duration(milliseconds: 600), // Slower for elastic bounce
-      reverseDuration: AppDurations.md,
+      reverseDuration: DurationPrimitives.standard,
       vsync: this,
     );
 
     _scaleController = AnimationController(
-      duration: AppDurations.sm,
+      duration: DurationPrimitives.standard,
       vsync: this,
     );
 
@@ -235,7 +235,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: scheme.onSurface,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                         boxShadow: [
                           BoxShadow(
                             color: scheme.onSurface.withValues(alpha: 0.15),
@@ -311,7 +311,7 @@ class _ButtonCircle extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
       ),
       child: Icon(icon, color: iconColor, size: 22),
     );
@@ -342,7 +342,7 @@ class CenterButton extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
           border: Border.all(
             color: Theme.of(context).colorScheme.onSurface,
             width: 1.0,
@@ -372,7 +372,7 @@ class _HintLabel extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: scheme.onSurface,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
         boxShadow: [
           BoxShadow(
             color: scheme.onSurface.withValues(alpha: 0.15),

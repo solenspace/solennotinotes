@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 class EmptyState extends StatelessWidget {
   final String message;
@@ -17,14 +17,14 @@ class EmptyState extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xxxl,
+        horizontal: SpacingPrimitives.xl,
+        vertical: SpacingPrimitives.xxxl,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 64, color: scheme.onSurfaceVariant),
-          const Gap(AppSpacing.md),
+          const Gap(SpacingPrimitives.md),
           Text(
             message,
             textAlign: TextAlign.center,

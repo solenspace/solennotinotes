@@ -6,10 +6,10 @@ import 'package:gap/gap.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
-import 'package:noti_notes_app/helpers/color_picker.dart' as legacy;
 import 'package:noti_notes_app/models/note.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/noti_pattern_key.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Unified personalization sheet. Four sections — color, gradient, pattern,
@@ -54,13 +54,13 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const _SectionLabel('Color'),
-            const Gap(AppSpacing.sm),
+            const Gap(SpacingPrimitives.sm),
             SizedBox(
               height: 48,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: NotesColorPalette.swatches.length,
-                separatorBuilder: (_, __) => const Gap(AppSpacing.md),
+                separatorBuilder: (_, __) => const Gap(SpacingPrimitives.md),
                 itemBuilder: (_, i) {
                   final swatch = NotesColorPalette.swatches[i];
                   final color = swatch.background(brightness);
@@ -84,15 +84,15 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                 },
               ),
             ),
-            const Gap(AppSpacing.lg),
+            const Gap(SpacingPrimitives.lg),
             const _SectionLabel('Gradient'),
-            const Gap(AppSpacing.sm),
+            const Gap(SpacingPrimitives.sm),
             SizedBox(
               height: 72,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: NotesGradientPalette.gradients.length,
-                separatorBuilder: (_, __) => const Gap(AppSpacing.md),
+                separatorBuilder: (_, __) => const Gap(SpacingPrimitives.md),
                 itemBuilder: (_, i) {
                   final gradient = NotesGradientPalette.gradients[i];
                   final selected = note.hasGradient &&
@@ -115,15 +115,15 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                 },
               ),
             ),
-            const Gap(AppSpacing.lg),
+            const Gap(SpacingPrimitives.lg),
             const _SectionLabel('Pattern'),
-            const Gap(AppSpacing.sm),
+            const Gap(SpacingPrimitives.sm),
             SizedBox(
               height: 72,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: legacy.ColorPicker.patterns.length + 1,
-                separatorBuilder: (_, __) => const Gap(AppSpacing.md),
+                itemCount: NotiPatternKey.values.length + 1,
+                separatorBuilder: (_, __) => const Gap(SpacingPrimitives.md),
                 itemBuilder: (_, i) {
                   if (i == 0) {
                     final selected = note.patternImage == null;
@@ -133,7 +133,7 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                       onTap: () => context.read<NoteEditorBloc>().add(const PatternImageRemoved()),
                     );
                   }
-                  final asset = legacy.ColorPicker.patterns[i - 1];
+                  final asset = NotiPatternKey.values[i - 1].assetPath;
                   final selected = note.patternImage == asset;
                   return _PatternThumb(
                     asset: asset,
@@ -147,12 +147,12 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
                 },
               ),
             ),
-            const Gap(AppSpacing.lg),
+            const Gap(SpacingPrimitives.lg),
             InkWell(
               onTap: () => setState(() => _showTextColor = !_showTextColor),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(vertical: SpacingPrimitives.sm),
                 child: Row(
                   children: [
                     const Expanded(child: _SectionLabel('Text color')),
@@ -165,18 +165,18 @@ class _NoteStyleSheetState extends State<NoteStyleSheet> {
               ),
             ),
             AnimatedSize(
-              duration: AppDurations.sm,
-              curve: AppCurves.standard,
+              duration: DurationPrimitives.standard,
+              curve: CurvePrimitives.calm,
               alignment: Alignment.topCenter,
               child: _showTextColor
                   ? Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      padding: const EdgeInsets.only(top: SpacingPrimitives.sm),
                       child: SizedBox(
                         height: 48,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: NotesTextColorPalette.colors.length,
-                          separatorBuilder: (_, __) => const Gap(AppSpacing.md),
+                          separatorBuilder: (_, __) => const Gap(SpacingPrimitives.md),
                           itemBuilder: (_, i) {
                             final color = NotesTextColorPalette.colors[i];
                             final selected = note.fontColor.toARGB32() == color.toARGB32();
@@ -236,12 +236,12 @@ class _SwatchCircle extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: AppDurations.xs,
+        duration: DurationPrimitives.fast,
         width: 40,
         height: 40,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
           border: Border.all(
             color: selected ? scheme.onSurface : scheme.outline,
             width: selected ? 2.5 : 1.0,
@@ -275,12 +275,12 @@ class _GradientThumb extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: AppDurations.xs,
+        duration: DurationPrimitives.fast,
         width: 56,
         height: 72,
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
           border: Border.all(
             color: selected ? scheme.onSurface : scheme.outline,
             width: selected ? 2.5 : 1.0,
@@ -312,12 +312,12 @@ class _PatternThumb extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: AppDurations.xs,
+        duration: DurationPrimitives.fast,
         width: 56,
         height: 72,
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
           image:
               asset != null ? DecorationImage(image: AssetImage(asset!), fit: BoxFit.cover) : null,
           border: Border.all(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 import 'editor_block.dart';
 
@@ -98,7 +98,7 @@ class _TextBlockWidgetState extends State<TextBlockWidget> {
           color: widget.textColor,
         );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: SpacingPrimitives.xs),
       child: Focus(
         onKeyEvent: _handleKey,
         child: TextField(
