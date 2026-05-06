@@ -15,6 +15,8 @@ import 'package:noti_notes_app/services/notifications/notifications_service.dart
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/services/speech/stt_models.dart';
 import 'package:noti_notes_app/services/speech/stt_service.dart';
+import 'package:noti_notes_app/services/speech/tts_models.dart';
+import 'package:noti_notes_app/services/speech/tts_service.dart';
 import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
@@ -38,6 +40,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     required AudioRepository audio,
     required PermissionsService permissions,
     required SttService stt,
+    required TtsService tts,
     ImagePickerService? imageService,
     CancelNotification? cancelNotification,
   })  : _repository = repository,
@@ -45,6 +48,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
         _audio = audio,
         _permissions = permissions,
         _stt = stt,
+        _tts = tts,
         _imageService = imageService ?? const ImagePickerService(),
         _cancelNotification = cancelNotification ?? LocalNotificationService.cancelNotification,
         super(const NoteEditorState()) {
@@ -91,6 +95,12 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     on<DictationCancelled>(_onDictationCancelled);
     on<DictationPartialEmitted>(_onDictationPartialEmitted);
     on<DictationFinalEmitted>(_onDictationFinalEmitted);
+    on<ReadAloudRequested>(_onReadAloudRequested);
+    on<ReadAloudPaused>(_onReadAloudPaused);
+    on<ReadAloudResumed>(_onReadAloudResumed);
+    on<ReadAloudStopped>(_onReadAloudStopped);
+    on<ReadAloudProgressEmitted>(_onReadAloudProgressEmitted);
+    on<ReadAloudBlockCompleted>(_onReadAloudBlockCompleted);
   }
 
   final NotesRepository _repository;
@@ -98,6 +108,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   final AudioRepository _audio;
   final PermissionsService _permissions;
   final SttService _stt;
+  final TtsService _tts;
   final ImagePickerService _imageService;
   final CancelNotification _cancelNotification;
 
@@ -105,6 +116,16 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   StreamSubscription<double>? _amplitudeSub;
 
   StreamSubscription<SttRecognitionEvent>? _dictationSub;
+
+  StreamSubscription<TtsEvent>? _ttsSub;
+
+  /// Snapshot of readable blocks at session start. Captured once so a
+  /// concurrent [BlocksReplaced] mid-read does not desync the orchestration
+  /// (the session reads what was on screen when the user tapped Read).
+  List<({int blockIndex, String text})> _readBuffer = const [];
+
+  /// Position into [_readBuffer] of the block currently being spoken.
+  int _readPosition = 0;
 
   Future<void> _onEditorOpened(
     EditorOpened event,
@@ -677,6 +698,191 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     );
   }
 
+  Future<void> _onReadAloudRequested(
+    ReadAloudRequested event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null || state.isReadingAloud) return;
+
+    final readable = _readableBlocks(note);
+    if (readable.isEmpty) {
+      // Two-emission snackbar pattern (see _onAudioCaptureRequested).
+      emit(state.copyWith(errorMessage: 'Nothing to read.'));
+      emit(state.copyWith(clearError: true));
+      return;
+    }
+
+    final startIndex =
+        event.blockIndex == null ? 0 : readable.indexWhere((b) => b.blockIndex == event.blockIndex);
+    if (startIndex < 0) {
+      // Requested block isn't readable (e.g. image-only). Silent no-op:
+      // the per-block affordance only renders on text/checklist blocks
+      // anyway, so this is defence-in-depth.
+      return;
+    }
+
+    _readBuffer = readable;
+    _readPosition = startIndex;
+
+    emit(
+      state.copyWith(
+        isReadingAloud: true,
+        isReadAloudPaused: false,
+        currentReadBlockIndex: readable[startIndex].blockIndex,
+        clearReadProgress: true,
+      ),
+    );
+
+    await _startSpeakingCurrent();
+  }
+
+  Future<void> _onReadAloudPaused(
+    ReadAloudPaused event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isReadingAloud || state.isReadAloudPaused) return;
+    await _tts.pause();
+    emit(state.copyWith(isReadAloudPaused: true));
+  }
+
+  Future<void> _onReadAloudResumed(
+    ReadAloudResumed event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isReadingAloud || !state.isReadAloudPaused) return;
+    if (_readPosition < 0 || _readPosition >= _readBuffer.length) return;
+    emit(state.copyWith(isReadAloudPaused: false, clearReadProgress: true));
+    await _startSpeakingCurrent();
+  }
+
+  Future<void> _onReadAloudStopped(
+    ReadAloudStopped event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    await _ttsSub?.cancel();
+    _ttsSub = null;
+    if (_tts.isSpeaking) {
+      await _tts.stop();
+    }
+    _readBuffer = const [];
+    _readPosition = 0;
+    emit(
+      state.copyWith(
+        isReadingAloud: false,
+        isReadAloudPaused: false,
+        clearCurrentReadBlockIndex: true,
+        clearReadProgress: true,
+      ),
+    );
+  }
+
+  Future<void> _onReadAloudProgressEmitted(
+    ReadAloudProgressEmitted event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isReadingAloud) return;
+    emit(state.copyWith(readProgress: event.progress));
+  }
+
+  Future<void> _onReadAloudBlockCompleted(
+    ReadAloudBlockCompleted event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isReadingAloud) return;
+
+    await _ttsSub?.cancel();
+    _ttsSub = null;
+
+    // On Android, `flutter_tts.pause()` maps to the engine's `stop()`,
+    // which fires the cancel handler and bridges to a synthetic
+    // `ReadAloudBlockCompleted`. Honor the paused flag — stay on the
+    // current block so resume can re-issue speak — instead of advancing.
+    // See progress-tracker open question 20.
+    if (state.isReadAloudPaused) return;
+
+    final next = _readPosition + 1;
+    if (next >= _readBuffer.length) {
+      _readBuffer = const [];
+      _readPosition = 0;
+      emit(
+        state.copyWith(
+          isReadingAloud: false,
+          isReadAloudPaused: false,
+          clearCurrentReadBlockIndex: true,
+          clearReadProgress: true,
+        ),
+      );
+      return;
+    }
+
+    _readPosition = next;
+    emit(
+      state.copyWith(
+        currentReadBlockIndex: _readBuffer[next].blockIndex,
+        clearReadProgress: true,
+      ),
+    );
+    await _startSpeakingCurrent();
+  }
+
+  /// Subscribes to `_tts.speak(...)` for the block at [_readPosition].
+  /// Bridges progress + completion through synthetic events; an error path
+  /// dispatches [ReadAloudStopped] so the session unwinds cleanly. Same
+  /// pattern as `_onDictationStarted`'s recognizer subscription.
+  Future<void> _startSpeakingCurrent() async {
+    final entry = _readBuffer[_readPosition];
+    await _ttsSub?.cancel();
+    _ttsSub = _tts.speak(entry.text).listen(
+      (event) {
+        if (isClosed) return;
+        switch (event) {
+          case TtsProgressEvent(:final progress):
+            add(ReadAloudProgressEmitted(progress));
+          case TtsBlockCompleted():
+            add(const ReadAloudBlockCompleted());
+        }
+      },
+      // Synthesizer errors (engine crash, audio session preempted) tear
+      // down the session — same conservative discard policy as the audio
+      // amplitude stream and the STT recognizer.
+      onError: (Object _, StackTrace __) {
+        if (!isClosed) add(const ReadAloudStopped());
+      },
+      cancelOnError: true,
+    );
+  }
+
+  /// Block-text extraction for read-aloud. Mirrors the audio block flow's
+  /// approach to `note.blocks` — operates on the raw `Map<String, dynamic>`
+  /// shape (the legacy schema) rather than the in-memory `EditorBlock`
+  /// sealed type, since the bloc reads `note.blocks` directly.
+  ///
+  /// Skips image and audio blocks (no plain text). Empty text/checklist
+  /// items skip too. Returned tuples carry the original `blockIndex` so
+  /// state can surface "Reading block N" of the user's note, not of the
+  /// readable subset.
+  List<({int blockIndex, String text})> _readableBlocks(Note note) {
+    final out = <({int blockIndex, String text})>[];
+    for (var i = 0; i < note.blocks.length; i++) {
+      final b = note.blocks[i];
+      final type = b['type'];
+      if (type == 'text') {
+        final t = (b['text'] ?? '').toString().trim();
+        if (t.isNotEmpty) out.add((blockIndex: i, text: t));
+      } else if (type == 'checklist') {
+        final t = (b['text'] ?? '').toString().trim();
+        if (t.isEmpty) continue;
+        final checked = b['checked'] == true;
+        // Prefix with done/todo so the synthesizer audibly distinguishes
+        // checked items from unchecked ones — proofing aid per spec § E.
+        out.add((blockIndex: i, text: '${checked ? 'done' : 'todo'}: $t'));
+      }
+      // image + audio blocks are skipped; see "Note skipping" in spec § Design.
+    }
+    return out;
+  }
+
   @override
   Future<void> close() async {
     await _amplitudeSub?.cancel();
@@ -690,6 +896,11 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     _dictationSub = null;
     if (_stt.isListening) {
       await _stt.cancel();
+    }
+    await _ttsSub?.cancel();
+    _ttsSub = null;
+    if (_tts.isSpeaking) {
+      await _tts.stop();
     }
     return super.close();
   }

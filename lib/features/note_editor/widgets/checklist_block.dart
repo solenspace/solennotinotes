@@ -51,6 +51,8 @@ class _NewlineInterceptor extends TextInputFormatter {
 /// A checkbox + text field row. Pressing Enter adds a sibling checklist
 /// block via [onInsertBelow]. Pressing Backspace at position 0 of empty
 /// text converts the block back to a text block via [onConvertToText].
+/// When focused, shows a trailing read-aloud affordance via [onReadAloud]
+/// (Spec 16) — same focused-only IconButton pattern as [TextBlockWidget].
 class ChecklistBlockWidget extends StatefulWidget {
   final ChecklistBlock block;
   final FocusNode focusNode;
@@ -58,6 +60,7 @@ class ChecklistBlockWidget extends StatefulWidget {
   final ValueChanged<bool> onCheckedChanged;
   final ValueChanged<String> onInsertBelow;
   final VoidCallback onConvertToText;
+  final VoidCallback? onReadAloud;
   final Color? textColor;
 
   const ChecklistBlockWidget({
@@ -68,6 +71,7 @@ class ChecklistBlockWidget extends StatefulWidget {
     required this.onCheckedChanged,
     required this.onInsertBelow,
     required this.onConvertToText,
+    this.onReadAloud,
     this.textColor,
   });
 
@@ -189,8 +193,57 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
               ),
             ),
           ),
+          if (widget.onReadAloud != null)
+            _ChecklistReadAloudButton(
+              focusNode: widget.focusNode,
+              color: color,
+              onTap: widget.onReadAloud!,
+            ),
         ],
       ),
+    );
+  }
+}
+
+/// Trailing read-aloud affordance shown only while the block is focused.
+/// Mirrors the [TextBlockWidget] sibling — same shape so users build
+/// uniform muscle memory across block kinds.
+class _ChecklistReadAloudButton extends StatelessWidget {
+  const _ChecklistReadAloudButton({
+    required this.focusNode,
+    required this.color,
+    required this.onTap,
+  });
+
+  final FocusNode focusNode;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, _) {
+        if (!focusNode.hasFocus) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: SpacingPrimitives.xs),
+          child: Tooltip(
+            message: 'Read this block',
+            child: InkResponse(
+              onTap: onTap,
+              radius: 22,
+              child: Padding(
+                padding: const EdgeInsets.all(SpacingPrimitives.xs),
+                child: Icon(
+                  Icons.volume_up_outlined,
+                  size: 18,
+                  color: color.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
