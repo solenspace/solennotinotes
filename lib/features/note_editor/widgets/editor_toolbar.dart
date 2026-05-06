@@ -22,6 +22,10 @@ class EditorToolbar extends StatelessWidget {
   final VoidCallback onOpenTagSheet;
   final VoidCallback onDoneEditing;
 
+  /// Optional audio capture affordance (e.g. `AudioCaptureButton`). The
+  /// toolbar stays presentational; the button owns its own bloc wiring.
+  final Widget? audioCaptureButton;
+
   const EditorToolbar({
     super.key,
     required this.currentBlockIsChecklist,
@@ -32,6 +36,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onOpenReminderSheet,
     required this.onOpenTagSheet,
     required this.onDoneEditing,
+    this.audioCaptureButton,
   });
 
   @override
@@ -72,6 +77,10 @@ class EditorToolbar extends StatelessWidget {
               tooltip: 'Add image',
               onTap: onAddImage,
             ),
+            if (audioCaptureButton != null) ...[
+              const Gap(SpacingPrimitives.xs),
+              audioCaptureButton!,
+            ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
               tooltip: 'Style — long-press to reset',

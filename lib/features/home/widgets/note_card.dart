@@ -7,7 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
 import 'package:noti_notes_app/features/home/widgets/note_overlay_dot.dart';
-import 'package:noti_notes_app/features/note_editor/widgets/editor_block.dart';
+import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
@@ -69,9 +69,11 @@ class _NoteCardState extends State<NoteCard> {
     final textBlocks = blocks.whereType<TextBlock>().toList();
     final checklistBlocks = blocks.whereType<ChecklistBlock>().toList();
     final imageBlocks = blocks.whereType<ImageBlock>().toList();
+    final audioBlocks = blocks.whereType<AudioBlock>().toList();
     final hasContent = textBlocks.any((b) => b.text.isNotEmpty) ||
         checklistBlocks.isNotEmpty ||
         imageBlocks.isNotEmpty ||
+        audioBlocks.isNotEmpty ||
         note.title.isNotEmpty;
 
     final preview = textBlocks.map((b) => b.text).where((t) => t.isNotEmpty).join('\n');
@@ -229,6 +231,10 @@ class _NoteCardState extends State<NoteCard> {
                     ),
                   ),
               ],
+              if (audioBlocks.isNotEmpty) ...[
+                const Gap(SpacingPrimitives.xs),
+                _AudioSummary(audioBlocks: audioBlocks, textColor: textColor),
+              ],
               if (note.tags.isNotEmpty) ...[
                 const Gap(SpacingPrimitives.sm),
                 Wrap(
@@ -294,6 +300,49 @@ class _NoteCardState extends State<NoteCard> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Compact audio summary for the home masonry card. Shows a mic glyph plus
+/// the total duration of all audio blocks on the note (m:ss). The full
+/// waveform is intentionally not rendered here — the card is small and the
+/// editor's [AudioBlockView] is the right place for that affordance.
+class _AudioSummary extends StatelessWidget {
+  const _AudioSummary({required this.audioBlocks, required this.textColor});
+
+  final List<AudioBlock> audioBlocks;
+  final Color textColor;
+
+  String _formatDuration(int totalMs) {
+    final d = Duration(milliseconds: totalMs);
+    final m = d.inMinutes;
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalMs = audioBlocks.fold<int>(0, (sum, b) => sum + b.durationMs);
+    final label = audioBlocks.length == 1
+        ? 'Audio · ${_formatDuration(totalMs)}'
+        : '${audioBlocks.length} audio · ${_formatDuration(totalMs)}';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.mic_rounded, size: 14, color: textColor.withValues(alpha: 0.7)),
+        const Gap(SpacingPrimitives.xs),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: textColor.withValues(alpha: 0.7),
+                ),
+          ),
+        ),
+      ],
     );
   }
 }
