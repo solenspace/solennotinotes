@@ -12,3 +12,9 @@ lib/services/speech/stt_capability_probe.dart
 # The plugin's native engines (AVSpeechSynthesizer / Android TextToSpeech)
 # run fully offline; consumers elsewhere import lib/services/speech/tts_service.dart.
 lib/services/speech/tts_service.dart
+
+# Spec 17: device_info_plus is allowed only inside the device-capability probe.
+# The plugin reads system properties (UIDevice / android.os.Build) and makes
+# no network calls; consumers elsewhere import the DeviceCapabilityService
+# wrapper at lib/services/device/device_capability_service.dart.
+lib/services/device/device_capability_probe.dart

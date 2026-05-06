@@ -22,7 +22,7 @@
 | TTS | `flutter_tts` 4.x via `TtsService` wrapper | Native text-to-speech (`AVSpeechSynthesizer` / Android `TextToSpeech`); fully offline; per-word `setProgressHandler` drives the read-aloud overlay's word highlight; pause is iOS-true / Android-best-effort (Spec 16, open question 20) |
 | On-device LLM | `fllama` (llama.cpp + GGUF) — to validate per spec | Summarize, rewrite, suggest titles |
 | On-device whisper | TBD per spec (whisper.cpp binding) | Audio note → text transcription |
-| Device capability | `device_info_plus` | Gate AI features by RAM / OS version |
+| Device capability | `device_info_plus` 11.x via `DeviceCapabilityService` wrapper | Gate AI features by RAM / OS version / arch. Cold-start `DeviceCapabilityProbe` classifies the device into `AiTier.full` / `compact` / `unsupported` (≥6 GB / 4–6 GB / below threshold; arm64 + iOS 16+ / Android 13+ required); seven cache keys persist in `settings_v2` (`aiTier`, `ramBytes`, `osMajorVersion`, `archIsArm64`, `hasMetal`, `hasNeuralEngine`, `lastProbedOsVersion`); `Platform.operatingSystemVersion` change triggers automatic re-probe; `reprobe()` is also exposed for opt-in moments (Spec 18). Conservative posture: any failure path yields `AiTier.unsupported`. Established by [Spec 17](../specs/17-device-capability-service.md). |
 | Routing | `go_router` (introduce per spec) | Declarative routing |
 | Icons / assets | `flutter_svg`, custom SF Pro Display fonts, pattern PNGs | Existing assets stay |
 
