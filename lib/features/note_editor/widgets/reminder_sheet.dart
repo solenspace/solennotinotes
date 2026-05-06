@@ -10,7 +10,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart'
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 /// Quick chips for common reminders + an inline date/time picker for the
@@ -81,8 +81,8 @@ class _ReminderSheetState extends State<ReminderSheet> {
         return SheetScaffold(
           title: 'Remind me',
           child: AnimatedSize(
-            duration: AppDurations.md,
-            curve: AppCurves.standard,
+            duration: DurationPrimitives.standard,
+            curve: CurvePrimitives.calm,
             alignment: Alignment.topCenter,
             child: _showPicker ? _buildPicker(context) : _buildChips(context, hasReminder),
           ),
@@ -103,8 +103,8 @@ class _ReminderSheetState extends State<ReminderSheet> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: SpacingPrimitives.sm,
+          runSpacing: SpacingPrimitives.sm,
           children: [
             if (laterToday.isAfter(now))
               _Chip(
@@ -135,7 +135,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
           ],
         ),
         if (hasReminder) ...[
-          const Gap(AppSpacing.lg),
+          const Gap(SpacingPrimitives.lg),
           TextButton.icon(
             onPressed: _cancelReminder,
             icon: const Icon(Icons.notifications_off_outlined),
@@ -165,7 +165,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
             onChange: (date) => _pendingDate = date,
           ),
         ),
-        const Gap(AppSpacing.md),
+        const Gap(SpacingPrimitives.md),
         Row(
           children: [
             TextButton(
@@ -212,21 +212,21 @@ class _Chip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: SpacingPrimitives.lg,
+            vertical: SpacingPrimitives.md,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 18, color: scheme.primary),
-                const Gap(AppSpacing.sm),
+                const Gap(SpacingPrimitives.sm),
               ],
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,12 +1,12 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter/material.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/tokens/color_tokens.dart';
 import 'package:uuid/uuid.dart';
 
 import 'note_editor_event.dart';
@@ -335,7 +335,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
       content: '',
       dateCreated: DateTime.now(),
       colorBackground: NotesColorPalette.defaultSwatch.light,
-      fontColor: const Color(0xFF1A1A1A),
+      fontColor: NotiColors.bone.inkOnLightSurface,
       hasGradient: false,
       displayMode: type == NoteType.todo ? DisplayMode.withTodoList : DisplayMode.normal,
     );

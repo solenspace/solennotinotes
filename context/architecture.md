@@ -6,7 +6,8 @@
 |-------|------|------|
 | App framework | Flutter 3.x (Dart 3) | Cross-platform iOS + Android UI |
 | Material | Material 3 | Component baseline |
-| State | `flutter_bloc` 9.x | Business logic separation, BLoC + Cubit |
+| State | `flutter_bloc` 9.x | Business logic separation, BLoC + Cubit. `package:provider` removed in Spec 10. |
+| Theme tokens | `lib/theme/tokens/` two-layer system | Raw primitives → semantic `ThemeExtension`s consumed via `context.tokens.<category>.<role>`. Per-note overlays (Spec 11) patch `NotiColors` / `NotiPatternBackdrop` / `NotiSignature`. |
 | Local DB | `hive_ce` + `hive_ce_flutter` 2.x | Notes, tags, themes, settings, received inbox |
 | Code gen | `build_runner` | Hive adapters, freezed (introduce per spec), json_serializable |
 | File storage | `path_provider` | App documents dir for blobs (audio + image) |
@@ -24,7 +25,7 @@
 | Routing | `go_router` (introduce per spec) | Declarative routing |
 | Icons / assets | `flutter_svg`, custom SF Pro Display fonts, pattern PNGs | Existing assets stay |
 
-Existing dependencies (`provider`, `flutter_staggered_grid_view`, `material_tag_editor`, `animations`, `flutter_animate`, `google_fonts`, `gap`, `board_datetime_picker`, `string_similarity`, `uuid`, `collection`) remain until specs explicitly migrate them.
+Existing dependencies (`flutter_staggered_grid_view`, `material_tag_editor`, `animations`, `flutter_animate`, `google_fonts`, `gap`, `board_datetime_picker`, `string_similarity`, `uuid`, `collection`) remain until specs explicitly migrate them. `package:provider` was removed in Spec 10 and is now in `scripts/.forbidden-imports.txt`.
 
 ## System boundaries
 

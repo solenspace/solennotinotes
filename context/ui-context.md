@@ -12,6 +12,8 @@ Type is **SF Pro Display** (already bundled). Body weight 400, semibold for emph
 
 Tokens are the *base* layer. Per-note `NotiThemeOverlay` (Spec 11) selectively replaces surface + accent + pattern + signature glyph.
 
+The token values below are implemented in `lib/theme/tokens/` and consumed via `context.tokens.colors.<role>`. Raw `Color(0x…)` literals outside `lib/theme/tokens/` (and `lib/theme/curated_palettes.dart` for per-note swatches) are defects per [code-standards.md](code-standards.md) "Styling".
+
 ### Bone mode (canonical default)
 
 #### Bones (warm off-white surfaces)
@@ -84,6 +86,8 @@ Available in settings; honored by `MaterialApp.themeMode = system` if the device
 - Pattern: 720 ms, ease-in-out-cubic — overlay swap inside the editor (App Style)
 - Reduced motion (`MediaQuery.disableAnimations`) halves all durations.
 - Use `flutter_animate` and `animations` (already in pubspec) — avoid custom `AnimationController` for one-offs.
+
+Motion durations + curves are also reachable through `context.tokens.motion.{fast,standard,calm,pattern}` and `context.tokens.motion.{fast,standard,calm,pattern}Curve` for places where a token-routed read makes diffs easier to audit.
 
 ## NotiTheme override layer
 

@@ -45,3 +45,4 @@ formatter:
 custom_lint:
   rules:
     - forbidden_import
+    - no_hardcoded_color

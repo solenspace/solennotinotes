@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Docked toolbar above the keyboard. Each button is a [_ToolButton] with a
 /// gentle press scale animation. The state of each affordance is owned by the
@@ -41,8 +41,8 @@ class EditorToolbar extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.sm,
+        horizontal: SpacingPrimitives.sm,
+        vertical: SpacingPrimitives.sm,
       ),
       child: SafeArea(
         top: false,
@@ -59,25 +59,25 @@ class EditorToolbar extends StatelessWidget {
                 onToggleChecklist();
               },
             ),
-            const Gap(AppSpacing.xs),
+            const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.image_outlined,
               tooltip: 'Add image',
               onTap: onAddImage,
             ),
-            const Gap(AppSpacing.xs),
+            const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.palette_outlined,
               tooltip: 'Style',
               onTap: onOpenStyleSheet,
             ),
-            const Gap(AppSpacing.xs),
+            const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.notifications_outlined,
               tooltip: 'Reminder',
               onTap: onOpenReminderSheet,
             ),
-            const Gap(AppSpacing.xs),
+            const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.tag_rounded,
               tooltip: 'Tags',
@@ -128,15 +128,15 @@ class _ToolButtonState extends State<_ToolButton> {
         onTap: widget.onTap,
         child: AnimatedScale(
           scale: _pressed ? 0.92 : 1.0,
-          duration: AppDurations.xs,
-          curve: AppCurves.standard,
+          duration: DurationPrimitives.fast,
+          curve: CurvePrimitives.calm,
           child: AnimatedContainer(
-            duration: AppDurations.xs,
+            duration: DurationPrimitives.fast,
             width: 40,
             height: 40,
             decoration: BoxDecoration(
               color: widget.selected ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
             ),
             child: Icon(
               widget.icon,

@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/tokens.dart';
 
 import 'bloc/note_editor_bloc.dart';
 import 'bloc/note_editor_event.dart';
@@ -324,8 +324,8 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
+                    horizontal: SpacingPrimitives.lg,
+                    vertical: SpacingPrimitives.md,
                   ),
                   children: [
                     TextField(
@@ -350,7 +350,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                             ),
                       ),
                     ),
-                    const Gap(AppSpacing.xs),
+                    const Gap(SpacingPrimitives.xs),
                     Text(
                       DateFormat('MMM d · HH:mm').format(note.dateCreated),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -358,7 +358,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                           ),
                     ),
                     if (note.reminder != null) ...[
-                      const Gap(AppSpacing.sm),
+                      const Gap(SpacingPrimitives.sm),
                       _ReminderChip(
                         date: note.reminder!,
                         textColor: autoTextColor,
@@ -366,12 +366,12 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                       ),
                     ],
                     if (note.tags.isNotEmpty) ...[
-                      const Gap(AppSpacing.sm),
+                      const Gap(SpacingPrimitives.sm),
                       _TagsRow(tags: note.tags, textColor: autoTextColor),
                     ],
-                    const Gap(AppSpacing.md),
+                    const Gap(SpacingPrimitives.md),
                     ..._blocks.map((block) => _buildBlock(block, autoTextColor)),
-                    const Gap(AppSpacing.xxxl),
+                    const Gap(SpacingPrimitives.xxxl),
                   ],
                 ),
               ),
@@ -400,14 +400,15 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     Color activeBgColor,
     Brightness brightness,
   ) {
+    final colors = context.tokens.colors;
     if (note.hasGradient && note.gradient != null) {
       final avgLuminance = note.gradient!.colors.first.computeLuminance();
-      return avgLuminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
+      return avgLuminance > 0.5 ? colors.inkOnLightSurface : colors.inkOnDarkSurface;
     }
     return swatch?.autoTextColor(brightness) ??
         (activeBgColor.computeLuminance() > 0.5
-            ? const Color(0xFF1A1A1A)
-            : const Color(0xFFF5F5F5));
+            ? colors.inkOnLightSurface
+            : colors.inkOnDarkSurface);
   }
 
   Widget _buildBlock(EditorBlock block, Color? textColor) {
@@ -509,19 +510,19 @@ class _ReminderChip extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.xs + 2,
+            horizontal: SpacingPrimitives.md,
+            vertical: SpacingPrimitives.xs + 2,
           ),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
             border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.notifications_active_outlined, size: 14, color: color),
-              const Gap(AppSpacing.xs),
+              const Gap(SpacingPrimitives.xs),
               Text(
                 DateFormat('MMM d · HH:mm').format(date),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -549,14 +550,14 @@ class _TagsRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: tags.length,
-        separatorBuilder: (_, __) => const Gap(AppSpacing.xs),
+        separatorBuilder: (_, __) => const Gap(SpacingPrimitives.xs),
         itemBuilder: (_, i) {
           final tag = tags.elementAt(i);
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: SpacingPrimitives.md),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
               border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
             ),
             alignment: Alignment.center,
