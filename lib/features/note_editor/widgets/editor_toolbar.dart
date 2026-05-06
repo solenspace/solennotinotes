@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
@@ -12,6 +13,11 @@ class EditorToolbar extends StatelessWidget {
   final VoidCallback onToggleChecklist;
   final VoidCallback onAddImage;
   final VoidCallback onOpenStyleSheet;
+
+  /// Long-press on the brush icon resets the active note's overlay to the
+  /// user's [NotiIdentity] default.
+  final VoidCallback onResetOverlay;
+
   final VoidCallback onOpenReminderSheet;
   final VoidCallback onOpenTagSheet;
   final VoidCallback onDoneEditing;
@@ -22,6 +28,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onToggleChecklist,
     required this.onAddImage,
     required this.onOpenStyleSheet,
+    required this.onResetOverlay,
     required this.onOpenReminderSheet,
     required this.onOpenTagSheet,
     required this.onDoneEditing,
@@ -67,9 +74,15 @@ class EditorToolbar extends StatelessWidget {
             ),
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
-              icon: Icons.palette_outlined,
-              tooltip: 'Style',
+              tooltip: 'Style — long-press to reset',
               onTap: onOpenStyleSheet,
+              onLongPress: onResetOverlay,
+              builder: (color) => SvgPicture.asset(
+                'lib/assets/icons/brush.svg',
+                width: 22,
+                height: 22,
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
             ),
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
@@ -96,17 +109,21 @@ class EditorToolbar extends StatelessWidget {
 }
 
 class _ToolButton extends StatefulWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget Function(Color color)? builder;
   final String tooltip;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final bool selected;
 
   const _ToolButton({
-    required this.icon,
+    this.icon,
+    this.builder,
     required this.tooltip,
     required this.onTap,
+    this.onLongPress,
     this.selected = false,
-  });
+  }) : assert(icon != null || builder != null, 'icon or builder must be provided');
 
   @override
   State<_ToolButton> createState() => _ToolButtonState();
@@ -118,6 +135,7 @@ class _ToolButtonState extends State<_ToolButton> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final iconColor = widget.selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85);
     return Tooltip(
       message: widget.tooltip,
       child: GestureDetector(
@@ -126,6 +144,12 @@ class _ToolButtonState extends State<_ToolButton> {
         onTapCancel: () => setState(() => _pressed = false),
         onTapUp: (_) => setState(() => _pressed = false),
         onTap: widget.onTap,
+        onLongPress: widget.onLongPress == null
+            ? null
+            : () {
+                HapticFeedback.mediumImpact();
+                widget.onLongPress!();
+              },
         child: AnimatedScale(
           scale: _pressed ? 0.92 : 1.0,
           duration: DurationPrimitives.fast,
@@ -138,11 +162,10 @@ class _ToolButtonState extends State<_ToolButton> {
               color: widget.selected ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
             ),
-            child: Icon(
-              widget.icon,
-              size: 22,
-              color: widget.selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85),
-            ),
+            alignment: Alignment.center,
+            child: widget.builder != null
+                ? widget.builder!(iconColor)
+                : Icon(widget.icon, size: 22, color: iconColor),
           ),
         ),
       ),

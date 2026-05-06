@@ -10,6 +10,10 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? foregroundColor;
   final Color? backgroundColor;
 
+  /// Optional title slot. Spec 11 wires the from-sender chip in here on
+  /// shared notes; locally-authored notes pass null.
+  final Widget? title;
+
   const NoteAppBar({
     super.key,
     required this.isPinned,
@@ -18,6 +22,7 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onShare,
     this.foregroundColor,
     this.backgroundColor,
+    this.title,
   });
 
   @override
@@ -37,6 +42,9 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
         icon: Icon(Icons.arrow_back_rounded, color: fg),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
+      title: title,
+      titleSpacing: 0,
+      centerTitle: false,
       actions: [
         IconButton(
           tooltip: isPinned ? 'Unpin' : 'Pin',

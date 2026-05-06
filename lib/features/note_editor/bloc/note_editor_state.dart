@@ -9,6 +9,7 @@ class NoteEditorState extends Equatable {
     this.note,
     this.popRequested = false,
     this.errorMessage,
+    this.accentOverride,
   });
 
   final NoteEditorStatus status;
@@ -20,21 +21,29 @@ class NoteEditorState extends Equatable {
 
   final String? errorMessage;
 
+  /// In-memory carry of the per-note signature accent glyph. The legacy
+  /// [Note] schema has no place to store it; Spec 04b promotes
+  /// `Note.overlay: NotiThemeOverlay` and this field retires.
+  final String? accentOverride;
+
   NoteEditorState copyWith({
     NoteEditorStatus? status,
     Note? note,
     bool? popRequested,
     String? errorMessage,
     bool clearError = false,
+    String? accentOverride,
+    bool clearAccentOverride = false,
   }) {
     return NoteEditorState(
       status: status ?? this.status,
       note: note ?? this.note,
       popRequested: popRequested ?? false,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      accentOverride: clearAccentOverride ? null : (accentOverride ?? this.accentOverride),
     );
   }
 
   @override
-  List<Object?> get props => [status, note, popRequested, errorMessage];
+  List<Object?> get props => [status, note, popRequested, errorMessage, accentOverride];
 }

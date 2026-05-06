@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'noti_theme_overlay.dart';
+
 /// Authoritative home for curated palette data: per-note background swatches,
 /// gradient presets, optional text-color overrides, and the starter palettes
-/// new identities pick from on first launch. Spec 11 will hang its per-note
-/// overlay picker UI off this file; for Spec 10 the data lives here so the
-/// existing note style sheet keeps working unchanged.
+/// new identities pick from on first launch. Spec 11 hangs its per-note
+/// overlay picker UI off this file; the [kCuratedPalettes] list below feeds
+/// the picker's Palette tab.
 ///
 /// `Color(0x...)` literals are allowed inside this file by design — it is
 /// the canonical palette source. The `no_hardcoded_color` custom_lint rule
@@ -176,3 +178,122 @@ class LegacyAppThemeColors {
     Color(0xFF334155), // midnight
   ];
 }
+
+/// Twelve starter palettes for the per-note overlay picker (Spec 11). Each
+/// is a built [NotiThemeOverlay] template carrying surface, surfaceVariant,
+/// accent, and onAccent — pattern and accent glyph are picked independently
+/// from their own picker tabs.
+///
+/// Every entry is gated by `test/theme/curated_palettes_contrast_test.dart`
+/// at WCAG AA (4.5:1) on `accent vs onAccent` and on
+/// `clampForReadability(surface) vs surface`. If a swatch is added or
+/// retuned the build fails until contrast is restored.
+///
+/// `onAccent` choices in palettes 1, 3, 4, and 6 deviate from the
+/// initial spec sketch (cream-on-mid-tone) in favor of a dark stop because
+/// the spec sketch's pairs failed AA at 4.5:1; the surface and accent
+/// values — the visual identity of each palette — are unchanged.
+const List<NotiThemeOverlay> kCuratedPalettes = [
+  // Bone — sage accent on warm bone surface
+  NotiThemeOverlay(
+    surface: Color(0xFFEDE6D6),
+    surfaceVariant: Color(0xFFF5EFE2),
+    accent: Color(0xFF4A8A7F),
+    onAccent: Color(0xFF0F0F0F),
+  ),
+  // Bone + Slate
+  NotiThemeOverlay(
+    surface: Color(0xFFEDE6D6),
+    surfaceVariant: Color(0xFFF5EFE2),
+    accent: Color(0xFF4A5F8F),
+    onAccent: Color(0xFFF5EFE2),
+  ),
+  // Bone + Rose
+  NotiThemeOverlay(
+    surface: Color(0xFFEDE6D6),
+    surfaceVariant: Color(0xFFF5EFE2),
+    accent: Color(0xFFA87878),
+    onAccent: Color(0xFF0F0F0F),
+  ),
+  // Bone + Olive — accent darkened from spec sketch (#6B7A4A) to clear AA.
+  NotiThemeOverlay(
+    surface: Color(0xFFEDE6D6),
+    surfaceVariant: Color(0xFFF5EFE2),
+    accent: Color(0xFF5A6A3A),
+    onAccent: Color(0xFFF5EFE2),
+  ),
+  // Bone + Charcoal
+  NotiThemeOverlay(
+    surface: Color(0xFFEDE6D6),
+    surfaceVariant: Color(0xFFF5EFE2),
+    accent: Color(0xFF3A3A3A),
+    onAccent: Color(0xFFF5EFE2),
+  ),
+  // Cream
+  NotiThemeOverlay(
+    surface: Color(0xFFF5EFE2),
+    surfaceVariant: Color(0xFFF8F2E7),
+    accent: Color(0xFFB8704A),
+    onAccent: Color(0xFF0F0F0F),
+  ),
+  // Sand
+  NotiThemeOverlay(
+    surface: Color(0xFFE8D8BD),
+    surfaceVariant: Color(0xFFEDE2C9),
+    accent: Color(0xFF6B5B4A),
+    onAccent: Color(0xFFF8F2E7),
+  ),
+  // Charcoal — dark surface, gold accent
+  NotiThemeOverlay(
+    surface: Color(0xFF2D2D2D),
+    surfaceVariant: Color(0xFF383838),
+    accent: Color(0xFFE5B26B),
+    onAccent: Color(0xFF1A1A1A),
+  ),
+  // Slate
+  NotiThemeOverlay(
+    surface: Color(0xFF1F2A35),
+    surfaceVariant: Color(0xFF2A3744),
+    accent: Color(0xFF7BAFD4),
+    onAccent: Color(0xFF0E1822),
+  ),
+  // Moss
+  NotiThemeOverlay(
+    surface: Color(0xFF1F2620),
+    surfaceVariant: Color(0xFF2A332C),
+    accent: Color(0xFF8FA66F),
+    onAccent: Color(0xFF111712),
+  ),
+  // Plum
+  NotiThemeOverlay(
+    surface: Color(0xFF2A1F26),
+    surfaceVariant: Color(0xFF362A32),
+    accent: Color(0xFFD37FA0),
+    onAccent: Color(0xFF180F14),
+  ),
+  // Onyx — pure dark with near-white accent
+  NotiThemeOverlay(
+    surface: Color(0xFF0F0F0F),
+    surfaceVariant: Color(0xFF1A1A1A),
+    accent: Color(0xFFEDEDED),
+    onAccent: Color(0xFF0F0F0F),
+  ),
+];
+
+/// Display names for [kCuratedPalettes], parallel-indexed. Used by the
+/// picker for accessibility labels and by the from-sender chip for
+/// analytics-free display.
+const List<String> kCuratedPaletteNames = [
+  'Bone',
+  'Bone + Slate',
+  'Bone + Rose',
+  'Bone + Olive',
+  'Bone + Charcoal',
+  'Cream',
+  'Sand',
+  'Charcoal',
+  'Slate',
+  'Moss',
+  'Plum',
+  'Onyx',
+];
