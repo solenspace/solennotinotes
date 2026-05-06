@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 import 'editor_block.dart';
 
@@ -120,7 +120,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
         );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: SpacingPrimitives.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,13 +129,13 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
               child: AnimatedContainer(
-                duration: AppDurations.xs,
+                duration: DurationPrimitives.fast,
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
                   color: widget.block.checked ? color : Colors.transparent,
                   border: Border.all(color: color.withValues(alpha: 0.6), width: 1.0),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                 ),
                 child: widget.block.checked
                     ? Icon(
@@ -147,7 +147,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
               ),
             ),
           ),
-          const Gap(AppSpacing.md),
+          const Gap(SpacingPrimitives.md),
           Expanded(
             child: Focus(
               onKeyEvent: _handleKey,

@@ -6,10 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
+import 'package:noti_notes_app/features/home/widgets/note_overlay_dot.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/models/note_overlay.dart';
+import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/tokens.dart';
 
 import '../bloc/notes_list_bloc.dart';
 import '../bloc/notes_list_event.dart';
@@ -38,6 +40,7 @@ class _NoteCardState extends State<NoteCard> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final tokens = context.tokens;
     final note = widget.note;
     final swatch = NotesColorPalette.swatchFor(note.colorBackground);
 
@@ -48,12 +51,14 @@ class _NoteCardState extends State<NoteCard> {
     Color computeTextColor() {
       if (note.hasGradient && note.gradient != null) {
         final avgLuminance = note.gradient!.colors.first.computeLuminance();
-        return avgLuminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
+        return avgLuminance > 0.5
+            ? tokens.colors.inkOnLightSurface
+            : tokens.colors.inkOnDarkSurface;
       }
       return swatch?.autoTextColor(brightness) ??
           (activeBgColor.computeLuminance() > 0.5
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFFF5F5F5));
+              ? tokens.colors.inkOnLightSurface
+              : tokens.colors.inkOnDarkSurface);
     }
 
     final textColor = computeTextColor();
@@ -82,13 +87,13 @@ class _NoteCardState extends State<NoteCard> {
       },
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
-        duration: AppDurations.xs,
-        curve: AppCurves.standard,
+        duration: DurationPrimitives.fast,
+        curve: CurvePrimitives.calm,
         child: Container(
           decoration: BoxDecoration(
             color: note.hasGradient ? null : activeBgColor,
             gradient: note.hasGradient ? note.gradient : null,
-            borderRadius: BorderRadius.circular(AppRadius.sm), // Neo-brutalist tight radius
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm), // Neo-brutalist tight radius
             image: note.patternImage != null
                 ? DecorationImage(
                     image: AssetImage(note.patternImage!),
@@ -107,23 +112,30 @@ class _NoteCardState extends State<NoteCard> {
               width: 1.0, // Thin, sharp border matching the component
             ),
           ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(SpacingPrimitives.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (note.isPinned)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Icon(
-                    Icons.push_pin,
-                    size: 14,
-                    color: textColor.withValues(alpha: 0.7),
-                  ),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  NoteOverlayDot(overlay: note.toOverlay()),
+                  if (note.isPinned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Icon(
+                        Icons.push_pin,
+                        size: 14,
+                        color: textColor.withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
               if (imageBlocks.isNotEmpty) ...[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                   child: Image.file(
                     File(imageBlocks.first.path),
                     width: double.infinity,
@@ -134,7 +146,7 @@ class _NoteCardState extends State<NoteCard> {
                     ),
                   ),
                 ),
-                const Gap(AppSpacing.sm),
+                const Gap(SpacingPrimitives.sm),
               ],
               if (note.title.isNotEmpty)
                 Text(
@@ -146,7 +158,7 @@ class _NoteCardState extends State<NoteCard> {
                       ),
                 ),
               if (preview.isNotEmpty) ...[
-                if (note.title.isNotEmpty) const Gap(AppSpacing.xs),
+                if (note.title.isNotEmpty) const Gap(SpacingPrimitives.xs),
                 Text(
                   preview,
                   maxLines: 6,
@@ -157,7 +169,7 @@ class _NoteCardState extends State<NoteCard> {
                 ),
               ],
               if (checklistBlocks.isNotEmpty) ...[
-                const Gap(AppSpacing.xs),
+                const Gap(SpacingPrimitives.xs),
                 ...checklistBlocks.take(4).map(
                       (b) => GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -187,7 +199,7 @@ class _NoteCardState extends State<NoteCard> {
                                 size: 18,
                                 color: textColor.withValues(alpha: 0.85),
                               ),
-                              const Gap(AppSpacing.sm),
+                              const Gap(SpacingPrimitives.sm),
                               Expanded(
                                 child: Text(
                                   b.text.isEmpty ? 'Untitled task' : b.text,
@@ -218,10 +230,10 @@ class _NoteCardState extends State<NoteCard> {
                   ),
               ],
               if (note.tags.isNotEmpty) ...[
-                const Gap(AppSpacing.sm),
+                const Gap(SpacingPrimitives.sm),
                 Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
+                  spacing: SpacingPrimitives.xs,
+                  runSpacing: SpacingPrimitives.xs,
                   children: note.tags.take(3).map((t) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -230,7 +242,7 @@ class _NoteCardState extends State<NoteCard> {
                       ),
                       decoration: BoxDecoration(
                         color: textColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                         border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1.0),
                       ),
                       child: Text(
@@ -244,7 +256,7 @@ class _NoteCardState extends State<NoteCard> {
                 ),
               ],
               if (note.reminder != null) ...[
-                const Gap(AppSpacing.sm),
+                const Gap(SpacingPrimitives.sm),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -253,7 +265,7 @@ class _NoteCardState extends State<NoteCard> {
                       size: 12,
                       color: textColor.withValues(alpha: 0.7),
                     ),
-                    const Gap(AppSpacing.xs),
+                    const Gap(SpacingPrimitives.xs),
                     Text(
                       DateFormat('MMM d · HH:mm').format(note.reminder!),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -271,7 +283,7 @@ class _NoteCardState extends State<NoteCard> {
                         fontStyle: FontStyle.italic,
                       ),
                 ),
-              const Gap(AppSpacing.sm),
+              const Gap(SpacingPrimitives.sm),
               Text(
                 DateFormat('MMM d').format(note.dateCreated),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(

@@ -46,3 +46,6 @@ package:sentry_flutter
 package:posthog_flutter
 package:mixpanel_flutter
 package:amplitude_flutter
+
+# Banned post-Spec-10 (last consumer migrated to BLoC + RepositoryProvider).
+package:provider

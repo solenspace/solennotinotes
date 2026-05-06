@@ -9,7 +9,7 @@ import 'package:noti_notes_app/features/settings/screen.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_state.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Large collapsing app bar with greeting, profile/settings actions, and a
 /// persistent search field at the bottom edge.
@@ -48,9 +48,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          bottom: AppSpacing.lg, // Standard padding now
+          left: SpacingPrimitives.lg,
+          right: SpacingPrimitives.lg,
+          bottom: SpacingPrimitives.lg, // Standard padding now
         ),
         title: LayoutBuilder(
           builder: (context, constraints) {
@@ -69,13 +69,13 @@ class _HomeAppBarState extends State<HomeAppBar> {
           curve: Curves.easeOutCubic,
           // When expanded, the width is W - 32.
           // With a right margin of 16, it leaves exactly 16px on the left side,
-          // perfectly aligning with the AppSpacing.lg (16px) title padding on all devices.
+          // perfectly aligning with the SpacingPrimitives.lg (16px) title padding on all devices.
           width: _isSearching ? MediaQuery.of(context).size.width - 32 : 48,
           height: 48,
           margin: EdgeInsets.only(right: _isSearching ? 16 : 8),
           decoration: BoxDecoration(
             color: _isSearching ? scheme.surfaceContainerHighest : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -155,7 +155,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       height: 36,
                       decoration: BoxDecoration(
                         color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                         border: Border.all(color: scheme.outline, width: 1.0),
                         image: identity?.profilePicture != null
                             ? DecorationImage(

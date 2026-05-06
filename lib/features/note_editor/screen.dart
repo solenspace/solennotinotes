@@ -1,16 +1,19 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/models/note_overlay.dart';
+import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
-import 'package:noti_notes_app/theme/app_tokens.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/theme/noti_pattern_key.dart';
+import 'package:noti_notes_app/theme/tokens.dart';
 
 import 'bloc/note_editor_bloc.dart';
 import 'bloc/note_editor_event.dart';
@@ -19,9 +22,10 @@ import 'note_type.dart';
 import 'widgets/checklist_block.dart';
 import 'widgets/editor_block.dart';
 import 'widgets/editor_toolbar.dart';
+import 'widgets/from_sender_chip.dart';
 import 'widgets/image_block.dart';
 import 'widgets/note_app_bar.dart';
-import 'widgets/note_style_sheet.dart';
+import 'widgets/overlay_picker_sheet.dart';
 import 'widgets/reminder_sheet.dart';
 import 'widgets/tag_sheet.dart';
 import 'widgets/text_block.dart';
@@ -46,8 +50,10 @@ class NoteEditorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<NoteEditorBloc>(
-      create: (ctx) => NoteEditorBloc(repository: ctx.read<NotesRepository>())
-        ..add(EditorOpened(noteId: noteId, noteType: noteType)),
+      create: (ctx) => NoteEditorBloc(
+        repository: ctx.read<NotesRepository>(),
+        identityRepository: ctx.read<NotiIdentityRepository>(),
+      )..add(EditorOpened(noteId: noteId, noteType: noteType)),
       child: _NoteEditorView(noteType: noteType),
     );
   }
@@ -193,19 +199,6 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     _persistBlocks();
   }
 
-  Future<void> _openStyleSheet(String noteId) async {
-    final bloc = context.read<NoteEditorBloc>();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => BlocProvider<NoteEditorBloc>.value(
-        value: bloc,
-        child: NoteStyleSheet(noteId: noteId),
-      ),
-    );
-  }
-
   Future<void> _openReminderSheet(String noteId) async {
     final bloc = context.read<NoteEditorBloc>();
     await showModalBottomSheet<void>(
@@ -258,11 +251,25 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   }
 
   Widget _buildBody(BuildContext context, Note note) {
-    final brightness = Theme.of(context).brightness;
-    final swatch = NotesColorPalette.swatchFor(note.colorBackground);
-    final activeBgColor = swatch?.background(brightness) ?? note.colorBackground;
-    final autoTextColor = _computeTextColor(note, swatch, activeBgColor, brightness);
-    final background = note.hasGradient && note.gradient != null ? null : activeBgColor;
+    final base = Theme.of(context);
+    final baseTokens = context.tokens;
+    final overlay = note.toOverlay();
+    final patchedColors = overlay.applyToColors(baseTokens.colors);
+    final patchedPattern = overlay.applyToPatternBackdrop(baseTokens.patternBackdrop);
+    final patchedSignature = overlay.applyToSignature(baseTokens.signature);
+
+    final themed = base.copyWith(
+      extensions: <ThemeExtension<dynamic>>[
+        patchedColors,
+        baseTokens.text,
+        baseTokens.motion,
+        baseTokens.shape,
+        baseTokens.elevation,
+        baseTokens.spacing,
+        patchedPattern,
+        patchedSignature,
+      ],
+    );
 
     final currentBlock = _focusedBlockId == null
         ? (_blocks.isNotEmpty ? _blocks.first : null)
@@ -271,143 +278,148 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
             orElse: () => _blocks.first,
           );
     final currentIsChecklist = currentBlock is ChecklistBlock;
+    final showFromSenderChip = overlay.fromIdentityId != null;
+    final isDarkSurface = patchedColors.surface.computeLuminance() < 0.5;
 
-    return Scaffold(
-      backgroundColor: background,
-      extendBodyBehindAppBar: true,
-      appBar: NoteAppBar(
-        isPinned: note.isPinned,
-        onTogglePin: () => context.read<NoteEditorBloc>().add(const PinToggled()),
-        onDelete: () async {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Delete note?'),
-              content: const Text('This cannot be undone.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                ),
-              ],
-            ),
-          );
-          if (confirmed == true && context.mounted) {
-            context.read<NoteEditorBloc>().add(const NoteDeleted());
-          }
-        },
-        foregroundColor: autoTextColor,
-      ),
-      body: Container(
-        decoration: note.hasGradient && note.gradient != null
-            ? BoxDecoration(gradient: note.gradient)
-            : note.patternImage != null
-                ? BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(note.patternImage!),
-                      fit: BoxFit.cover,
-                      opacity: 0.5,
-                      colorFilter: ColorFilter.mode(
-                        activeBgColor,
-                        BlendMode.softLight,
-                      ),
-                    ),
-                  )
-                : null,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  children: [
-                    TextField(
-                      controller: _titleController,
-                      maxLength: 80,
-                      onChanged: (text) => context.read<NoteEditorBloc>().add(TitleChanged(text)),
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: autoTextColor,
+    return AnimatedTheme(
+      data: themed,
+      duration: baseTokens.motion.pattern,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: patchedColors.surface,
+          statusBarIconBrightness: isDarkSurface ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDarkSurface ? Brightness.dark : Brightness.light,
+        ),
+        child: Builder(
+          builder: (themedCtx) {
+            final tokens = themedCtx.tokens;
+            return Scaffold(
+              backgroundColor: tokens.colors.surface,
+              extendBodyBehindAppBar: true,
+              appBar: NoteAppBar(
+                isPinned: note.isPinned,
+                backgroundColor: tokens.colors.surfaceVariant,
+                foregroundColor: tokens.colors.onSurface,
+                title: showFromSenderChip ? const FromSenderChip() : null,
+                onTogglePin: () => themedCtx.read<NoteEditorBloc>().add(const PinToggled()),
+                onDelete: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: themedCtx,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Delete note?'),
+                      content: const Text('This cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(themedCtx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(themedCtx).pop(true),
+                          child: Text(
+                            'Delete',
+                            style: TextStyle(color: tokens.colors.error),
                           ),
-                      cursorColor: autoTextColor,
-                      decoration: InputDecoration(
-                        isCollapsed: true,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
-                        counterText: '',
-                        contentPadding: EdgeInsets.zero,
-                        hintText: 'Title',
-                        hintStyle: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: autoTextColor.withValues(alpha: 0.4),
-                            ),
-                      ),
+                        ),
+                      ],
                     ),
-                    const Gap(AppSpacing.xs),
-                    Text(
-                      DateFormat('MMM d · HH:mm').format(note.dateCreated),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: autoTextColor.withValues(alpha: 0.6),
-                          ),
-                    ),
-                    if (note.reminder != null) ...[
-                      const Gap(AppSpacing.sm),
-                      _ReminderChip(
-                        date: note.reminder!,
-                        textColor: autoTextColor,
-                        onTap: () => _openReminderSheet(note.id),
-                      ),
-                    ],
-                    if (note.tags.isNotEmpty) ...[
-                      const Gap(AppSpacing.sm),
-                      _TagsRow(tags: note.tags, textColor: autoTextColor),
-                    ],
-                    const Gap(AppSpacing.md),
-                    ..._blocks.map((block) => _buildBlock(block, autoTextColor)),
-                    const Gap(AppSpacing.xxxl),
-                  ],
-                ),
-              ),
-              EditorToolbar(
-                currentBlockIsChecklist: currentIsChecklist,
-                onToggleChecklist: _convertCurrentBlock,
-                onAddImage: _addImage,
-                onOpenStyleSheet: () => _openStyleSheet(note.id),
-                onOpenReminderSheet: () => _openReminderSheet(note.id),
-                onOpenTagSheet: () => _openTagSheet(note.id),
-                onDoneEditing: () {
-                  FocusScope.of(context).unfocus();
-                  _persistBlocks();
+                  );
+                  if (confirmed == true && themedCtx.mounted) {
+                    themedCtx.read<NoteEditorBloc>().add(const NoteDeleted());
+                  }
                 },
               ),
-            ],
-          ),
+              body: _PatternedBackdrop(
+                patternKey: NotiPatternKey.fromString(patchedPattern.patternKey),
+                bodyOpacity: patchedPattern.bodyOpacity,
+                headerOpacity: patchedPattern.headerOpacity,
+                headerHeightFraction: patchedPattern.headerHeightFraction,
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: tokens.spacing.lg,
+                            vertical: tokens.spacing.md,
+                          ),
+                          children: [
+                            TextField(
+                              controller: _titleController,
+                              maxLength: 80,
+                              onChanged: (text) =>
+                                  themedCtx.read<NoteEditorBloc>().add(TitleChanged(text)),
+                              style: tokens.text.displayLg.copyWith(
+                                color: tokens.colors.onSurface,
+                              ),
+                              cursorColor: tokens.colors.onSurface,
+                              decoration: InputDecoration(
+                                isCollapsed: true,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                filled: false,
+                                counterText: '',
+                                contentPadding: EdgeInsets.zero,
+                                hintText: 'Title',
+                                hintStyle: tokens.text.displayLg.copyWith(
+                                  color: tokens.colors.onSurface.withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ),
+                            Gap(tokens.spacing.xs),
+                            Text(
+                              DateFormat('MMM d · HH:mm').format(note.dateCreated),
+                              style: tokens.text.labelSm.copyWith(
+                                color: tokens.colors.onSurfaceMuted,
+                              ),
+                            ),
+                            if (note.reminder != null) ...[
+                              Gap(tokens.spacing.sm),
+                              _ReminderChip(
+                                date: note.reminder!,
+                                textColor: tokens.colors.onSurface,
+                                onTap: () => _openReminderSheet(note.id),
+                              ),
+                            ],
+                            if (note.tags.isNotEmpty) ...[
+                              Gap(tokens.spacing.sm),
+                              _TagsRow(
+                                tags: note.tags,
+                                textColor: tokens.colors.onSurface,
+                              ),
+                            ],
+                            Gap(tokens.spacing.md),
+                            ..._blocks.map(
+                              (block) => _buildBlock(block, tokens.colors.onSurface),
+                            ),
+                            Gap(tokens.spacing.xxxl),
+                          ],
+                        ),
+                      ),
+                      EditorToolbar(
+                        currentBlockIsChecklist: currentIsChecklist,
+                        onToggleChecklist: _convertCurrentBlock,
+                        onAddImage: _addImage,
+                        onOpenStyleSheet: () => OverlayPickerSheet.show(themedCtx),
+                        onResetOverlay: () => themedCtx
+                            .read<NoteEditorBloc>()
+                            .add(const OverlayResetToIdentityDefault()),
+                        onOpenReminderSheet: () => _openReminderSheet(note.id),
+                        onOpenTagSheet: () => _openTagSheet(note.id),
+                        onDoneEditing: () {
+                          FocusScope.of(themedCtx).unfocus();
+                          _persistBlocks();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
-  }
-
-  Color _computeTextColor(
-    Note note,
-    NotesSwatch? swatch,
-    Color activeBgColor,
-    Brightness brightness,
-  ) {
-    if (note.hasGradient && note.gradient != null) {
-      final avgLuminance = note.gradient!.colors.first.computeLuminance();
-      return avgLuminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
-    }
-    return swatch?.autoTextColor(brightness) ??
-        (activeBgColor.computeLuminance() > 0.5
-            ? const Color(0xFF1A1A1A)
-            : const Color(0xFFF5F5F5));
   }
 
   Widget _buildBlock(EditorBlock block, Color? textColor) {
@@ -509,19 +521,19 @@ class _ReminderChip extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.xs + 2,
+            horizontal: SpacingPrimitives.md,
+            vertical: SpacingPrimitives.xs + 2,
           ),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
             border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.notifications_active_outlined, size: 14, color: color),
-              const Gap(AppSpacing.xs),
+              const Gap(SpacingPrimitives.xs),
               Text(
                 DateFormat('MMM d · HH:mm').format(date),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -549,14 +561,14 @@ class _TagsRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: tags.length,
-        separatorBuilder: (_, __) => const Gap(AppSpacing.xs),
+        separatorBuilder: (_, __) => const Gap(SpacingPrimitives.xs),
         itemBuilder: (_, i) {
           final tag = tags.elementAt(i);
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: SpacingPrimitives.md),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
               border: Border.all(color: color.withValues(alpha: 0.3), width: 1.0),
             ),
             alignment: Alignment.center,
@@ -569,6 +581,63 @@ class _TagsRow extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Two-zone pattern renderer: full opacity in the top
+/// [headerHeightFraction] of the canvas, body opacity below, with a 16px
+/// linear feather between the two zones. Patterns are picked from the
+/// bundled [NotiPatternKey] PNG set; null disables the pattern entirely.
+class _PatternedBackdrop extends StatelessWidget {
+  const _PatternedBackdrop({
+    required this.patternKey,
+    required this.bodyOpacity,
+    required this.headerOpacity,
+    required this.headerHeightFraction,
+    required this.child,
+  });
+
+  final NotiPatternKey? patternKey;
+  final double bodyOpacity;
+  final double headerOpacity;
+  final double headerHeightFraction;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (patternKey == null || (bodyOpacity == 0 && headerOpacity == 0)) {
+      return child;
+    }
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ShaderMask(
+            shaderCallback: (rect) => LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: headerOpacity),
+                Colors.black.withValues(alpha: headerOpacity),
+                Colors.black.withValues(alpha: bodyOpacity),
+                Colors.black.withValues(alpha: bodyOpacity),
+              ],
+              stops: [
+                0.0,
+                (headerHeightFraction - 0.04).clamp(0.0, 1.0),
+                (headerHeightFraction + 0.04).clamp(0.0, 1.0),
+                1.0,
+              ],
+            ).createShader(rect),
+            blendMode: BlendMode.dstIn,
+            child: Image.asset(
+              patternKey!.assetPath,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned.fill(child: child),
+      ],
     );
   }
 }

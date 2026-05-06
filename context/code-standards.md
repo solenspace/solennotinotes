@@ -41,8 +41,15 @@ The following must never appear under `lib/`:
 - `package:cloud_firestore`, `package:firebase_*`, `package:supabase_*`, `package:appwrite`, `package:amplify_*`
 - `package:google_sign_in`, `package:firebase_auth`
 - `package:sentry`, `package:firebase_crashlytics`, `package:posthog_flutter`, `package:mixpanel_flutter`
+- `package:provider` — banned post-Spec-10; the last consumer (`ThemeProvider`) was migrated to `ThemeCubit`. `flutter_bloc` re-exports the `RepositoryProvider` we still rely on.
 
 Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.md): a fast `scripts/check-offline.sh` grep run at pre-commit, and the `forbidden_import` rule in `tools/forbidden_imports_lint/` fired by `flutter analyze`. Both read from `scripts/.forbidden-imports.txt`.
+
+## Styling
+
+All UI reads colors / type / motion / shape / elevation / spacing from `context.tokens.<category>.<role>`. Hardcoded `Color(0x…)` literals, magic radii, magic durations, and hand-rolled `TextStyle` outside `lib/theme/tokens/` are defects. The token system layers are: primitives (private to `lib/theme/tokens/`) → semantics (`ThemeExtension<T>` per category — colors, text, motion, shape, elevation, spacing, patternBackdrop, signature) → access (`context.tokens.<category>.<role>`). Per-note overlays (Spec 11) clone and patch the active `NotiColors` / `NotiPatternBackdrop` / `NotiSignature` extensions; no other extensions are ever overridden.
+
+Curated palette data (per-note background swatches, gradient presets, starter palettes) lives in `lib/theme/curated_palettes.dart`; that file is the only path outside `lib/theme/tokens/` allowed to construct raw `Color(0x…)` literals. The `no_hardcoded_color` `custom_lint` rule (in `tools/forbidden_imports_lint/`) enforces this at WARNING severity; `lib/models/` and `test/` are exempt because they construct `Color` from persisted ints / fixtures, not from hex literals.
 
 ## flutter_bloc usage
 

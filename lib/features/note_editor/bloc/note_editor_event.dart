@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/theme/noti_pattern_key.dart';
+import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
 
 sealed class NoteEditorEvent extends Equatable {
   const NoteEditorEvent();
@@ -70,6 +72,48 @@ final class ImageRemoved extends NoteEditorEvent {
 
 // — Theme / appearance —
 
+/// Picks a curated or custom palette for the active note. Carries the full
+/// [NotiThemeOverlay] so the handler can write surface, surfaceVariant,
+/// accent, and onAccent in one shot.
+final class OverlayPaletteChanged extends NoteEditorEvent {
+  const OverlayPaletteChanged(this.overlay);
+  final NotiThemeOverlay overlay;
+  @override
+  List<Object?> get props => [overlay];
+}
+
+/// Sets or clears the per-note pattern. Null = pattern removed.
+final class OverlayPatternChanged extends NoteEditorEvent {
+  const OverlayPatternChanged(this.patternKey);
+  final NotiPatternKey? patternKey;
+  @override
+  List<Object?> get props => [patternKey];
+}
+
+/// Updates the per-note signature accent glyph. Null = remove glyph.
+/// The glyph is stored in [NoteEditorState.accentOverride] until Spec 04b
+/// promotes it to a first-class column on [Note].
+final class OverlayAccentChanged extends NoteEditorEvent {
+  const OverlayAccentChanged(this.accent);
+  final String? accent;
+  @override
+  List<Object?> get props => [accent];
+}
+
+/// Resets the active note's overlay to the user's [NotiIdentity] default.
+/// Long-press on the editor toolbar's paintbrush dispatches this.
+final class OverlayResetToIdentityDefault extends NoteEditorEvent {
+  const OverlayResetToIdentityDefault();
+}
+
+/// Replaces a received note's overlay with the current user's identity
+/// overlay and clears [NotiThemeOverlay.fromIdentityId]. Wired to the
+/// "Convert to mine" item in the from-sender chip's popup menu.
+final class OverlayConvertToMine extends NoteEditorEvent {
+  const OverlayConvertToMine();
+}
+
+@Deprecated('use OverlayPaletteChanged; remove in spec 04b')
 final class BackgroundColorChanged extends NoteEditorEvent {
   const BackgroundColorChanged(this.color);
   final Color color;
@@ -77,6 +121,7 @@ final class BackgroundColorChanged extends NoteEditorEvent {
   List<Object?> get props => [color];
 }
 
+@Deprecated('use OverlayPatternChanged; remove in spec 04b')
 final class PatternImageSet extends NoteEditorEvent {
   const PatternImageSet(this.patternKey);
   final String patternKey;
@@ -84,10 +129,12 @@ final class PatternImageSet extends NoteEditorEvent {
   List<Object?> get props => [patternKey];
 }
 
+@Deprecated('use OverlayPatternChanged with null patternKey; remove in spec 04b')
 final class PatternImageRemoved extends NoteEditorEvent {
   const PatternImageRemoved();
 }
 
+@Deprecated('use OverlayPaletteChanged; remove in spec 04b')
 final class FontColorChanged extends NoteEditorEvent {
   const FontColorChanged(this.color);
   final Color color;
@@ -102,6 +149,7 @@ final class DisplayModeChanged extends NoteEditorEvent {
   List<Object?> get props => [mode];
 }
 
+@Deprecated('use OverlayPaletteChanged; remove in spec 04b')
 final class GradientChanged extends NoteEditorEvent {
   const GradientChanged(this.gradient);
   final LinearGradient gradient;
@@ -109,6 +157,7 @@ final class GradientChanged extends NoteEditorEvent {
   List<Object?> get props => [gradient];
 }
 
+@Deprecated('use OverlayPaletteChanged; remove in spec 04b')
 final class GradientToggled extends NoteEditorEvent {
   const GradientToggled();
 }
