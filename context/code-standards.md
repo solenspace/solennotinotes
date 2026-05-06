@@ -45,6 +45,13 @@ The following must never appear under `lib/`:
 
 Two gates enforce this — see [Spec 02](../specs/02-offline-invariant-ci-gate.md): a fast `scripts/check-offline.sh` grep run at pre-commit, and the `forbidden_import` rule in `tools/forbidden_imports_lint/` fired by `flutter analyze`. Both read from `scripts/.forbidden-imports.txt`.
 
+### Forbidden imports (hygiene)
+
+The following imports are also forbidden under `lib/` for hygiene reasons (not enforced by `scripts/check-offline.sh` or `forbidden_import` because they are not network-related):
+
+- `package:permission_handler` — go through `PermissionsService` (`lib/services/permissions/`) instead. The wrapper is the sole gate; consumers receive a typed `PermissionResult`. Established by [Spec 12](../specs/12-permissions-service.md).
+- `package:flutter_local_notifications` (raw) — go through `LocalNotificationService` (`lib/services/notifications/`). Instance-ification of that service is tracked in open question 11.
+
 ## Styling
 
 All UI reads colors / type / motion / shape / elevation / spacing from `context.tokens.<category>.<role>`. Hardcoded `Color(0x…)` literals, magic radii, magic durations, and hand-rolled `TextStyle` outside `lib/theme/tokens/` are defects. The token system layers are: primitives (private to `lib/theme/tokens/`) → semantics (`ThemeExtension<T>` per category — colors, text, motion, shape, elevation, spacing, patternBackdrop, signature) → access (`context.tokens.<category>.<role>`). Per-note overlays (Spec 11) clone and patch the active `NotiColors` / `NotiPatternBackdrop` / `NotiSignature` extensions; no other extensions are ever overridden.
