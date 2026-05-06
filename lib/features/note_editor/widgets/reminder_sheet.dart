@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
+import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
@@ -28,11 +28,10 @@ class _ReminderSheetState extends State<ReminderSheet> {
   DateTime _pendingDate = DateTime.now().add(const Duration(hours: 1));
   final BoardDateTimeController _controller = BoardDateTimeController();
 
-  Future<void> _ensurePermission() async {
-    final status = await Permission.notification.status;
-    if (status.isDenied) {
-      await Permission.notification.request();
-    }
+  Future<void> _ensurePermission(PermissionsService service) async {
+    final status = await service.notificationsStatus();
+    if (status.isUsable) return;
+    await service.requestNotifications();
   }
 
   Future<void> _setReminder(DateTime date) async {
@@ -42,7 +41,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
       );
       return;
     }
-    await _ensurePermission();
+    await _ensurePermission(context.read<PermissionsService>());
     if (!mounted) return;
 
     final bloc = context.read<NoteEditorBloc>();
