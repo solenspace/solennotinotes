@@ -1,4 +1,9 @@
 # File-path allowlist for offline-invariant exemptions.
 # One file path per line, relative to repo root.
 # Each entry MUST include a comment with the spec number that authorized it.
-# Empty at bootstrap; Spec 19 (llm-model-download) will add the first entry.
+
+# Spec 15: speech_to_text is allowed only inside the STT service wrapper.
+# The plugin's onDevice flag is enforced inside the wrapper; consumers
+# elsewhere import lib/services/speech/stt_service.dart instead.
+lib/services/speech/stt_service.dart
+lib/services/speech/stt_capability_probe.dart

@@ -23,4 +23,12 @@ abstract class SettingsRepository {
 
   /// Persists the settings. Overwrites any existing record.
   Future<void> save(Settings settings);
+
+  /// Whether the device passed the cold-start STT capability probe (Spec 15).
+  /// Cached separately from [Settings] because it is a device-capability fact,
+  /// not a user-chrome preference; defaults to `false` so the dictation UI
+  /// hides itself when the probe has not run yet.
+  Future<bool> getSttOfflineCapable();
+
+  Future<void> setSttOfflineCapable(bool value);
 }
