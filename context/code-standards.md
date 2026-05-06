@@ -51,6 +51,7 @@ The following imports are also forbidden under `lib/` for hygiene reasons (not e
 
 - `package:permission_handler` — go through `PermissionsService` (`lib/services/permissions/`) instead. The wrapper is the sole gate; consumers receive a typed `PermissionResult`. Established by [Spec 12](../specs/12-permissions-service.md).
 - `package:flutter_local_notifications` (raw) — go through `LocalNotificationService` (`lib/services/notifications/`). Instance-ification of that service is tracked in open question 11.
+- `package:record` and `package:audioplayers` — direct imports are confined to `lib/services/audio/`, `lib/repositories/audio/`, and `lib/features/note_editor/widgets/audio_*.dart`. Other consumers go through `AudioRepository` (capture lifecycle) and `AudioBlockView` (playback). Established by [Spec 13](../specs/13-audio-capture.md).
 
 ## Styling
 

@@ -14,6 +14,8 @@ import 'package:noti_notes_app/features/settings/cubit/theme_state.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
+import 'package:noti_notes_app/repositories/audio/audio_repository.dart';
+import 'package:noti_notes_app/repositories/audio/file_system_audio_repository.dart';
 import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
@@ -33,6 +35,7 @@ void main() async {
   final notesRepository = HiveNotesRepository();
   final notiIdentityRepository = HiveNotiIdentityRepository();
   final settingsRepository = HiveSettingsRepository();
+  final audioRepository = FileSystemAudioRepository();
   await notesRepository.init();
   await notiIdentityRepository.init();
   // Settings init runs AFTER identity init so the one-shot
@@ -45,6 +48,7 @@ void main() async {
       notesRepository: notesRepository,
       notiIdentityRepository: notiIdentityRepository,
       settingsRepository: settingsRepository,
+      audioRepository: audioRepository,
     ),
   );
 }
@@ -55,11 +59,13 @@ class MyApp extends StatefulWidget {
     required this.notesRepository,
     required this.notiIdentityRepository,
     required this.settingsRepository,
+    required this.audioRepository,
   });
 
   final NotesRepository notesRepository;
   final NotiIdentityRepository notiIdentityRepository;
   final SettingsRepository settingsRepository;
+  final AudioRepository audioRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -96,6 +102,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           value: widget.notiIdentityRepository,
         ),
         RepositoryProvider<SettingsRepository>.value(value: widget.settingsRepository),
+        RepositoryProvider<AudioRepository>.value(value: widget.audioRepository),
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),
