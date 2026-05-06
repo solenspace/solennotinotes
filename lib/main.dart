@@ -21,6 +21,7 @@ import 'package:noti_notes_app/repositories/noti_identity/noti_identity_reposito
 import 'package:noti_notes_app/repositories/settings/hive_settings_repository.dart';
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
+import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +96,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           value: widget.notiIdentityRepository,
         ),
         RepositoryProvider<SettingsRepository>.value(value: widget.settingsRepository),
+        RepositoryProvider<PermissionsService>.value(
+          value: const PluginPermissionsService(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [

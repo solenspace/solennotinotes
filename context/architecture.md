@@ -13,7 +13,7 @@
 | File storage | `path_provider` | App documents dir for blobs (audio + image) |
 | Localization | `intl` 0.20 | ARB-driven; English-only at MVP |
 | Reminders | `flutter_local_notifications` + `timezone` + `flutter_timezone` | Local OS notifications (no push server) |
-| Permissions | `permission_handler` | Runtime requests at point of use |
+| Permissions | `permission_handler` 12.x via `PermissionsService` wrapper | Point-of-use permission orchestration; consumers receive a typed `PermissionResult`, never raw plugin output |
 | Image capture | `image_picker` + `flutter_image_compress` | Camera/gallery + size cap |
 | Audio capture | TBD per spec | Voice notes (offline-only) |
 | P2P transport | `flutter_nearby_connections` | Apple Multipeer + Android Nearby Connections; messages, bytes, files |
@@ -89,7 +89,7 @@ Per-note overlay fields are currently scattered across `Note.{colorBackground, f
 6. **BLoCs do not import widgets. Widgets do not import repositories.** Dependency direction is strict.
 7. **Audio + image blobs live on disk.** Hive stores file paths and metadata only — never the bytes.
 8. **Every async stream and future has explicit cancellation.** `StreamSubscription.cancel()` in `close`/`dispose`; AI runs cancellable.
-9. **Permissions requested at point of use** (mic when starting recording; camera when opening capture; BLE when opening share). Not at startup.
+9. **Permissions requested at point of use** (mic when starting recording; camera when opening capture; BLE when opening share). Not at startup. Every consumer goes through `PermissionsService` (`lib/services/permissions/`); direct `package:permission_handler` imports under `lib/` are forbidden by code review (Spec 12).
 10. **AI model files live in app support directory**, downloaded on first AI use, never bundled in the IPA/APK.
 11. **P2P payloads size-capped to 50 MB** and chunked. Receiver shows progress; either side can cancel.
 12. **Sender's NotiIdentity ships with every shared note** so the receiver renders it faithfully.
