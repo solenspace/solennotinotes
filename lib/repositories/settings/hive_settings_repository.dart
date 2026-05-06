@@ -30,6 +30,13 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _ttsVoiceKey = 'ttsVoice';
   static const String _ttsRateKey = 'ttsRate';
   static const String _ttsPitchKey = 'ttsPitch';
+  static const String _aiTierKey = 'aiTier';
+  static const String _ramBytesKey = 'ramBytes';
+  static const String _osMajorVersionKey = 'osMajorVersion';
+  static const String _archIsArm64Key = 'archIsArm64';
+  static const String _hasMetalKey = 'hasMetal';
+  static const String _hasNeuralEngineKey = 'hasNeuralEngine';
+  static const String _lastProbedOsVersionKey = 'lastProbedOsVersion';
 
   Box<dynamic>? _box;
   StreamController<Settings>? _controller;
@@ -136,6 +143,118 @@ class HiveSettingsRepository implements SettingsRepository {
   Future<void> setTtsPitch(double value) async {
     final box = _openBox;
     await box.put(_ttsPitchKey, value);
+  }
+
+  @override
+  Future<String?> getAiTier() async {
+    final box = _openBox;
+    return box.get(_aiTierKey) as String?;
+  }
+
+  @override
+  Future<void> setAiTier(String? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_aiTierKey);
+    } else {
+      await box.put(_aiTierKey, value);
+    }
+  }
+
+  @override
+  Future<int?> getRamBytes() async {
+    final box = _openBox;
+    return box.get(_ramBytesKey) as int?;
+  }
+
+  @override
+  Future<void> setRamBytes(int? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_ramBytesKey);
+    } else {
+      await box.put(_ramBytesKey, value);
+    }
+  }
+
+  @override
+  Future<int?> getOsMajorVersion() async {
+    final box = _openBox;
+    return box.get(_osMajorVersionKey) as int?;
+  }
+
+  @override
+  Future<void> setOsMajorVersion(int? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_osMajorVersionKey);
+    } else {
+      await box.put(_osMajorVersionKey, value);
+    }
+  }
+
+  @override
+  Future<bool?> getArchIsArm64() async {
+    final box = _openBox;
+    return box.get(_archIsArm64Key) as bool?;
+  }
+
+  @override
+  Future<void> setArchIsArm64(bool? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_archIsArm64Key);
+    } else {
+      await box.put(_archIsArm64Key, value);
+    }
+  }
+
+  @override
+  Future<bool?> getHasMetal() async {
+    final box = _openBox;
+    return box.get(_hasMetalKey) as bool?;
+  }
+
+  @override
+  Future<void> setHasMetal(bool? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_hasMetalKey);
+    } else {
+      await box.put(_hasMetalKey, value);
+    }
+  }
+
+  @override
+  Future<bool?> getHasNeuralEngine() async {
+    final box = _openBox;
+    return box.get(_hasNeuralEngineKey) as bool?;
+  }
+
+  @override
+  Future<void> setHasNeuralEngine(bool? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_hasNeuralEngineKey);
+    } else {
+      await box.put(_hasNeuralEngineKey, value);
+    }
+  }
+
+  @override
+  Future<String?> getLastProbedOsVersion() async {
+    final box = _openBox;
+    return box.get(_lastProbedOsVersionKey) as String?;
+  }
+
+  @override
+  Future<void> setLastProbedOsVersion(String? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_lastProbedOsVersionKey);
+    } else {
+      await box.put(_lastProbedOsVersionKey, value);
+    }
   }
 
   Future<void> _migrateLegacyAppColor(
