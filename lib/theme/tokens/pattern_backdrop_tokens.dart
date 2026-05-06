@@ -15,9 +15,15 @@ class NotiPatternBackdrop extends ThemeExtension<NotiPatternBackdrop> {
     required double bodyOpacity,
     required double headerOpacity,
     required double headerHeightFraction,
-  })  : bodyOpacity = bodyOpacity.clamp(0.0, 1.0),
+  })  : bodyOpacity = bodyOpacity.clamp(0.0, kMaxBodyOpacity),
         headerOpacity = headerOpacity.clamp(0.0, 1.0),
         headerHeightFraction = headerHeightFraction.clamp(0.0, 1.0);
+
+  /// Hard ceiling on body-text pattern opacity. Spec 11 §3.2 readability
+  /// guardrail: above 18% the pattern starts interfering with body copy
+  /// even on AA-validated palettes. The header band may go full opacity
+  /// because no body text sits inside it.
+  static const double kMaxBodyOpacity = 0.18;
 
   /// Persisted key on `NotiIdentity.signaturePatternKey` / per-note
   /// equivalent. Null = no pattern.

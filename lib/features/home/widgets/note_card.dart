@@ -6,8 +6,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
+import 'package:noti_notes_app/features/home/widgets/note_overlay_dot.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
@@ -115,15 +117,22 @@ class _NoteCardState extends State<NoteCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (note.isPinned)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Icon(
-                    Icons.push_pin,
-                    size: 14,
-                    color: textColor.withValues(alpha: 0.7),
-                  ),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  NoteOverlayDot(overlay: note.toOverlay()),
+                  if (note.isPinned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Icon(
+                        Icons.push_pin,
+                        size: 14,
+                        color: textColor.withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
               if (imageBlocks.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(RadiusPrimitives.sm),

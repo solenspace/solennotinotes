@@ -71,6 +71,9 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
         └── audio/<asset_uuid>.m4a      ← capped at 10 MB; truncation flag in Hive metadata
 ```
 
+### Per-note overlay
+Per-note overlay fields are currently scattered across `Note.{colorBackground, fontColor, patternImage, gradient, hasGradient}`. Spec 11's `Note.toOverlay()` extension synthesizes a `NotiThemeOverlay` from those fields; every editor render goes through it, and every overlay event handler writes back to the legacy fields for Hive-storage compatibility. Spec 04b retires the scattered fields in favor of a single `Note.overlay: NotiThemeOverlay` value with `signatureAccent`, `signatureTagline`, and `fromIdentityId` promoted to first-class columns.
+
 ### Share payload
 - A zipped folder containing `manifest.json` (note + assets index + sender NotiIdentity) plus the asset files.
 - Payload signed by the sender's noti keypair so the receiver can attribute it.
@@ -101,6 +104,9 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
 
 ### Receive a shared note
 `SharePeerService` (P2P transport) emits `IncomingPayload(bytes)` → `ShareInboxBloc` decodes manifest → validates signature → writes assets to disk → inserts a record into `received_inbox` Hive box → UI reflects the new inbox count → user opens preview → on accept, `ShareInboxBloc` calls `NoteRepository.importFromShare(...)` to merge.
+
+### Open editor → render with the note's overlay
+Route push mounts `NoteEditorBloc` → BLoC emits `ready` with the `Note` → editor `BlocBuilder` calls `note.toOverlay()` and patches `NotiColors` / `NotiPatternBackdrop` / `NotiSignature` via `overlay.applyTo*(...)` → wraps the body subtree in `AnimatedTheme(data: themed)` → `AppBar`, `Scaffold`, status bar, and any sheets opened from inside the route inherit the overlay → user pops the route → `AnimatedTheme` interpolates back to the base theme over `tokens.motion.pattern` (~720 ms).
 
 ### On-device AI summarize
 `NoteScreen` → `AiAssistBloc` checks `DeviceCapabilityService.canRunSmallLlm()` → if true, calls `LlmService.summarize(noteText)` → service streams tokens from local llama.cpp runtime → BLoC emits `AssistResultStreaming(token)` → screen appends to a draft → on completion the user accepts/rejects.
