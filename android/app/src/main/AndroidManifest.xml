@@ -29,6 +29,19 @@
         tools:targetApi="33"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+
+    <!--
+      Spec 15: Android 11+ package-visibility filter for the offline speech
+      recognition service. Without this query, SpeechRecognizer cannot
+      resolve the on-device recognizer even when the user has installed an
+      offline language pack.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+    </queries>
+
    <application
         android:label="Noti"
         android:name="${applicationName}"

@@ -8,6 +8,7 @@ class ForbiddenImportsRule extends DartLintRule {
   const ForbiddenImportsRule() : super(code: _code);
 
   static const _patternsRelativePath = 'scripts/.forbidden-imports.txt';
+  static const _allowlistRelativePath = 'scripts/.offline-allowlist';
 
   static const _code = LintCode(
     name: 'forbidden_import',
@@ -23,8 +24,19 @@ class ForbiddenImportsRule extends DartLintRule {
     ErrorReporter reporter,
     CustomLintContext context,
   ) {
-    final patterns = _loadPatterns(resolver.path);
+    final patternsFile = _findFileUp(resolver.path, _patternsRelativePath);
+    if (patternsFile == null) return;
+    final patterns = _loadPatternsFromFile(patternsFile);
     if (patterns.isEmpty) return;
+
+    final repoRoot = patternsFile.parent.parent.path;
+    final relativePath = _toRepoRelative(resolver.path, repoRoot);
+
+    // Spec 15 — per-path carve-outs. When the analyzed file is on the
+    // offline-allowlist, the rule short-circuits. The shell-level
+    // scripts/check-offline.sh honors the same file via grep --exclude.
+    final allowlist = _loadAllowlist(repoRoot);
+    if (relativePath != null && allowlist.contains(relativePath)) return;
 
     context.registry.addImportDirective((node) {
       final uri = node.uri.stringValue;
@@ -38,13 +50,12 @@ class ForbiddenImportsRule extends DartLintRule {
     });
   }
 
-  static final Map<String, List<String>> _cache = <String, List<String>>{};
+  static final Map<String, List<String>> _patternsCache = <String, List<String>>{};
+  static final Map<String, Set<String>> _allowlistCache = <String, Set<String>>{};
 
-  static List<String> _loadPatterns(String analyzedFilePath) {
-    final patternsFile = _findPatternsFile(analyzedFilePath);
-    if (patternsFile == null) return const [];
-    return _cache.putIfAbsent(patternsFile.path, () {
-      return patternsFile
+  static List<String> _loadPatternsFromFile(File file) {
+    return _patternsCache.putIfAbsent(file.path, () {
+      return file
           .readAsLinesSync()
           .map((l) => l.trim())
           .where((l) => l.isNotEmpty && !l.startsWith('#'))
@@ -52,14 +63,32 @@ class ForbiddenImportsRule extends DartLintRule {
     });
   }
 
-  static File? _findPatternsFile(String startFilePath) {
+  static Set<String> _loadAllowlist(String repoRoot) {
+    return _allowlistCache.putIfAbsent(repoRoot, () {
+      final file = File('$repoRoot/$_allowlistRelativePath');
+      if (!file.existsSync()) return const <String>{};
+      return file
+          .readAsLinesSync()
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty && !l.startsWith('#'))
+          .toSet();
+    });
+  }
+
+  static File? _findFileUp(String startFilePath, String relativePath) {
     Directory dir = File(startFilePath).parent;
     while (true) {
-      final candidate = File('${dir.path}/$_patternsRelativePath');
+      final candidate = File('${dir.path}/$relativePath');
       if (candidate.existsSync()) return candidate;
       final parent = dir.parent;
       if (parent.path == dir.path) return null;
       dir = parent;
     }
+  }
+
+  static String? _toRepoRelative(String absolutePath, String repoRoot) {
+    final root = repoRoot.endsWith('/') ? repoRoot : '$repoRoot/';
+    if (!absolutePath.startsWith(root)) return null;
+    return absolutePath.substring(root.length);
   }
 }

@@ -21,12 +21,14 @@ if [[ -z "$PATTERNS" ]]; then
   exit 2
 fi
 
-# Build allowlist exclude args.
-EXCLUDE_ARGS=()
+# Load allowlist as repo-relative paths into an array. Each entry exempts
+# the matching `lib/...` or `test/...` file from the forbidden-imports
+# check. Path-based — basename collisions are not allowed.
+ALLOWLIST_PATHS=()
 if [[ -f "$ALLOWLIST_FILE" ]]; then
   while IFS= read -r line; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-    EXCLUDE_ARGS+=("--exclude=$line")
+    ALLOWLIST_PATHS+=("$line")
   done < "$ALLOWLIST_FILE"
 fi
 
@@ -34,8 +36,30 @@ fi
 # `^\s*import\s+['"]` ensures we match real import directives, not comments.
 HITS="$(grep -RnE "^[[:space:]]*import[[:space:]]+['\"]($PATTERNS)" \
         --include='*.dart' \
-        ${EXCLUDE_ARGS[@]+"${EXCLUDE_ARGS[@]}"} \
         "${REPO_ROOT}/lib" "${REPO_ROOT}/test" 2>/dev/null || true)"
+
+# Post-filter against the allowlist. `grep --exclude` matches against the
+# basename only, so it cannot honor path-distinguishing entries like
+# `lib/services/speech/stt_service.dart`; doing the filter in shell here
+# matches the path-based semantics that the `forbidden_imports_lint`
+# custom-lint rule applies on the IDE side. Resolves open question 10.
+if [[ -n "$HITS" && ${#ALLOWLIST_PATHS[@]} -gt 0 ]]; then
+  FILTERED=""
+  while IFS= read -r hit; do
+    [[ -z "$hit" ]] && continue
+    skip=0
+    for entry in "${ALLOWLIST_PATHS[@]}"; do
+      if [[ "$hit" == "${REPO_ROOT}/${entry}:"* ]]; then
+        skip=1
+        break
+      fi
+    done
+    if [[ $skip -eq 0 ]]; then
+      FILTERED+="${hit}"$'\n'
+    fi
+  done <<< "$HITS"
+  HITS="${FILTERED%$'\n'}"
+fi
 
 if [[ -n "$HITS" ]]; then
   echo "Forbidden imports found (offline invariant 1):" >&2

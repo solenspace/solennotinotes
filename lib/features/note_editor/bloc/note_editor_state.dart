@@ -15,6 +15,10 @@ class NoteEditorState extends Equatable {
     this.currentAmplitude,
     this.committedAudioBlock,
     this.audioPermissionExplainerRequested = false,
+    this.isDictating = false,
+    this.dictationDraft,
+    this.committedDictationText,
+    this.dictationUnavailableExplainerRequested = false,
   });
 
   final NoteEditorStatus status;
@@ -47,7 +51,28 @@ class NoteEditorState extends Equatable {
   /// One-shot signal: the OS has put microphone permission out of reach
   /// (`permanentlyDenied` / `restricted`). The screen shows the
   /// `PermissionExplainerSheet` and the next emission resets the flag.
+  /// Shared by audio capture and STT — both use the same mic permission.
   final bool audioPermissionExplainerRequested;
+
+  /// True while the speech recognizer is listening. Drives the dictation
+  /// button's active-state visual and the in-block italic preview.
+  final bool isDictating;
+
+  /// Transient italic preview of the current partial recognition. `null`
+  /// when not dictating; cleared via `clearDictationDraft: true` on stop /
+  /// cancel.
+  final String? dictationDraft;
+
+  /// One-shot signal: a non-empty final transcription ready to commit. The
+  /// screen consumes it via `BlocListener`, appends to the last text block
+  /// (or creates one), and dispatches `BlocksReplaced` to persist. Reset to
+  /// `null` on the next emission. Mirrors [committedAudioBlock].
+  final String? committedDictationText;
+
+  /// One-shot signal: the device cannot run STT fully offline (capability
+  /// probe returned false). The screen shows an explainer sheet and the
+  /// next emission resets the flag.
+  final bool dictationUnavailableExplainerRequested;
 
   NoteEditorState copyWith({
     NoteEditorStatus? status,
@@ -62,6 +87,11 @@ class NoteEditorState extends Equatable {
     bool clearAmplitude = false,
     AudioBlock? committedAudioBlock,
     bool? audioPermissionExplainerRequested,
+    bool? isDictating,
+    String? dictationDraft,
+    bool clearDictationDraft = false,
+    String? committedDictationText,
+    bool? dictationUnavailableExplainerRequested,
   }) {
     return NoteEditorState(
       status: status ?? this.status,
@@ -75,6 +105,11 @@ class NoteEditorState extends Equatable {
       // explicitly sets it. Mirrors the [popRequested] pattern.
       committedAudioBlock: committedAudioBlock,
       audioPermissionExplainerRequested: audioPermissionExplainerRequested ?? false,
+      isDictating: isDictating ?? this.isDictating,
+      dictationDraft: clearDictationDraft ? null : (dictationDraft ?? this.dictationDraft),
+      // One-shot: same pattern as [committedAudioBlock].
+      committedDictationText: committedDictationText,
+      dictationUnavailableExplainerRequested: dictationUnavailableExplainerRequested ?? false,
     );
   }
 
@@ -89,5 +124,9 @@ class NoteEditorState extends Equatable {
         currentAmplitude,
         committedAudioBlock,
         audioPermissionExplainerRequested,
+        isDictating,
+        dictationDraft,
+        committedDictationText,
+        dictationUnavailableExplainerRequested,
       ];
 }

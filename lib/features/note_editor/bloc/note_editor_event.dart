@@ -248,6 +248,52 @@ final class AudioAmplitudeSampled extends NoteEditorEvent {
   List<Object?> get props => [amplitude];
 }
 
+// — Dictation (STT) —
+
+/// Long-press start (or tap-to-toggle on) on the editor's dictation button.
+/// The bloc hard-gates on `SttService.isOfflineCapable` and the same
+/// microphone permission as audio capture; on success it subscribes to
+/// the recognizer's [SttRecognitionEvent] stream and flips
+/// `state.isDictating`.
+final class DictationStarted extends NoteEditorEvent {
+  const DictationStarted();
+}
+
+/// Long-press release (or second tap) on the dictation button. Stops the
+/// recognizer; the recognizer emits one trailing final result, routed to
+/// [DictationFinalEmitted] by the bloc's stream listener.
+final class DictationStopped extends NoteEditorEvent {
+  const DictationStopped();
+}
+
+/// Slide-to-cancel during a hold-to-dictate gesture. Cancels the recognizer
+/// and discards any partial draft without committing.
+final class DictationCancelled extends NoteEditorEvent {
+  const DictationCancelled();
+}
+
+/// Internal: bridges a streaming [SttPartialResult] into the bloc's event
+/// loop. Same synthetic-event pattern as [AudioAmplitudeSampled] —
+/// dispatching from the listener lets the bloc emit through its standard
+/// handler path instead of capturing a closed [Emitter].
+final class DictationPartialEmitted extends NoteEditorEvent {
+  const DictationPartialEmitted(this.text);
+  final String text;
+  @override
+  List<Object?> get props => [text];
+}
+
+/// Internal: bridges the terminal [SttFinalResult] into the bloc's event
+/// loop. The bloc emits the one-shot `committedDictationText` signal that
+/// the screen consumes to mutate its block list.
+final class DictationFinalEmitted extends NoteEditorEvent {
+  const DictationFinalEmitted({required this.text, required this.confidence});
+  final String text;
+  final double confidence;
+  @override
+  List<Object?> get props => [text, confidence];
+}
+
 // — Pin / delete —
 
 final class PinToggled extends NoteEditorEvent {
