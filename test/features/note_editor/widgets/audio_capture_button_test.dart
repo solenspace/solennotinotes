@@ -14,6 +14,8 @@ import '../../../repositories/audio/fake_audio_repository.dart';
 import '../../../repositories/noti_identity/fake_noti_identity_repository.dart';
 import '../../../repositories/notes/fake_notes_repository.dart';
 import '../../../services/permissions/fake_permissions_service.dart';
+import '../../../services/speech/fake_stt_service.dart';
+import '../../../services/speech/fake_tts_service.dart';
 
 // Detailed gesture-handler behavior (long-press start/end/cancel/move,
 // permission decision tree, capture-stop block emission, file deletion)
@@ -58,6 +60,8 @@ Future<NoteEditorBloc> _readyBloc({
     identityRepository: identity,
     audio: audio,
     permissions: permissions,
+    stt: FakeSttService(),
+    tts: FakeTtsService(),
     cancelNotification: (_) {},
   );
   bloc.add(EditorOpened(noteId: seed.id));

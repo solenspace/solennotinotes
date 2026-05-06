@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/services/speech/tts_models.dart';
 
 enum NoteEditorStatus { initial, loading, ready, notFound, saving, error }
 
@@ -19,6 +20,10 @@ class NoteEditorState extends Equatable {
     this.dictationDraft,
     this.committedDictationText,
     this.dictationUnavailableExplainerRequested = false,
+    this.isReadingAloud = false,
+    this.isReadAloudPaused = false,
+    this.currentReadBlockIndex,
+    this.readProgress,
   });
 
   final NoteEditorStatus status;
@@ -74,6 +79,27 @@ class NoteEditorState extends Equatable {
   /// next emission resets the flag.
   final bool dictationUnavailableExplainerRequested;
 
+  /// True while the synthesizer is reading the note (or paused mid-read —
+  /// pause does not exit the read-aloud session). Drives the floating
+  /// overlay's visibility and the toolbar button's stop-icon state.
+  final bool isReadingAloud;
+
+  /// True while the user has paused an active read-aloud session. The
+  /// overlay swaps the pause button for a resume button. Independent of
+  /// [isReadingAloud] so resume can dispatch [ReadAloudResumed] cleanly.
+  final bool isReadAloudPaused;
+
+  /// Index into `note.blocks` of the block currently being read. Used by
+  /// the overlay to show "Reading block N of M". `null` when no session
+  /// is active.
+  final int? currentReadBlockIndex;
+
+  /// Latest per-word progress sample from the synthesizer. The overlay
+  /// uses [TtsProgress.start]/[TtsProgress.end] to slice the rendered
+  /// text into before/active/after spans. `null` between blocks and when
+  /// no session is active; cleared via `clearReadProgress: true`.
+  final TtsProgress? readProgress;
+
   NoteEditorState copyWith({
     NoteEditorStatus? status,
     Note? note,
@@ -92,6 +118,12 @@ class NoteEditorState extends Equatable {
     bool clearDictationDraft = false,
     String? committedDictationText,
     bool? dictationUnavailableExplainerRequested,
+    bool? isReadingAloud,
+    bool? isReadAloudPaused,
+    int? currentReadBlockIndex,
+    bool clearCurrentReadBlockIndex = false,
+    TtsProgress? readProgress,
+    bool clearReadProgress = false,
   }) {
     return NoteEditorState(
       status: status ?? this.status,
@@ -110,6 +142,11 @@ class NoteEditorState extends Equatable {
       // One-shot: same pattern as [committedAudioBlock].
       committedDictationText: committedDictationText,
       dictationUnavailableExplainerRequested: dictationUnavailableExplainerRequested ?? false,
+      isReadingAloud: isReadingAloud ?? this.isReadingAloud,
+      isReadAloudPaused: isReadAloudPaused ?? this.isReadAloudPaused,
+      currentReadBlockIndex:
+          clearCurrentReadBlockIndex ? null : (currentReadBlockIndex ?? this.currentReadBlockIndex),
+      readProgress: clearReadProgress ? null : (readProgress ?? this.readProgress),
     );
   }
 
@@ -128,5 +165,9 @@ class NoteEditorState extends Equatable {
         dictationDraft,
         committedDictationText,
         dictationUnavailableExplainerRequested,
+        isReadingAloud,
+        isReadAloudPaused,
+        currentReadBlockIndex,
+        readProgress,
       ];
 }

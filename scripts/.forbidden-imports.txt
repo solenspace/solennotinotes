@@ -53,3 +53,7 @@ package:provider
 # Spec 15: hygiene gate — STT consumers go through SttService.
 # Allowed inside lib/services/speech/ via scripts/.offline-allowlist.
 package:speech_to_text
+
+# Spec 16: hygiene gate — TTS consumers go through TtsService.
+# Allowed inside lib/services/speech/ via scripts/.offline-allowlist.
+package:flutter_tts

@@ -27,6 +27,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _writingFontKey = 'writingFont';
   static const String _legacyAppColorKey = 'appThemeColor';
   static const String _sttOfflineCapableKey = 'sttOfflineCapable';
+  static const String _ttsVoiceKey = 'ttsVoice';
+  static const String _ttsRateKey = 'ttsRate';
+  static const String _ttsPitchKey = 'ttsPitch';
 
   Box<dynamic>? _box;
   StreamController<Settings>? _controller;
@@ -93,6 +96,46 @@ class HiveSettingsRepository implements SettingsRepository {
   Future<void> setSttOfflineCapable(bool value) async {
     final box = _openBox;
     await box.put(_sttOfflineCapableKey, value);
+  }
+
+  @override
+  Future<String?> getTtsVoice() async {
+    final box = _openBox;
+    return box.get(_ttsVoiceKey) as String?;
+  }
+
+  @override
+  Future<void> setTtsVoice(String? value) async {
+    final box = _openBox;
+    if (value == null) {
+      await box.delete(_ttsVoiceKey);
+    } else {
+      await box.put(_ttsVoiceKey, value);
+    }
+  }
+
+  @override
+  Future<double> getTtsRate() async {
+    final box = _openBox;
+    return (box.get(_ttsRateKey, defaultValue: 1.0) as num).toDouble();
+  }
+
+  @override
+  Future<void> setTtsRate(double value) async {
+    final box = _openBox;
+    await box.put(_ttsRateKey, value);
+  }
+
+  @override
+  Future<double> getTtsPitch() async {
+    final box = _openBox;
+    return (box.get(_ttsPitchKey, defaultValue: 1.0) as num).toDouble();
+  }
+
+  @override
+  Future<void> setTtsPitch(double value) async {
+    final box = _openBox;
+    await box.put(_ttsPitchKey, value);
   }
 
   Future<void> _migrateLegacyAppColor(

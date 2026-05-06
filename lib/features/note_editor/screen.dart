@@ -17,6 +17,7 @@ import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/services/speech/stt_service.dart';
+import 'package:noti_notes_app/services/speech/tts_service.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 import 'package:noti_notes_app/widgets/permissions/permission_explainer_sheet.dart';
@@ -34,6 +35,8 @@ import 'widgets/from_sender_chip.dart';
 import 'widgets/image_block.dart';
 import 'widgets/note_app_bar.dart';
 import 'widgets/overlay_picker_sheet.dart';
+import 'widgets/read_aloud_button.dart';
+import 'widgets/read_aloud_overlay.dart';
 import 'widgets/reminder_sheet.dart';
 import 'widgets/tag_sheet.dart';
 import 'widgets/text_block.dart';
@@ -64,6 +67,7 @@ class NoteEditorScreen extends StatelessWidget {
         audio: ctx.read<AudioRepository>(),
         permissions: ctx.read<PermissionsService>(),
         stt: ctx.read<SttService>(),
+        tts: ctx.read<TtsService>(),
       )..add(EditorOpened(noteId: noteId, noteType: noteType)),
       child: _NoteEditorView(noteType: noteType),
     );
@@ -496,13 +500,18 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                               ),
                             ],
                             Gap(tokens.spacing.md),
-                            ..._blocks.map(
-                              (block) => _buildBlock(block, tokens.colors.onSurface),
-                            ),
+                            ..._blocks.asMap().entries.map(
+                                  (entry) => _buildBlock(
+                                    entry.value,
+                                    tokens.colors.onSurface,
+                                    blockIndex: entry.key,
+                                  ),
+                                ),
                             Gap(tokens.spacing.xxxl),
                           ],
                         ),
                       ),
+                      const ReadAloudOverlay(),
                       const _DictationDraftBanner(),
                       EditorToolbar(
                         currentBlockIsChecklist: currentIsChecklist,
@@ -520,6 +529,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                         },
                         audioCaptureButton: const AudioCaptureButton(),
                         dictationButton: const DictationButton(),
+                        readAloudButton: const ReadAloudButton(),
                       ),
                     ],
                   ),
@@ -532,7 +542,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     );
   }
 
-  Widget _buildBlock(EditorBlock block, Color? textColor) {
+  Widget _buildBlock(EditorBlock block, Color? textColor, {required int blockIndex}) {
     return KeyedSubtree(
       key: ValueKey(block.id),
       child: switch (block) {
@@ -542,6 +552,8 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
             onChanged: (_) => _onBlockChanged(),
             onInsertBelow: (text) => _insertTextBlockBelow(block.id, text),
             onDeleteBlock: () => _deleteBlock(block.id),
+            onReadAloud: () =>
+                context.read<NoteEditorBloc>().add(ReadAloudRequested(blockIndex: blockIndex)),
             textColor: textColor,
           ),
         ChecklistBlock() => ChecklistBlockWidget(
@@ -564,6 +576,8 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                 _focusBlock(replacement.id);
               });
             },
+            onReadAloud: () =>
+                context.read<NoteEditorBloc>().add(ReadAloudRequested(blockIndex: blockIndex)),
             textColor: textColor,
           ),
         ImageBlock() => ImageBlockWidget(
