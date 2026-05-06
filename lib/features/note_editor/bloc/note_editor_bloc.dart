@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:characters/characters.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/noti_identity_overlay.dart';
+import 'package:noti_notes_app/repositories/audio/audio_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
+import 'package:noti_notes_app/services/audio/audio_capture_session.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
+import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
@@ -28,10 +33,14 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   NoteEditorBloc({
     required NotesRepository repository,
     required NotiIdentityRepository identityRepository,
+    required AudioRepository audio,
+    required PermissionsService permissions,
     ImagePickerService? imageService,
     CancelNotification? cancelNotification,
   })  : _repository = repository,
         _identityRepository = identityRepository,
+        _audio = audio,
+        _permissions = permissions,
         _imageService = imageService ?? const ImagePickerService(),
         _cancelNotification = cancelNotification ?? LocalNotificationService.cancelNotification,
         super(const NoteEditorState()) {
@@ -68,12 +77,22 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     on<TaskContentUpdatedAtIndex>(_onTaskContentUpdatedAtIndex);
     on<PinToggled>(_onPinToggled);
     on<NoteDeleted>(_onNoteDeleted);
+    on<AudioCaptureRequested>(_onAudioCaptureRequested);
+    on<AudioCaptureStopped>(_onAudioCaptureStopped);
+    on<AudioCaptureCancelled>(_onAudioCaptureCancelled);
+    on<AudioBlockRemoved>(_onAudioBlockRemoved);
+    on<AudioAmplitudeSampled>(_onAudioAmplitudeSampled);
   }
 
   final NotesRepository _repository;
   final NotiIdentityRepository _identityRepository;
+  final AudioRepository _audio;
+  final PermissionsService _permissions;
   final ImagePickerService _imageService;
   final CancelNotification _cancelNotification;
+
+  AudioCaptureSession? _activeAudioSession;
+  StreamSubscription<double>? _amplitudeSub;
 
   Future<void> _onEditorOpened(
     EditorOpened event,
@@ -433,6 +452,125 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     _cancelNotification(notificationIdForNote(note.id));
     await _repository.delete(note.id);
     emit(state.copyWith(popRequested: true));
+  }
+
+  Future<void> _onAudioCaptureRequested(
+    AudioCaptureRequested event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null || _activeAudioSession != null) return;
+
+    final status = await _permissions.microphoneStatus();
+    if (status.isFinalDenial) {
+      emit(state.copyWith(audioPermissionExplainerRequested: true));
+      return;
+    }
+    if (!status.isUsable) {
+      final result = await _permissions.requestMicrophone();
+      if (!result.isUsable) {
+        if (result.isFinalDenial) {
+          emit(state.copyWith(audioPermissionExplainerRequested: true));
+        } else {
+          // Two-emission snackbar pattern: set the message so
+          // `BlocListener<errorMessage>` fires, then clear so the next
+          // denial (same message text) still produces a null→non-null
+          // transition and re-fires the listener.
+          emit(state.copyWith(errorMessage: 'Microphone permission needed to record.'));
+          emit(state.copyWith(clearError: true));
+        }
+        return;
+      }
+    }
+
+    final session = await _audio.startCapture(noteId: note.id);
+    _activeAudioSession = session;
+    emit(state.copyWith(isCapturingAudio: true, currentAmplitude: 0));
+
+    await _amplitudeSub?.cancel();
+    _amplitudeSub = _audio.amplitudeStream(session).listen(
+      (amp) {
+        if (isClosed) return;
+        add(AudioAmplitudeSampled(amp));
+      },
+      // Native audio sessions can be interrupted (incoming call on iOS,
+      // audio focus loss on Android). Treat as cancel — discarding a
+      // partial recording is safer than trying to finalize a possibly
+      // corrupt file. The user can re-tap to record again.
+      onError: (Object _, StackTrace __) {
+        if (!isClosed) add(const AudioCaptureCancelled());
+      },
+      cancelOnError: true,
+    );
+  }
+
+  Future<void> _onAudioAmplitudeSampled(
+    AudioAmplitudeSampled event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (!state.isCapturingAudio) return;
+    emit(state.copyWith(currentAmplitude: event.amplitude));
+  }
+
+  Future<void> _onAudioCaptureStopped(
+    AudioCaptureStopped event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final session = _activeAudioSession;
+    if (session == null) return;
+
+    await _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+
+    final block = await _audio.finalize(session);
+    _activeAudioSession = null;
+
+    // One-shot: the screen consumes [committedAudioBlock] via BlocListener,
+    // appends to its local block list, and dispatches BlocksReplaced —
+    // mirrors the image-block flow. The bloc never mutates note.blocks.
+    emit(
+      state.copyWith(
+        isCapturingAudio: false,
+        committedAudioBlock: block,
+        clearAmplitude: true,
+      ),
+    );
+  }
+
+  Future<void> _onAudioCaptureCancelled(
+    AudioCaptureCancelled event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final session = _activeAudioSession;
+    if (session == null) return;
+
+    await _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+    await _audio.cancel(session);
+    _activeAudioSession = null;
+
+    emit(state.copyWith(isCapturingAudio: false, clearAmplitude: true));
+  }
+
+  Future<void> _onAudioBlockRemoved(
+    AudioBlockRemoved event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null) return;
+    await _audio.delete(noteId: note.id, audioId: event.audioId);
+  }
+
+  @override
+  Future<void> close() async {
+    await _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+    final session = _activeAudioSession;
+    if (session != null) {
+      _activeAudioSession = null;
+      await _audio.cancel(session);
+    }
+    return super.close();
   }
 
   Note _blankNote(NoteType type) {

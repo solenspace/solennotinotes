@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 
 enum NoteEditorStatus { initial, loading, ready, notFound, saving, error }
@@ -10,6 +11,10 @@ class NoteEditorState extends Equatable {
     this.popRequested = false,
     this.errorMessage,
     this.accentOverride,
+    this.isCapturingAudio = false,
+    this.currentAmplitude,
+    this.committedAudioBlock,
+    this.audioPermissionExplainerRequested = false,
   });
 
   final NoteEditorStatus status;
@@ -26,6 +31,24 @@ class NoteEditorState extends Equatable {
   /// `Note.overlay: NotiThemeOverlay` and this field retires.
   final String? accentOverride;
 
+  /// True while a recorder session is active. Drives the pulse + amplitude
+  /// meter UI on the editor's mic button.
+  final bool isCapturingAudio;
+
+  /// Latest dB-normalized amplitude sample (range [0, 1]) emitted by the
+  /// recorder. `null` when not capturing.
+  final double? currentAmplitude;
+
+  /// One-shot signal: a freshly-finalized audio block. The screen consumes
+  /// it via `BlocListener`, appends to its local block list, and dispatches
+  /// `BlocksReplaced` to persist. Reset to `null` on the next emission.
+  final AudioBlock? committedAudioBlock;
+
+  /// One-shot signal: the OS has put microphone permission out of reach
+  /// (`permanentlyDenied` / `restricted`). The screen shows the
+  /// `PermissionExplainerSheet` and the next emission resets the flag.
+  final bool audioPermissionExplainerRequested;
+
   NoteEditorState copyWith({
     NoteEditorStatus? status,
     Note? note,
@@ -34,6 +57,11 @@ class NoteEditorState extends Equatable {
     bool clearError = false,
     String? accentOverride,
     bool clearAccentOverride = false,
+    bool? isCapturingAudio,
+    double? currentAmplitude,
+    bool clearAmplitude = false,
+    AudioBlock? committedAudioBlock,
+    bool? audioPermissionExplainerRequested,
   }) {
     return NoteEditorState(
       status: status ?? this.status,
@@ -41,9 +69,25 @@ class NoteEditorState extends Equatable {
       popRequested: popRequested ?? false,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       accentOverride: clearAccentOverride ? null : (accentOverride ?? this.accentOverride),
+      isCapturingAudio: isCapturingAudio ?? this.isCapturingAudio,
+      currentAmplitude: clearAmplitude ? null : (currentAmplitude ?? this.currentAmplitude),
+      // One-shot: defaults to null on every emission unless the caller
+      // explicitly sets it. Mirrors the [popRequested] pattern.
+      committedAudioBlock: committedAudioBlock,
+      audioPermissionExplainerRequested: audioPermissionExplainerRequested ?? false,
     );
   }
 
   @override
-  List<Object?> get props => [status, note, popRequested, errorMessage, accentOverride];
+  List<Object?> get props => [
+        status,
+        note,
+        popRequested,
+        errorMessage,
+        accentOverride,
+        isCapturingAudio,
+        currentAmplitude,
+        committedAudioBlock,
+        audioPermissionExplainerRequested,
+      ];
 }
