@@ -26,6 +26,7 @@ import 'package:noti_notes_app/services/notifications/notifications_service.dart
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/services/speech/stt_capability_probe.dart';
 import 'package:noti_notes_app/services/speech/stt_service.dart';
+import 'package:noti_notes_app/services/speech/tts_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +54,12 @@ void main() async {
   await settingsRepository.setSttOfflineCapable(sttOfflineCapable);
   final sttService = PluginSttService(isOfflineCapable: sttOfflineCapable);
 
+  // TTS has no cold-start probe — `flutter_tts` self-initializes lazily on
+  // the first `speak()` call, and the OS-bundled voices are uniformly
+  // available offline (unlike STT, where Android's offline recognizer is
+  // patchy). See architecture.md decision 29.
+  final ttsService = PluginTtsService();
+
   runApp(
     MyApp(
       notesRepository: notesRepository,
@@ -60,6 +67,7 @@ void main() async {
       settingsRepository: settingsRepository,
       audioRepository: audioRepository,
       sttService: sttService,
+      ttsService: ttsService,
     ),
   );
 }
@@ -72,6 +80,7 @@ class MyApp extends StatefulWidget {
     required this.settingsRepository,
     required this.audioRepository,
     required this.sttService,
+    required this.ttsService,
   });
 
   final NotesRepository notesRepository;
@@ -79,6 +88,7 @@ class MyApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final AudioRepository audioRepository;
   final SttService sttService;
+  final TtsService ttsService;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -117,6 +127,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<SettingsRepository>.value(value: widget.settingsRepository),
         RepositoryProvider<AudioRepository>.value(value: widget.audioRepository),
         RepositoryProvider<SttService>.value(value: widget.sttService),
+        RepositoryProvider<TtsService>.value(value: widget.ttsService),
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),

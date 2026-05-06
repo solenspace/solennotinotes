@@ -7,3 +7,8 @@
 # elsewhere import lib/services/speech/stt_service.dart instead.
 lib/services/speech/stt_service.dart
 lib/services/speech/stt_capability_probe.dart
+
+# Spec 16: flutter_tts is allowed only inside the TTS service wrapper.
+# The plugin's native engines (AVSpeechSynthesizer / Android TextToSpeech)
+# run fully offline; consumers elsewhere import lib/services/speech/tts_service.dart.
+lib/services/speech/tts_service.dart

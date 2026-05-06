@@ -32,6 +32,10 @@ class EditorToolbar extends StatelessWidget {
   /// devices.
   final Widget? dictationButton;
 
+  /// Optional read-aloud affordance (e.g. `ReadAloudButton`). Sibling to
+  /// the dictation slot; tapping starts/stops whole-note text-to-speech.
+  final Widget? readAloudButton;
+
   const EditorToolbar({
     super.key,
     required this.currentBlockIsChecklist,
@@ -44,6 +48,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onDoneEditing,
     this.audioCaptureButton,
     this.dictationButton,
+    this.readAloudButton,
   });
 
   @override
@@ -91,6 +96,10 @@ class EditorToolbar extends StatelessWidget {
             if (dictationButton != null) ...[
               const Gap(SpacingPrimitives.xs),
               dictationButton!,
+            ],
+            if (readAloudButton != null) ...[
+              const Gap(SpacingPrimitives.xs),
+              readAloudButton!,
             ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
