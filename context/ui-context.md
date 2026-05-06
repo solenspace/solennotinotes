@@ -12,6 +12,8 @@ Type is **SF Pro Display** (already bundled). Body weight 400, semibold for emph
 
 Tokens are the *base* layer. Per-note `NotiThemeOverlay` (Spec 11) selectively replaces surface + accent + pattern + signature glyph.
 
+The token values below are implemented in `lib/theme/tokens/` and consumed via `context.tokens.colors.<role>`. Raw `Color(0x…)` literals outside `lib/theme/tokens/` (and `lib/theme/curated_palettes.dart` for per-note swatches) are defects per [code-standards.md](code-standards.md) "Styling".
+
 ### Bone mode (canonical default)
 
 #### Bones (warm off-white surfaces)
@@ -85,25 +87,20 @@ Available in settings; honored by `MaterialApp.themeMode = system` if the device
 - Reduced motion (`MediaQuery.disableAnimations`) halves all durations.
 - Use `flutter_animate` and `animations` (already in pubspec) — avoid custom `AnimationController` for one-offs.
 
+Motion durations + curves are also reachable through `context.tokens.motion.{fast,standard,calm,pattern}` and `context.tokens.motion.{fast,standard,calm,pattern}Curve` for places where a token-routed read makes diffs easier to audit.
+
 ## NotiTheme override layer
 
-Every note can carry its own [`NotiThemeOverlay`](../specs/11-noti-theme-overlay.md):
-
-- **Surface palette** — replaces `--bone-base` + `--bone-lifted` + `--accent-default` per note. The 12 curated palettes (5 bone-first + 2 warm light + 5 dark; full list in Spec 11) are always WCAG-AA-safe.
-- **Pattern key** — selects from the seven bundled pattern PNGs or `null`.
-- **Signature accent** — single grapheme (emoji or glyph) shown as the note's signature.
-- **Tagline** — short user-authored line carried with shared notes.
-
-Patterns paint at full opacity in a 25–35% header band and at 8–18% behind body text, blended with a 16px feather. Receivers render the sender's overlay faithfully; the "from @sender" chip in the AppBar offers a one-tap "Convert to mine" escape hatch (Spec 11 §I).
+Each note carries a [`NotiThemeOverlay`](../lib/theme/noti_theme_overlay.dart): surface palette + pattern key + signature accent + signature tagline + (for received notes) origin identity id. The overlay is selected via a three-tab bottom sheet (Palette / Pattern / Accent) invoked from the paintbrush button in the editor toolbar; long-press on the brush resets to the user's `NotiIdentity` default. Curated swatches first; custom HSV gated behind a contrast check that disables Apply until both surface and accent clear AA. Patterns paint at full opacity inside the top 30% header band and at 12% behind body text, blended through a 16-px linear feather. The home grid renders a 12-px swatch dot per card so the signature reads at thumbnail size — or the accent glyph in the overlay's accent color when the note carries one. When the note's overlay carries a non-null `fromIdentityId`, the editor AppBar shows a "from @sender" chip with a one-tap "Convert to mine" escape hatch.
 
 ## Pattern overlay readability
 
 Four-defense system locked by Spec 11:
 
-1. Build-time test — every curated palette passes `onSurface vs surface ≥ 4.5:1` and `onAccent vs accent ≥ 4.5:1`.
-2. Pattern alpha clamp — body opacity ∈ [0.0, 0.18]; header opacity may go full but text never renders there.
-3. Two-zone rendering — header band at full pattern, body fades via gradient mask.
-4. Runtime APCA fallback — custom-color combos that fail body contrast auto-swap `onSurface` to the higher-contrast neighbor.
+1. **Build-time test** — every curated palette passes `clampForReadability(surface) vs surface ≥ 4.5:1` and `accent vs onAccent ≥ 4.5:1`. `test/theme/curated_palettes_contrast_test.dart` fails the build if a swatch is added or retuned and breaks the contract.
+2. **Pattern alpha clamp** — `NotiPatternBackdrop` constructor clamps `bodyOpacity` to `[0.0, 0.18]` (`kMaxBodyOpacity`); header opacity may go full because no body text sits inside the header band.
+3. **Two-zone rendering** — the editor's `_PatternedBackdrop` paints the pattern at `headerOpacity` in the top `headerHeightFraction` (0.30 by default) and at `bodyOpacity` below, blended via a `LinearGradient` `ShaderMask` over a 16-px feather (8 px on each side of the band edge).
+4. **Runtime fallback** — `clampForReadability(surface)` picks whichever of the project's neutral ink stops yields the higher contrast against the active surface, so custom-HSV combos never escape with unreadable body copy.
 
 ## Voice & copy
 

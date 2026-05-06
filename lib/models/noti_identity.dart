@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:uuid/uuid.dart';
+
+export 'package:noti_notes_app/theme/curated_palettes.dart' show NotiIdentityDefaults;
 
 /// A user's signature identity. Travels with every shared note so the
 /// receiver renders the sender's preferred look (palette, pattern, accent,
@@ -107,16 +110,4 @@ class NotiIdentity {
       ),
     );
   }
-}
-
-class NotiIdentityDefaults {
-  /// Starter palettes — each entry is an ordered list of swatches
-  /// (background, surface, accent, text-on-accent). Picked at random
-  /// for first-launch identities so two users get different defaults.
-  static const List<List<Color>> starterPalettes = [
-    [Color(0xFF2D2D2D), Color(0xFF383838), Color(0xFFE5B26B), Color(0xFFF2EFEA)],
-    [Color(0xFF1B1F2A), Color(0xFF24293A), Color(0xFF7BAFD4), Color(0xFFEAF1FA)],
-    [Color(0xFF1F2620), Color(0xFF2A332C), Color(0xFF8FA66F), Color(0xFFEDF1E6)],
-    [Color(0xFF2A1F26), Color(0xFF362A32), Color(0xFFD37FA0), Color(0xFFF7EDF1)],
-  ];
 }

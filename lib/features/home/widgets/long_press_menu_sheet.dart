@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
 import '../bloc/notes_list_bloc.dart';
@@ -44,7 +44,7 @@ class LongPressMenuSheet extends StatelessWidget {
                   Navigator.of(context).pop();
                 },
               ),
-              const Gap(AppSpacing.xs),
+              const Gap(SpacingPrimitives.xs),
               _MenuTile(
                 icon: Icons.delete_outline,
                 label: 'Delete',
@@ -82,19 +82,19 @@ class _MenuTile extends StatelessWidget {
     final color = destructive ? Colors.redAccent : scheme.onSurface;
     return Material(
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: SpacingPrimitives.lg,
+            vertical: SpacingPrimitives.md,
           ),
           child: Row(
             children: [
               Icon(icon, color: color, size: 22),
-              const Gap(AppSpacing.md),
+              const Gap(SpacingPrimitives.md),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(

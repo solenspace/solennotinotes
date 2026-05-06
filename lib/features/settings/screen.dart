@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
-import 'package:noti_notes_app/theme/app_tokens.dart';
+import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
+import 'package:noti_notes_app/features/settings/cubit/theme_state.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
-import 'package:noti_notes_app/theme/theme_provider.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const routeName = '/settings';
@@ -17,24 +18,20 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: SpacingPrimitives.lg,
+          vertical: SpacingPrimitives.md,
         ),
         children: const [
           _SectionLabel('Appearance'),
-          Gap(AppSpacing.sm),
+          Gap(SpacingPrimitives.sm),
           _ThemeModePicker(),
-          Gap(AppSpacing.xl),
-          _SectionLabel('App color'),
-          Gap(AppSpacing.sm),
-          _AppColorPicker(),
-          Gap(AppSpacing.xl),
+          Gap(SpacingPrimitives.xl),
           _SectionLabel('App font'),
-          Gap(AppSpacing.sm),
+          Gap(SpacingPrimitives.sm),
           _AppFontPicker(),
-          Gap(AppSpacing.xl),
+          Gap(SpacingPrimitives.xl),
           _SectionLabel('About'),
-          Gap(AppSpacing.sm),
+          Gap(SpacingPrimitives.sm),
           _AboutTile(),
         ],
       ),
@@ -47,7 +44,7 @@ class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: SpacingPrimitives.xs),
         child: Text(
           text.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -64,7 +61,7 @@ class _ThemeModePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<ThemeProvider>();
+    final mode = context.select<ThemeCubit, ThemeMode>((c) => c.state.themeMode);
     return SegmentedButton<ThemeMode>(
       segments: const [
         ButtonSegment(
@@ -83,48 +80,8 @@ class _ThemeModePicker extends StatelessWidget {
           icon: Icon(Icons.dark_mode_outlined),
         ),
       ],
-      selected: {theme.themeMode},
-      onSelectionChanged: (set) => context.read<ThemeProvider>().setThemeMode(set.first),
-    );
-  }
-}
-
-class _AppColorPicker extends StatelessWidget {
-  const _AppColorPicker();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.watch<ThemeProvider>();
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: AppThemeColor.values.length,
-        separatorBuilder: (_, __) => const Gap(AppSpacing.md),
-        itemBuilder: (_, i) {
-          final colorEnum = AppThemeColor.values[i];
-          final selected = theme.appColor == colorEnum;
-          return GestureDetector(
-            onTap: () => theme.setAppColor(colorEnum),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: colorEnum.color,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: selected
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.outline,
-                  width: selected ? 2 : 1,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: selected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
-            ),
-          );
-        },
-      ),
+      selected: {mode},
+      onSelectionChanged: (set) => context.read<ThemeCubit>().setThemeMode(set.first),
     );
   }
 }
@@ -134,57 +91,60 @@ class _AppFontPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<ThemeProvider>();
     final scheme = Theme.of(context).colorScheme;
-    return Column(
-      children: WritingFont.values.map((font) {
-        final selected = theme.writingFont == font;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          child: Material(
-            color: selected ? scheme.primary.withValues(alpha: 0.12) : scheme.surfaceContainerHigh,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              side: BorderSide(
-                color: selected ? scheme.primary : scheme.outline.withValues(alpha: 0.5),
-                width: 1.0,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      buildWhen: (a, b) => a.writingFont != b.writingFont,
+      builder: (context, state) => Column(
+        children: WritingFont.values.map((font) {
+          final selected = state.writingFont == font;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: SpacingPrimitives.sm),
+            child: Material(
+              color:
+                  selected ? scheme.primary.withValues(alpha: 0.12) : scheme.surfaceContainerHigh,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                side: BorderSide(
+                  color: selected ? scheme.primary : scheme.outline.withValues(alpha: 0.5),
+                  width: 1.0,
+                ),
               ),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              onTap: () => context.read<ThemeProvider>().setWritingFont(font),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            font.displayName,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const Gap(AppSpacing.xs),
-                          Text(
-                            'The quick brown fox jumps over the lazy dog',
-                            style: GoogleFonts.getFont(
-                              font.googleFontName,
-                              fontSize: 16,
-                              color: scheme.onSurface.withValues(alpha: 0.85),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                onTap: () => context.read<ThemeCubit>().setWritingFont(font),
+                child: Padding(
+                  padding: const EdgeInsets.all(SpacingPrimitives.lg),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              font.displayName,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
-                          ),
-                        ],
+                            const Gap(SpacingPrimitives.xs),
+                            Text(
+                              'The quick brown fox jumps over the lazy dog',
+                              style: GoogleFonts.getFont(
+                                font.googleFontName,
+                                fontSize: 16,
+                                color: scheme.onSurface.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (selected) Icon(Icons.check_circle, color: scheme.primary),
-                  ],
+                      if (selected) Icon(Icons.check_circle, color: scheme.primary),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -198,16 +158,16 @@ class _AboutTile extends StatelessWidget {
     return Material(
       color: scheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
         side: BorderSide(color: scheme.outline.withValues(alpha: 0.5), width: 1.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(SpacingPrimitives.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('NotiNotes 2.0', style: Theme.of(context).textTheme.titleMedium),
-            const Gap(AppSpacing.xs),
+            const Gap(SpacingPrimitives.xs),
             Text(
               'A customizable, offline notes app built with Flutter.',
               style: Theme.of(context).textTheme.bodyMedium,

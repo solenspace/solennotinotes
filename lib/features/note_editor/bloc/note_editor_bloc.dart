@@ -1,12 +1,17 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:characters/characters.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
 import 'package:noti_notes_app/features/note_editor/note_type.dart';
 import 'package:noti_notes_app/models/note.dart';
+import 'package:noti_notes_app/models/noti_identity_overlay.dart';
+import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
-import 'package:noti_notes_app/theme/notes_color_palette.dart';
+import 'package:noti_notes_app/theme/contrast.dart';
+import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
+import 'package:noti_notes_app/theme/tokens/color_tokens.dart';
 import 'package:uuid/uuid.dart';
 
 import 'note_editor_event.dart';
@@ -22,9 +27,11 @@ typedef CancelNotification = void Function(int id);
 class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   NoteEditorBloc({
     required NotesRepository repository,
+    required NotiIdentityRepository identityRepository,
     ImagePickerService? imageService,
     CancelNotification? cancelNotification,
   })  : _repository = repository,
+        _identityRepository = identityRepository,
         _imageService = imageService ?? const ImagePickerService(),
         _cancelNotification = cancelNotification ?? LocalNotificationService.cancelNotification,
         super(const NoteEditorState()) {
@@ -35,12 +42,23 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     on<TagRemovedAtIndex>(_onTagRemovedAtIndex);
     on<ImageSelected>(_onImageSelected);
     on<ImageRemoved>(_onImageRemoved);
+    on<OverlayPaletteChanged>(_onOverlayPaletteChanged);
+    on<OverlayPatternChanged>(_onOverlayPatternChanged);
+    on<OverlayAccentChanged>(_onOverlayAccentChanged);
+    on<OverlayResetToIdentityDefault>(_onOverlayResetToIdentityDefault);
+    on<OverlayConvertToMine>(_onOverlayConvertToMine);
+    // ignore: deprecated_member_use_from_same_package
     on<BackgroundColorChanged>(_onBackgroundColorChanged);
+    // ignore: deprecated_member_use_from_same_package
     on<PatternImageSet>(_onPatternImageSet);
+    // ignore: deprecated_member_use_from_same_package
     on<PatternImageRemoved>(_onPatternImageRemoved);
+    // ignore: deprecated_member_use_from_same_package
     on<FontColorChanged>(_onFontColorChanged);
     on<DisplayModeChanged>(_onDisplayModeChanged);
+    // ignore: deprecated_member_use_from_same_package
     on<GradientChanged>(_onGradientChanged);
+    // ignore: deprecated_member_use_from_same_package
     on<GradientToggled>(_onGradientToggled);
     on<ReminderSet>(_onReminderSet);
     on<ReminderRemoved>(_onReminderRemoved);
@@ -53,6 +71,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   }
 
   final NotesRepository _repository;
+  final NotiIdentityRepository _identityRepository;
   final ImagePickerService _imageService;
   final CancelNotification _cancelNotification;
 
@@ -147,6 +166,104 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     note.imageFile = null;
     await _repository.save(note);
     emit(state.copyWith(note: note));
+  }
+
+  Future<void> _onOverlayPaletteChanged(
+    OverlayPaletteChanged event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null) return;
+    note.colorBackground = event.overlay.surface;
+    note.fontColor = event.overlay.onSurface ?? clampForReadability(event.overlay.surface);
+    note.gradient = null;
+    note.hasGradient = false;
+    await _repository.save(note);
+    emit(state.copyWith(note: note));
+  }
+
+  Future<void> _onOverlayPatternChanged(
+    OverlayPatternChanged event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null) return;
+    note.patternImage = event.patternKey?.name;
+    await _repository.save(note);
+    emit(state.copyWith(note: note));
+  }
+
+  Future<void> _onOverlayAccentChanged(
+    OverlayAccentChanged event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    if (state.note == null) return;
+    final raw = event.accent;
+    if (raw == null || raw.isEmpty) {
+      emit(state.copyWith(clearAccentOverride: true));
+      return;
+    }
+    // Constrain to a single user-perceived character (grapheme cluster).
+    final firstGrapheme = raw.characters.isEmpty ? null : raw.characters.first;
+    if (firstGrapheme == null) {
+      emit(state.copyWith(clearAccentOverride: true));
+      return;
+    }
+    emit(state.copyWith(accentOverride: firstGrapheme));
+  }
+
+  Future<void> _onOverlayResetToIdentityDefault(
+    OverlayResetToIdentityDefault event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null) return;
+    final identity = await _identityRepository.getCurrent();
+    final identityOverlay = identity.toOverlay();
+    _writeOverlay(note, identityOverlay);
+    await _repository.save(note);
+    emit(
+      state.copyWith(
+        note: note,
+        accentOverride: identityOverlay.signatureAccent,
+        clearAccentOverride: identityOverlay.signatureAccent == null,
+      ),
+    );
+  }
+
+  Future<void> _onOverlayConvertToMine(
+    OverlayConvertToMine event,
+    Emitter<NoteEditorState> emit,
+  ) async {
+    final note = state.note;
+    if (note == null) return;
+    final identity = await _identityRepository.getCurrent();
+    final identityOverlay = identity.toOverlay();
+    _writeOverlay(note, identityOverlay);
+    // `fromIdentityId` lives on NotiThemeOverlay, not the legacy Note schema,
+    // so there's nothing to clear on disk yet — Spec 04b promotes it to a
+    // first-class column. The chip's render gate already keys off the
+    // synthesized overlay, which now has fromIdentityId == null because
+    // legacy notes never carry one.
+    await _repository.save(note);
+    emit(
+      state.copyWith(
+        note: note,
+        accentOverride: identityOverlay.signatureAccent,
+        clearAccentOverride: identityOverlay.signatureAccent == null,
+      ),
+    );
+  }
+
+  /// Writes the parts of [overlay] that have a home in the legacy schema.
+  /// `signatureTagline`, `signatureAccent`, and `fromIdentityId` are
+  /// in-memory-only on legacy notes (see [NoteEditorState.accentOverride]).
+  void _writeOverlay(Note note, NotiThemeOverlay overlay) {
+    note.colorBackground = overlay.surface;
+    note.fontColor = overlay.onSurface ?? clampForReadability(overlay.surface);
+    note.gradient = null;
+    note.hasGradient = false;
+    note.patternImage = overlay.patternKey?.name;
   }
 
   Future<void> _onBackgroundColorChanged(
@@ -335,7 +452,7 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
       content: '',
       dateCreated: DateTime.now(),
       colorBackground: NotesColorPalette.defaultSwatch.light,
-      fontColor: const Color(0xFF1A1A1A),
+      fontColor: NotiColors.bone.inkOnLightSurface,
       hasGradient: false,
       displayMode: type == NoteType.todo ? DisplayMode.withTodoList : DisplayMode.normal,
     );
