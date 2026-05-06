@@ -54,4 +54,54 @@ abstract class SettingsRepository {
   Future<double> getTtsPitch();
 
   Future<void> setTtsPitch(double value);
+
+  /// Cached device-capability tier (Spec 17). Stored as the lower-cased
+  /// [AiTier] enum name. `null` means the cold-start probe has not yet
+  /// run; consumers should treat that as `AiTier.unsupported` (the
+  /// hide-AI default).
+  ///
+  /// Stored as separate KV pairs (mirroring [getSttOfflineCapable]) rather
+  /// than folded into [Settings] because the cache is a device-capability
+  /// fact, not a user-chrome preference; bundling it would mean every
+  /// theme/font save also rewrites the seven cap keys.
+  Future<String?> getAiTier();
+
+  Future<void> setAiTier(String? value);
+
+  /// Total physical RAM in bytes from the most recent probe. `null` =
+  /// never probed; `0` = probed but the platform did not report a value
+  /// (Android OEM corner case — the classifier treats this as "unknown").
+  Future<int?> getRamBytes();
+
+  Future<void> setRamBytes(int? value);
+
+  /// iOS major version (e.g. `17`) on iOS, Android API level (e.g. `33`)
+  /// on Android. `null` = never probed.
+  Future<int?> getOsMajorVersion();
+
+  Future<void> setOsMajorVersion(int? value);
+
+  /// Whether the device CPU supports arm64. `null` = never probed.
+  Future<bool?> getArchIsArm64();
+
+  Future<void> setArchIsArm64(bool? value);
+
+  /// iOS-only Metal support flag from the most recent probe. Always
+  /// `false` on Android. `null` = never probed.
+  Future<bool?> getHasMetal();
+
+  Future<void> setHasMetal(bool? value);
+
+  /// iOS-only Apple Neural Engine flag (A12+). Always `false` on Android.
+  /// `null` = never probed.
+  Future<bool?> getHasNeuralEngine();
+
+  Future<void> setHasNeuralEngine(bool? value);
+
+  /// `Platform.operatingSystemVersion` from the most recent probe. The
+  /// probe re-runs whenever the live value differs, so an OS upgrade
+  /// after the cold-start probe is honoured before any AI feature load.
+  Future<String?> getLastProbedOsVersion();
+
+  Future<void> setLastProbedOsVersion(String? value);
 }
