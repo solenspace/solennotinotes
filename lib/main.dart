@@ -22,6 +22,8 @@ import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_rep
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/settings/hive_settings_repository.dart';
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
+import 'package:noti_notes_app/services/device/device_capability_probe.dart';
+import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/services/speech/stt_capability_probe.dart';
@@ -46,6 +48,14 @@ void main() async {
   // identity record.
   await settingsRepository.init(identityRepository: notiIdentityRepository);
 
+  // Cold-start device-capability probe (Spec 17). Runs before the STT
+  // probe so the cap cache is the single source of truth for OS / arch /
+  // RAM going forward. Cached values short-circuit the plugin handshake
+  // on subsequent cold starts; an OS-version change re-probes
+  // automatically.
+  final deviceCapabilityService =
+      await const DeviceCapabilityProbe().probe(settings: settingsRepository);
+
   // Cold-start STT capability probe (Spec 15). The probe is conservative —
   // any failure path resolves false so the dictation UI hides itself rather
   // than risk a network fallback. Result is cached in `settings_v2` so
@@ -66,6 +76,7 @@ void main() async {
       notiIdentityRepository: notiIdentityRepository,
       settingsRepository: settingsRepository,
       audioRepository: audioRepository,
+      deviceCapabilityService: deviceCapabilityService,
       sttService: sttService,
       ttsService: ttsService,
     ),
@@ -79,6 +90,7 @@ class MyApp extends StatefulWidget {
     required this.notiIdentityRepository,
     required this.settingsRepository,
     required this.audioRepository,
+    required this.deviceCapabilityService,
     required this.sttService,
     required this.ttsService,
   });
@@ -87,6 +99,7 @@ class MyApp extends StatefulWidget {
   final NotiIdentityRepository notiIdentityRepository;
   final SettingsRepository settingsRepository;
   final AudioRepository audioRepository;
+  final DeviceCapabilityService deviceCapabilityService;
   final SttService sttService;
   final TtsService ttsService;
 
@@ -126,6 +139,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
         RepositoryProvider<SettingsRepository>.value(value: widget.settingsRepository),
         RepositoryProvider<AudioRepository>.value(value: widget.audioRepository),
+        RepositoryProvider<DeviceCapabilityService>.value(
+          value: widget.deviceCapabilityService,
+        ),
         RepositoryProvider<SttService>.value(value: widget.sttService),
         RepositoryProvider<TtsService>.value(value: widget.ttsService),
         RepositoryProvider<PermissionsService>.value(

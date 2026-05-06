@@ -12,17 +12,7 @@ import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
 import 'package:noti_notes_app/theme/tokens/typography_tokens.dart';
 
-class _RecordingNoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
-  _RecordingNoteEditorBloc(NoteEditorState initial) : super(initial) {
-    on<NoteEditorEvent>((event, emit) {
-      events.add(event);
-    });
-  }
-
-  final List<NoteEditorEvent> events = [];
-
-  void push(NoteEditorState state) => emit(state);
-}
+import '../bloc/recording_note_editor_bloc.dart';
 
 Note _noteWith(List<String> texts) {
   return Note(
@@ -72,7 +62,7 @@ NotiText _stubText() {
 
 Future<void> _pumpOverlay(
   WidgetTester tester, {
-  required _RecordingNoteEditorBloc bloc,
+  required RecordingNoteEditorBloc bloc,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -88,19 +78,19 @@ Future<void> _pumpOverlay(
 void main() {
   group('ReadAloudOverlay', () {
     testWidgets('renders nothing when isReadingAloud is false', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(note: _noteWith(['hello'])),
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(note: _noteWith(['hello'])),
       );
       await _pumpOverlay(tester, bloc: bloc);
 
       expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
       expect(find.byIcon(Icons.stop_rounded), findsNothing);
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('renders pill with block label and stop button when reading', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith(['first', 'second']),
           isReadingAloud: true,
           currentReadBlockIndex: 0,
@@ -111,12 +101,12 @@ void main() {
       expect(find.text('Reading block 1 of 2'), findsOneWidget);
       expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
       expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('paused state swaps pause icon for play_arrow', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith(['only-block']),
           isReadingAloud: true,
           isReadAloudPaused: true,
@@ -127,12 +117,12 @@ void main() {
 
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
       expect(find.byIcon(Icons.pause_rounded), findsNothing);
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('tap pause dispatches ReadAloudPaused', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith(['x']),
           isReadingAloud: true,
           currentReadBlockIndex: 0,
@@ -143,12 +133,12 @@ void main() {
       await tester.tap(find.byIcon(Icons.pause_rounded));
       await tester.pump();
       expect(bloc.events.whereType<ReadAloudPaused>(), hasLength(1));
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('tap resume dispatches ReadAloudResumed', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith(['x']),
           isReadingAloud: true,
           isReadAloudPaused: true,
@@ -160,12 +150,12 @@ void main() {
       await tester.tap(find.byIcon(Icons.play_arrow_rounded));
       await tester.pump();
       expect(bloc.events.whereType<ReadAloudResumed>(), hasLength(1));
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('tap stop dispatches ReadAloudStopped', (tester) async {
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith(['x']),
           isReadingAloud: true,
           currentReadBlockIndex: 0,
@@ -176,13 +166,13 @@ void main() {
       await tester.tap(find.byIcon(Icons.stop_rounded));
       await tester.pump();
       expect(bloc.events.whereType<ReadAloudStopped>(), hasLength(1));
-      await bloc.close();
+      addTearDown(bloc.close);
     });
 
     testWidgets('progress slices text into before/active/after spans', (tester) async {
       const fullText = 'hello world';
-      final bloc = _RecordingNoteEditorBloc(
-        NoteEditorState(
+      final bloc = RecordingNoteEditorBloc(
+        initial: NoteEditorState(
           note: _noteWith([fullText]),
           isReadingAloud: true,
           currentReadBlockIndex: 0,
@@ -196,17 +186,32 @@ void main() {
       );
       await _pumpOverlay(tester, bloc: bloc);
 
-      // The Text.rich widget assembles "hello " + "world" + "" — find by
-      // RichText and inspect its inline span structure.
-      final richText = tester.widget<RichText>(find.byType(RichText).first);
-      final root = richText.text as TextSpan;
-      final children = root.children!.cast<TextSpan>();
-      expect(children, hasLength(3));
-      expect(children[0].text, 'hello ');
-      expect(children[1].text, 'world');
-      expect(children[1].style?.fontWeight, FontWeight.w700);
-      expect(children[2].text, '');
-      await bloc.close();
+      // Flutter wraps `Text.rich(TextSpan(children: [...]))` in an outer
+      // TextSpan that applies the inherited DefaultTextStyle, so the
+      // user-provided 3-child span ends up nested at depth 2. Walk into
+      // the first non-null `children` we find.
+      List<TextSpan>? children;
+      for (final rt in tester.widgetList<RichText>(find.byType(RichText))) {
+        TextSpan? cursor = rt.text as TextSpan?;
+        while (cursor != null) {
+          final next = cursor.children;
+          if (next == null) break;
+          if (next.length == 3 && next.every((c) => c is TextSpan)) {
+            children = next.cast<TextSpan>();
+            break;
+          }
+          cursor = next.length == 1 && next.first is TextSpan ? next.first as TextSpan : null;
+        }
+        if (children != null) break;
+      }
+      expect(children, isNotNull, reason: 'highlighted body span not found');
+      final spans = children!;
+      expect(spans, hasLength(3));
+      expect(spans[0].text, 'hello ');
+      expect(spans[1].text, 'world');
+      expect(spans[1].style?.fontWeight, FontWeight.w700);
+      expect(spans[2].text, '');
+      addTearDown(bloc.close);
     });
   });
 }

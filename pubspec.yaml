@@ -44,6 +44,7 @@ dependencies:
   hive_ce_flutter: ^2.3.4
   flutter_local_notifications: ^21.0.0
   permission_handler: ^12.0.1
+  device_info_plus: ^11.2.0
   flutter_timezone: ^5.0.2
   timezone: ^0.11.0
   collection: ^1.19.1
@@ -51,6 +52,7 @@ dependencies:
   bloc: ^9.0.0
   equatable: ^2.0.7
   characters: ^1.4.0
+  meta: ^1.16.0
   record: ^5.1.2
   audioplayers: ^6.1.0
   speech_to_text: ^7.3.0

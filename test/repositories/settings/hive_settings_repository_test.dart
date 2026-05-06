@@ -144,4 +144,75 @@ void main() {
       expect(box.containsKey('appThemeColor'), isTrue);
     });
   });
+
+  group('device-capability cache (Spec 17)', () {
+    test('every getter returns null when the box is empty', () async {
+      expect(await repo.getAiTier(), isNull);
+      expect(await repo.getRamBytes(), isNull);
+      expect(await repo.getOsMajorVersion(), isNull);
+      expect(await repo.getArchIsArm64(), isNull);
+      expect(await repo.getHasMetal(), isNull);
+      expect(await repo.getHasNeuralEngine(), isNull);
+      expect(await repo.getLastProbedOsVersion(), isNull);
+    });
+
+    test('round-trips every key through set/get', () async {
+      await repo.setAiTier('full');
+      await repo.setRamBytes(8 * 1024 * 1024 * 1024);
+      await repo.setOsMajorVersion(17);
+      await repo.setArchIsArm64(true);
+      await repo.setHasMetal(true);
+      await repo.setHasNeuralEngine(true);
+      await repo.setLastProbedOsVersion('Darwin 23.4.0');
+
+      expect(await repo.getAiTier(), 'full');
+      expect(await repo.getRamBytes(), 8 * 1024 * 1024 * 1024);
+      expect(await repo.getOsMajorVersion(), 17);
+      expect(await repo.getArchIsArm64(), isTrue);
+      expect(await repo.getHasMetal(), isTrue);
+      expect(await repo.getHasNeuralEngine(), isTrue);
+      expect(await repo.getLastProbedOsVersion(), 'Darwin 23.4.0');
+    });
+
+    test('passing null clears every key from the box', () async {
+      await repo.setAiTier('compact');
+      await repo.setRamBytes(4 * 1024 * 1024 * 1024);
+      await repo.setOsMajorVersion(33);
+      await repo.setArchIsArm64(true);
+      await repo.setHasMetal(false);
+      await repo.setHasNeuralEngine(false);
+      await repo.setLastProbedOsVersion('Linux 5.10 API 33');
+
+      await repo.setAiTier(null);
+      await repo.setRamBytes(null);
+      await repo.setOsMajorVersion(null);
+      await repo.setArchIsArm64(null);
+      await repo.setHasMetal(null);
+      await repo.setHasNeuralEngine(null);
+      await repo.setLastProbedOsVersion(null);
+
+      expect(box.containsKey('aiTier'), isFalse);
+      expect(box.containsKey('ramBytes'), isFalse);
+      expect(box.containsKey('osMajorVersion'), isFalse);
+      expect(box.containsKey('archIsArm64'), isFalse);
+      expect(box.containsKey('hasMetal'), isFalse);
+      expect(box.containsKey('hasNeuralEngine'), isFalse);
+      expect(box.containsKey('lastProbedOsVersion'), isFalse);
+    });
+
+    test('roundtrips falsey values without confusing them with absence', () async {
+      // The cache distinguishes "never probed" (null) from "probed and got
+      // a falsey value" (0 / false). Important for the iOS-only flags which
+      // are legitimately false on Android.
+      await repo.setRamBytes(0);
+      await repo.setArchIsArm64(false);
+      await repo.setHasMetal(false);
+      await repo.setHasNeuralEngine(false);
+
+      expect(await repo.getRamBytes(), 0);
+      expect(await repo.getArchIsArm64(), isFalse);
+      expect(await repo.getHasMetal(), isFalse);
+      expect(await repo.getHasNeuralEngine(), isFalse);
+    });
+  });
 }
