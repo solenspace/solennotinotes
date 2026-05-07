@@ -18,3 +18,9 @@ lib/services/speech/tts_service.dart
 # no network calls; consumers elsewhere import the DeviceCapabilityService
 # wrapper at lib/services/device/device_capability_service.dart.
 lib/services/device/device_capability_probe.dart
+
+# Spec 19: model download is the one authorized network surface.
+# The user opts in explicitly via the AI assist disclosure; the file is
+# fetched once, SHA-256 verified, and lives in app-support storage.
+# Never extend this allowlist without a written rationale.
+lib/services/ai/llm_model_downloader.dart

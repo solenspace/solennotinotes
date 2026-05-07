@@ -22,6 +22,7 @@ import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_rep
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/settings/hive_settings_repository.dart';
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
+import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
 import 'package:noti_notes_app/services/device/device_capability_probe.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
@@ -146,6 +147,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<TtsService>.value(value: widget.ttsService),
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
+        ),
+        // Spec 19: stateless downloader. Cubit lifecycle is owned by the
+        // settings screen (not at app root) so the download stream is only
+        // open while the user is on that surface.
+        RepositoryProvider<LlmModelDownloader>.value(
+          value: const LlmModelDownloader(),
         ),
       ],
       child: MultiBlocProvider(
