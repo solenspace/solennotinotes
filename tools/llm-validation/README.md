@@ -15,9 +15,13 @@ here does not affect the main app.
 
 - Dart SDK ≥ 3.4.0 (the harness is pure Dart on the desktop side).
 - A GGUF model file. Spec 18 §"Validation criteria" pins this:
-  **TinyLlama-1.1B-Chat Q4_K_M (~700 MB)**. Download from a trusted GGUF host
-  (e.g. [TheBloke on Hugging Face](https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF))
-  and verify the SHA-256 against the model card.
+  **TinyLlama-1.1B-Chat v1.0 Q4_K_M**. Canonical mirror (also the source
+  Spec 19's downloader hits in production):
+  <https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf>.
+  Size: 668,788,096 bytes (~638 MB). SHA-256:
+  `9fecc3b3cd76bba89d504f29b616eedf7da85b96540e490ca5824d3f7d2776a0` (from
+  the file's git-LFS pointer; verify locally with `shasum -a 256` after
+  download).
 - For physical-device runs: a Flutter shim app (recipe below).
 
 ## Running on macOS desktop (sanity check)
@@ -39,8 +43,21 @@ sudo purge
 
 dart run bin/probe.dart \
   --candidate=llama_cpp_dart \
-  --model=/absolute/path/to/tinyllama-1.1b-chat-q4_k_m.gguf \
+  --model=/absolute/path/to/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
   --device-label=macos-host \
+  --notes=flutter-sdk=3.41.4
+```
+
+If the dynamic loader cannot find `libllama.dylib` (the binding does not
+ship a prebuilt binary for every host), pass `--library-path` to point at
+the file you built or downloaded. Example after `brew install llama.cpp`:
+
+```bash
+dart run bin/probe.dart \
+  --candidate=llama_cpp_dart \
+  --model=/absolute/path/to/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
+  --device-label=macos-host \
+  --library-path=/opt/homebrew/lib/libllama.dylib \
   --notes=flutter-sdk=3.41.4
 ```
 
@@ -147,8 +164,8 @@ Once a candidate passes on both tiers:
    text suggests #24/#25 but those, and every integer through #31, are
    already taken by prior specs; #32 is the next free slot.)
 3. Move the active-spec pointer in `progress-tracker.md` to
-   `19-llm-model-download` and supersede architecture decision #6 with a
-   reference to #31.
+   `19-llm-model-download` and supersede architecture decision #6 (the
+   open question that motivated Spec 18) with a reference to #32.
 
 If **none** of the four candidates pass, follow Spec 18 §"Fallback path":
 record decision #32-fallback and defer Specs 19–21 to v2.

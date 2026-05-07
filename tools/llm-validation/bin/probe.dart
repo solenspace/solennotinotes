@@ -20,13 +20,13 @@ import 'package:path/path.dart' as p;
 
 // Candidate adapter imports live behind a top-level switch so an unpinned
 // candidate's missing package doesn't break `dart pub get` for the others.
-// To validate a candidate, uncomment its dependency in pubspec.yaml AND the
-// matching import below, then flesh out the adapter's load/generate/unload
-// against the binding's real API. The adapter shape mirrors the production
-// `LlmRuntime` interface (lib/services/ai/llm_runtime.dart) so the winning
-// adapter is a near-mechanical port for Spec 19.
-//
-// import 'package:llama_cpp_dart/llama_cpp_dart.dart' as llama_cpp_dart;
+// The lead candidate (`llama_cpp_dart`, architecture decision #32) is wired
+// in; alternates remain commented until a fallback run is needed. The
+// adapter shape mirrors the production `LlmRuntime` interface
+// (lib/services/ai/llm_runtime.dart) so the winning adapter is a
+// near-mechanical port for Spec 19.
+
+import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 // import 'package:flutter_llama/flutter_llama.dart' as flutter_llama;
 
 /// Fixed prompt for reproducibility across candidates and devices.
@@ -58,6 +58,14 @@ Future<void> main(List<String> argv) async {
     )
     ..addOption('output',
         abbr: 'o', help: 'Output JSON path. Defaults to results/<candidate>-<device>.json.')
+    ..addOption(
+      'library-path',
+      abbr: 'l',
+      help: 'Absolute path to the llama.cpp shared library. Defaults to '
+          'libllama.dylib (macOS) / libllama.so (Linux) / llama.dll (Windows) '
+          'resolved by the dynamic loader. Required only when the binding\'s '
+          'bundled binary cannot be located via the OS lookup paths.',
+    )
     ..addMultiOption('notes',
         help: 'Free-form key=value pair captured into the result JSON. Use this to '
             'record manual criterion 1 metadata, e.g. --notes=flutter-sdk=3.41.4.')
@@ -94,6 +102,11 @@ Future<void> main(List<String> argv) async {
     stderr.writeln('error: model file not found: $modelPath');
     exitCode = 66;
     return;
+  }
+
+  final libraryPath = args['library-path'] as String?;
+  if (libraryPath != null && libraryPath.isNotEmpty) {
+    Llama.libraryPath = libraryPath;
   }
 
   final adapter = _adapterFor(candidate);
@@ -337,38 +350,44 @@ _Adapter? _adapterFor(String candidate) {
 }
 
 /// Adapter for `llama_cpp_dart` — the lead candidate per architecture
-/// decision #6. The skeleton is intentionally unimplemented: pinning the
-/// binding's real API to a versioned snapshot is part of Spec 18's work.
-/// To wire it up:
+/// decision #32. Wraps the package's high-level `Llama` class verbatim:
+/// constructor loads the GGUF, `setPrompt` primes the sampler, `getNext`
+/// returns `(token, done)` per step, `dispose` releases the native context.
 ///
-///   1. Uncomment `llama_cpp_dart` in pubspec.yaml and the matching import
-///      at the top of this file; run `dart pub get`.
-///   2. Replace each `throw UnimplementedError(...)` below with a call into
-///      the binding (load → constructor / `init`; generate → token stream;
-///      unload → `dispose` / equivalent).
-///   3. Re-run `dart analyze`; then `dart run bin/probe.dart --candidate=
-///      llama_cpp_dart --model=<gguf> --device-label=<id>`.
-///
-/// The adapter shape itself is locked to mirror `LlmRuntime`, so once the
-/// real calls land here Spec 19's port is mechanical.
+/// `done == true` is the binding's EOS signal; the harness honours it
+/// alongside the `maxTokens` cap so a model that hits its own stop token
+/// before 50 tokens still satisfies criterion 6 ("Streaming token callback
+/// fires per token") via the per-yield event count, not a fixed length.
 class _LlamaCppDartAdapter implements _Adapter {
+  Llama? _llama;
+
   @override
   Future<bool> load(String modelPath) async {
-    throw UnimplementedError(
-      'Wire llama_cpp_dart.load(modelPath) — see README §"Running on macOS desktop".',
-    );
+    _llama?.dispose();
+    _llama = Llama(modelPath);
+    return true;
   }
 
   @override
-  Stream<String> generate({required String prompt, required int maxTokens}) {
-    throw UnimplementedError(
-      'Wire the binding\'s per-token stream into this method.',
-    );
+  Stream<String> generate({required String prompt, required int maxTokens}) async* {
+    final llama = _llama;
+    if (llama == null) {
+      throw StateError('llama_cpp_dart adapter: generate() called before load().');
+    }
+    llama.setPrompt(prompt);
+    var emitted = 0;
+    while (emitted < maxTokens) {
+      final (token, done) = llama.getNext();
+      yield token;
+      emitted++;
+      if (done) break;
+    }
   }
 
   @override
   Future<void> unload() async {
-    throw UnimplementedError('Wire the binding\'s dispose / unload here.');
+    _llama?.dispose();
+    _llama = null;
   }
 }
 
