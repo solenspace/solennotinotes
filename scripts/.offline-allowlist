@@ -24,3 +24,9 @@ lib/services/device/device_capability_probe.dart
 # fetched once, SHA-256 verified, and lives in app-support storage.
 # Never extend this allowlist without a written rationale.
 lib/services/ai/llm_model_downloader.dart
+
+# Spec 20: llama_cpp_dart is the on-device LLM binding (decision #32).
+# The package is FFI to a vendored llama.cpp shared library — no network
+# transitively. Wrapping it here keeps Spec 20 success criterion #5 enforceable
+# (only this file imports the chosen LLM package directly).
+lib/services/ai/llama_cpp_llm_runtime.dart

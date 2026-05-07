@@ -7,45 +7,44 @@ import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart'
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_state.dart';
+import 'package:noti_notes_app/features/settings/screens/manage_ai_screen.dart';
 import 'package:noti_notes_app/features/settings/widgets/ai_disclosure_sheet.dart';
 import 'package:noti_notes_app/features/settings/widgets/llm_download_progress_modal.dart';
-import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
+/// Settings screen. The `LlmReadinessCubit` it depends on is hoisted to
+/// the app shell (Spec 20 § "Hoist LlmReadinessCubit") so both this
+/// screen and the editor's ✦ Assist button read the same readiness
+/// state without redundant disk probes.
 class SettingsScreen extends StatelessWidget {
   static const routeName = '/settings';
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<LlmReadinessCubit>(
-      create: (ctx) => LlmReadinessCubit(
-        downloader: ctx.read<LlmModelDownloader>(),
-      )..bootstrap(),
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
-        body: ListView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: SpacingPrimitives.lg,
-            vertical: SpacingPrimitives.md,
-          ),
-          children: const [
-            _SectionLabel('Appearance'),
-            Gap(SpacingPrimitives.sm),
-            _ThemeModePicker(),
-            Gap(SpacingPrimitives.xl),
-            _SectionLabel('App font'),
-            Gap(SpacingPrimitives.sm),
-            _AppFontPicker(),
-            Gap(SpacingPrimitives.xl),
-            _AiAssistSection(),
-            _SectionLabel('About'),
-            Gap(SpacingPrimitives.sm),
-            _AboutTile(),
-          ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: SpacingPrimitives.lg,
+          vertical: SpacingPrimitives.md,
         ),
+        children: const [
+          _SectionLabel('Appearance'),
+          Gap(SpacingPrimitives.sm),
+          _ThemeModePicker(),
+          Gap(SpacingPrimitives.xl),
+          _SectionLabel('App font'),
+          Gap(SpacingPrimitives.sm),
+          _AppFontPicker(),
+          Gap(SpacingPrimitives.xl),
+          _AiAssistSection(),
+          _SectionLabel('About'),
+          Gap(SpacingPrimitives.sm),
+          _AboutTile(),
+        ],
       ),
     );
   }
@@ -204,7 +203,7 @@ class _AiAssistTile extends StatelessWidget {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-            onTap: isReady ? null : () => _onTap(context, state),
+            onTap: isReady ? () => _openManageAi(context) : () => _onTap(context, state),
             child: Padding(
               padding: const EdgeInsets.all(SpacingPrimitives.lg),
               child: Row(
@@ -235,6 +234,14 @@ class _AiAssistTile extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Called when the row is tapped while ready — navigates to the
+  /// "Manage AI" screen (Spec 20 § G) so the user can re-download or
+  /// delete the model. The same screen is reachable from a long-press
+  /// on the editor's ✦ Assist button.
+  void _openManageAi(BuildContext context) {
+    Navigator.of(context).pushNamed(ManageAiScreen.routeName);
   }
 
   /// Called when the row is tapped while not in `ready`. Routes by phase:

@@ -101,6 +101,17 @@ class LlmReadinessCubit extends Cubit<LlmReadinessState> {
     emit(const LlmReadinessState.idle());
   }
 
+  /// Disable AI assist by deleting the verified model + any partial
+  /// sidecar. Used by `ManageAiScreen` (Spec 20 § G) when the user
+  /// chooses "Delete model and disable AI". Returns the row to `idle`
+  /// so re-enabling goes through the disclosure sheet again.
+  Future<void> disable() async {
+    await _downloadSub?.cancel();
+    _downloadSub = null;
+    await _downloader.deleteAll();
+    emit(const LlmReadinessState.idle());
+  }
+
   @override
   Future<void> close() async {
     await _downloadSub?.cancel();

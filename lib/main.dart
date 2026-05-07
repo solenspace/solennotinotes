@@ -20,9 +20,13 @@ import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
+import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
+import 'package:noti_notes_app/features/settings/screens/manage_ai_screen.dart';
 import 'package:noti_notes_app/repositories/settings/hive_settings_repository.dart';
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
+import 'package:noti_notes_app/services/ai/llama_cpp_llm_runtime.dart';
 import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
+import 'package:noti_notes_app/services/ai/llm_runtime.dart';
 import 'package:noti_notes_app/services/device/device_capability_probe.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
@@ -148,11 +152,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),
-        // Spec 19: stateless downloader. Cubit lifecycle is owned by the
-        // settings screen (not at app root) so the download stream is only
-        // open while the user is on that surface.
+        // Spec 19: stateless downloader. The cubit that drives the AI
+        // assist row + the editor's ✦ button (hoisted below) reads it.
         RepositoryProvider<LlmModelDownloader>.value(
           value: const LlmModelDownloader(),
+        ),
+        // Spec 20: shared on-device LLM runtime. One worker isolate is
+        // shared across the editor's `AiAssistCubit` and any future
+        // surface (Spec 21 audio transcription). Stateful — singleton
+        // for the app lifetime.
+        RepositoryProvider<LlmRuntime>(
+          create: (_) => LlamaCppLlmRuntime(),
+          dispose: (runtime) => runtime.unload(),
         ),
       ],
       child: MultiBlocProvider(
@@ -173,6 +184,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               repository: ctx.read<NotiIdentityRepository>(),
             )..load(),
           ),
+          // Spec 20: hoisted from `SettingsScreen` so the editor's ✦
+          // button can read the same readiness state without re-probing
+          // disk on every open. `bootstrap()` is idempotent — the row
+          // paints "ready" on first frame for users who already
+          // downloaded on a previous run.
+          BlocProvider(
+            create: (ctx) => LlmReadinessCubit(
+              downloader: ctx.read<LlmModelDownloader>(),
+            )..bootstrap(),
+          ),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
           buildWhen: (a, b) =>
@@ -192,6 +213,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 NoteEditorScreen.routeName: (context) => const NoteEditorScreen(),
                 UserInfoScreen.routeName: (context) => const UserInfoScreen(),
                 SettingsScreen.routeName: (context) => const SettingsScreen(),
+                ManageAiScreen.routeName: (context) => const ManageAiScreen(),
               },
             );
           },
