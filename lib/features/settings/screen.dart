@@ -3,8 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
+import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_state.dart';
+import 'package:noti_notes_app/features/settings/widgets/ai_disclosure_sheet.dart';
+import 'package:noti_notes_app/features/settings/widgets/llm_download_progress_modal.dart';
+import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
+import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
@@ -14,26 +20,32 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: SpacingPrimitives.lg,
-          vertical: SpacingPrimitives.md,
+    return BlocProvider<LlmReadinessCubit>(
+      create: (ctx) => LlmReadinessCubit(
+        downloader: ctx.read<LlmModelDownloader>(),
+      )..bootstrap(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Settings')),
+        body: ListView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: SpacingPrimitives.lg,
+            vertical: SpacingPrimitives.md,
+          ),
+          children: const [
+            _SectionLabel('Appearance'),
+            Gap(SpacingPrimitives.sm),
+            _ThemeModePicker(),
+            Gap(SpacingPrimitives.xl),
+            _SectionLabel('App font'),
+            Gap(SpacingPrimitives.sm),
+            _AppFontPicker(),
+            Gap(SpacingPrimitives.xl),
+            _AiAssistSection(),
+            _SectionLabel('About'),
+            Gap(SpacingPrimitives.sm),
+            _AboutTile(),
+          ],
         ),
-        children: const [
-          _SectionLabel('Appearance'),
-          Gap(SpacingPrimitives.sm),
-          _ThemeModePicker(),
-          Gap(SpacingPrimitives.xl),
-          _SectionLabel('App font'),
-          Gap(SpacingPrimitives.sm),
-          _AppFontPicker(),
-          Gap(SpacingPrimitives.xl),
-          _SectionLabel('About'),
-          Gap(SpacingPrimitives.sm),
-          _AboutTile(),
-        ],
       ),
     );
   }
@@ -146,6 +158,132 @@ class _AppFontPicker extends StatelessWidget {
         }).toList(),
       ),
     );
+  }
+}
+
+/// AI assist row. Hidden entirely on `AiTier.unsupported` so users on
+/// devices that cannot run the on-device LLM see no UI hint that AI was
+/// ever a possibility — matches the project posture for STT (Spec 15).
+class _AiAssistSection extends StatelessWidget {
+  const _AiAssistSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final canRunLlm = context.read<DeviceCapabilityService>().aiTier.canRunLlm;
+    if (!canRunLlm) return const SizedBox.shrink();
+
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionLabel('AI assist'),
+        Gap(SpacingPrimitives.sm),
+        _AiAssistTile(),
+        Gap(SpacingPrimitives.xl),
+      ],
+    );
+  }
+}
+
+class _AiAssistTile extends StatelessWidget {
+  const _AiAssistTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return BlocBuilder<LlmReadinessCubit, LlmReadinessState>(
+      builder: (context, state) {
+        final isReady = state.phase == LlmReadinessPhase.ready;
+        return Material(
+          color: isReady ? scheme.primary.withValues(alpha: 0.12) : scheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+            side: BorderSide(
+              color: isReady ? scheme.primary : scheme.outline.withValues(alpha: 0.5),
+              width: 1.0,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+            onTap: isReady ? null : () => _onTap(context, state),
+            child: Padding(
+              padding: const EdgeInsets.all(SpacingPrimitives.lg),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _labelFor(state),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const Gap(SpacingPrimitives.xs),
+                        Text(
+                          _descriptionFor(state),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurface.withValues(alpha: 0.7),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isReady) Icon(Icons.check_circle, color: scheme.primary),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Called when the row is tapped while not in `ready`. Routes by phase:
+  /// idle → disclosure sheet → progress modal; failed → straight retry
+  /// (the previous failure reason is already on screen via the cubit's
+  /// emitted state, no need to re-confirm); downloading / verifying →
+  /// re-open the progress modal so the user can find Cancel.
+  Future<void> _onTap(BuildContext context, LlmReadinessState state) async {
+    final cubit = context.read<LlmReadinessCubit>();
+    switch (state.phase) {
+      case LlmReadinessPhase.idle:
+        final confirmed = await AiDisclosureSheet.show(context);
+        if (confirmed != true) return;
+        if (!context.mounted) return;
+        await cubit.start();
+        if (!context.mounted) return;
+        await LlmDownloadProgressModal.show(context);
+      case LlmReadinessPhase.failed:
+        await cubit.start();
+        if (!context.mounted) return;
+        await LlmDownloadProgressModal.show(context);
+      case LlmReadinessPhase.downloading:
+      case LlmReadinessPhase.verifying:
+        await LlmDownloadProgressModal.show(context);
+      case LlmReadinessPhase.ready:
+        // Ready rows are non-tappable (InkWell.onTap == null).
+        break;
+    }
+  }
+
+  static String _labelFor(LlmReadinessState state) {
+    return switch (state.phase) {
+      LlmReadinessPhase.idle => 'Enable AI assist (around 640 MB)',
+      LlmReadinessPhase.downloading => state.totalBytes > 0
+          ? 'Downloading… ${(state.progressFraction * 100).round()}%'
+          : 'Downloading…',
+      LlmReadinessPhase.verifying => 'Verifying…',
+      LlmReadinessPhase.ready => 'AI assist enabled',
+      LlmReadinessPhase.failed => 'Download failed — retry',
+    };
+  }
+
+  static String _descriptionFor(LlmReadinessState state) {
+    return switch (state.phase) {
+      LlmReadinessPhase.idle => 'On-device language model. Downloaded once, kept on this device.',
+      LlmReadinessPhase.downloading || LlmReadinessPhase.verifying => 'One-time, one-way download.',
+      LlmReadinessPhase.ready => 'Model on this device. No network calls during AI use.',
+      LlmReadinessPhase.failed => state.failureReason ?? 'The previous attempt did not finish.',
+    };
   }
 }
 
