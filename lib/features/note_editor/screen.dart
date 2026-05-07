@@ -10,9 +10,12 @@ import 'package:intl/intl.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
+import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_cubit.dart';
 import 'package:noti_notes_app/repositories/audio/audio_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
+import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
+import 'package:noti_notes_app/services/ai/llm_runtime.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
@@ -26,6 +29,7 @@ import 'bloc/note_editor_bloc.dart';
 import 'bloc/note_editor_event.dart';
 import 'bloc/note_editor_state.dart';
 import 'note_type.dart';
+import 'widgets/ai_assist_button.dart';
 import 'widgets/audio_block_view.dart';
 import 'widgets/audio_capture_button.dart';
 import 'widgets/checklist_block.dart';
@@ -60,15 +64,32 @@ class NoteEditorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<NoteEditorBloc>(
-      create: (ctx) => NoteEditorBloc(
-        repository: ctx.read<NotesRepository>(),
-        identityRepository: ctx.read<NotiIdentityRepository>(),
-        audio: ctx.read<AudioRepository>(),
-        permissions: ctx.read<PermissionsService>(),
-        stt: ctx.read<SttService>(),
-        tts: ctx.read<TtsService>(),
-      )..add(EditorOpened(noteId: noteId, noteType: noteType)),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<NoteEditorBloc>(
+          create: (ctx) => NoteEditorBloc(
+            repository: ctx.read<NotesRepository>(),
+            identityRepository: ctx.read<NotiIdentityRepository>(),
+            audio: ctx.read<AudioRepository>(),
+            permissions: ctx.read<PermissionsService>(),
+            stt: ctx.read<SttService>(),
+            tts: ctx.read<TtsService>(),
+          )..add(EditorOpened(noteId: noteId, noteType: noteType)),
+        ),
+        // Spec 20: per-route AI assist cubit. Lazy-loads the runtime on
+        // first use (the screen may open hundreds of times without ever
+        // touching AI), and `close()` calls `LlmRuntime.unload()` so the
+        // worker isolate is freed when the editor route pops.
+        BlocProvider<AiAssistCubit>(
+          create: (ctx) => AiAssistCubit(
+            runtime: ctx.read<LlmRuntime>(),
+            modelPathResolver: () async {
+              final file = await ctx.read<LlmModelDownloader>().resolveTargetFile();
+              return file.path;
+            },
+          ),
+        ),
+      ],
       child: _NoteEditorView(noteType: noteType),
     );
   }
@@ -530,6 +551,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                         audioCaptureButton: const AudioCaptureButton(),
                         dictationButton: const DictationButton(),
                         readAloudButton: const ReadAloudButton(),
+                        assistButton: const AiAssistButton(),
                       ),
                     ],
                   ),

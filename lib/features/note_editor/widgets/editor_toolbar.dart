@@ -36,6 +36,12 @@ class EditorToolbar extends StatelessWidget {
   /// the dictation slot; tapping starts/stops whole-note text-to-speech.
   final Widget? readAloudButton;
 
+  /// Optional AI assist affordance (e.g. `AiAssistButton`). Sits next
+  /// to the brush per Spec 20 § "The ✦ Assist toolbar button"; the
+  /// button hides itself when the device cannot run the on-device LLM
+  /// or the model is not yet downloaded.
+  final Widget? assistButton;
+
   const EditorToolbar({
     super.key,
     required this.currentBlockIsChecklist,
@@ -49,6 +55,7 @@ class EditorToolbar extends StatelessWidget {
     this.audioCaptureButton,
     this.dictationButton,
     this.readAloudButton,
+    this.assistButton,
   });
 
   @override
@@ -100,6 +107,10 @@ class EditorToolbar extends StatelessWidget {
             if (readAloudButton != null) ...[
               const Gap(SpacingPrimitives.xs),
               readAloudButton!,
+            ],
+            if (assistButton != null) ...[
+              const Gap(SpacingPrimitives.xs),
+              assistButton!,
             ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
