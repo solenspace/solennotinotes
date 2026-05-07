@@ -58,6 +58,10 @@ dependencies:
   speech_to_text: ^7.3.0
   flutter_tts: ^4.2.0
   crypto: ^3.0.6
+  # Spec 20: on-device LLM binding locked by architecture decision #32.
+  # Allowed only inside lib/services/ai/llama_cpp_llm_runtime.dart via
+  # scripts/.offline-allowlist; every other file goes through LlmRuntime.
+  llama_cpp_dart: ^0.2.2
 
 dev_dependencies:
   flutter_test:
