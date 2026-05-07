@@ -1,0 +1,19 @@
+# Throwaway-project caches.
+.dart_tool/
+.packages
+build/
+
+# Resolution lock — this project is intentionally re-resolvable per candidate
+# swap; locking would defeat the purpose. Spec 19 owns the production lock.
+pubspec.lock
+
+# Stray model files. GGUFs are large and never belong in the repo; keep them
+# under user-chosen paths and pass via --model.
+*.gguf
+*.bin
+
+# Throwaway Flutter shim app for on-device runs (see README).
+shim/
+
+# Vendored native libraries for MLC / custom FFI candidates (see README).
+native/
