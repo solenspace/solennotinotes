@@ -1,0 +1,9 @@
+# Harness-local analysis config. The throwaway project does not depend on
+# Flutter (and therefore not on `flutter_lints`); inheriting the repo-root
+# analysis_options.yaml would fail to resolve `package:flutter_lints/...`.
+# We use the standard Dart `lints` package instead, pinned in pubspec.yaml.
+
+include: package:lints/recommended.yaml
+
+formatter:
+  page_width: 100

@@ -1,0 +1,41 @@
+name: llm_validation
+description: >-
+  Throwaway Dart benchmark harness for Spec 18 (LLM runtime validation). NOT
+  part of the Flutter app build — see ../forbidden_imports_lint/ for the
+  sibling pattern. Adding a candidate package here does not affect the main
+  app's pubspec.yaml or the offline-imports gate (scripts/check-offline.sh
+  scans only lib/ and test/).
+publish_to: none
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  args: ^2.5.0
+  path: ^1.9.0
+
+  # ---------------------------------------------------------------------------
+  # Candidate runtime — uncomment exactly one block when running a benchmark.
+  # The probe in bin/probe.dart reads --candidate=<id> and dispatches to the
+  # matching adapter; only the active candidate's import resolves at compile
+  # time. Order tracks the preference list in specs/18-llm-runtime-validation.md.
+  # ---------------------------------------------------------------------------
+
+  # 1. Lead candidate — canonical Dart binding to llama.cpp.
+  #    https://pub.dev/packages/llama_cpp_dart
+  # llama_cpp_dart: ^<version>  # lock to the version validated by the run
+
+  # 2. Alternate — simpler platform-specific wrapper.
+  #    https://pub.dev/packages/flutter_llama
+  # flutter_llama: ^<version>
+
+  # 3. Alternate — MLC LLM via custom FFI bridge. No published Dart package;
+  # the implementer vendors a thin FFI shim under bin/ when validating this
+  # candidate. See README §"Validating MLC".
+
+  # 4. Last-resort — vendored llama.cpp shared library + dart:ffi. Nothing to
+  # pin here; ship the .so / .dylib alongside bin/probe.dart and document the
+  # build recipe in README §"Validating custom FFI".
+
+dev_dependencies:
+  lints: ^4.0.0
