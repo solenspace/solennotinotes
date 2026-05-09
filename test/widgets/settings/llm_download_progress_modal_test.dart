@@ -7,7 +7,7 @@ import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
-import '../../services/ai/fake_llm_model_downloader.dart';
+import '../../services/ai/fake_model_downloader.dart';
 
 NotiText _stubText(WritingFont font, Brightness brightness) {
   const blank = TextStyle();
@@ -35,7 +35,7 @@ ThemeData _theme() => AppTheme.bone(text: _stubText(WritingFont.inter, Brightnes
 /// Builds a host widget that surfaces the modal on a button tap, with a
 /// real [LlmReadinessCubit] backed by a fake downloader so we can drive
 /// the modal through every phase.
-Widget _harness({required FakeLlmModelDownloader fake}) {
+Widget _harness({required FakeModelDownloader fake}) {
   return MaterialApp(
     theme: _theme(),
     home: BlocProvider<LlmReadinessCubit>(
@@ -73,9 +73,9 @@ LlmReadinessCubit _cubitFor(WidgetTester tester) {
 }
 
 void main() {
-  late FakeLlmModelDownloader fake;
+  late FakeModelDownloader fake;
 
-  setUp(() => fake = FakeLlmModelDownloader());
+  setUp(() => fake = FakeModelDownloader());
   tearDown(() => fake.dispose());
 
   group('LlmDownloadProgressModal', () {

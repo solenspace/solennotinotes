@@ -4,8 +4,12 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
+import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.dart';
+import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/widgets/llm_download_progress_modal.dart';
+import 'package:noti_notes_app/features/settings/widgets/whisper_download_progress_modal.dart';
 import 'package:noti_notes_app/services/ai/llm_model_constants.dart';
+import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// "Manage AI" surface (Spec 20 § G). Lists the on-device model's
@@ -27,6 +31,7 @@ class ManageAiScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tier = context.read<DeviceCapabilityService>().aiTier;
     return Scaffold(
       appBar: AppBar(title: const Text('Manage AI')),
       body: ListView(
@@ -34,13 +39,47 @@ class ManageAiScreen extends StatelessWidget {
           horizontal: SpacingPrimitives.lg,
           vertical: SpacingPrimitives.md,
         ),
-        children: const [
-          _ModelInfoCard(),
-          Gap(SpacingPrimitives.lg),
-          _ReDownloadTile(),
-          Gap(SpacingPrimitives.sm),
-          _DeleteTile(),
+        children: [
+          if (tier.canRunLlm) ...const [
+            _SectionLabel('AI assist'),
+            Gap(SpacingPrimitives.sm),
+            _ModelInfoCard(),
+            Gap(SpacingPrimitives.sm),
+            _ReDownloadTile(),
+            Gap(SpacingPrimitives.sm),
+            _DeleteTile(),
+            Gap(SpacingPrimitives.xl),
+          ],
+          if (tier.canRunWhisper) ...const [
+            _SectionLabel('Voice transcription'),
+            Gap(SpacingPrimitives.sm),
+            _WhisperModelInfoCard(),
+            Gap(SpacingPrimitives.sm),
+            _WhisperReDownloadTile(),
+            Gap(SpacingPrimitives.sm),
+            _WhisperDeleteTile(),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: SpacingPrimitives.xs),
+      child: Text(
+        text.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
       ),
     );
   }
@@ -284,4 +323,124 @@ Future<bool?> _confirm(
       );
     },
   );
+}
+
+// ---------------------------------------------------------------------------
+// Spec 21 — Whisper section (mirrors LLM section above one-for-one).
+// ---------------------------------------------------------------------------
+
+class _WhisperModelInfoCard extends StatelessWidget {
+  const _WhisperModelInfoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return BlocBuilder<WhisperReadinessCubit, WhisperReadinessState>(
+      builder: (context, state) {
+        final spec = context.read<WhisperReadinessCubit>().spec;
+        final sizeMb = (spec.totalBytes / (1024 * 1024)).round();
+        return Material(
+          color: scheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+            side: BorderSide(color: scheme.outline.withValues(alpha: 0.5)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(SpacingPrimitives.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Model',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+                const Gap(SpacingPrimitives.xs),
+                Text(
+                  spec.filename,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Gap(SpacingPrimitives.md),
+                _InfoRow(label: 'Size', value: '$sizeMb MB'),
+                _InfoRow(label: 'Schema', value: spec.version),
+                _InfoRow(label: 'Status', value: _statusText(state)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  static String _statusText(WhisperReadinessState state) => switch (state.phase) {
+        WhisperReadinessPhase.idle => 'Not on this device',
+        WhisperReadinessPhase.downloading => 'Downloading…',
+        WhisperReadinessPhase.verifying => 'Verifying…',
+        WhisperReadinessPhase.ready => 'On this device, verified',
+        WhisperReadinessPhase.failed => 'Last attempt failed',
+      };
+}
+
+class _WhisperReDownloadTile extends StatelessWidget {
+  const _WhisperReDownloadTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return _ActionTile(
+      label: 'Re-download transcription model',
+      description: 'Replace the transcription model on this device with a fresh copy.',
+      icon: Icons.refresh_rounded,
+      color: scheme.primary,
+      onTap: () async {
+        final spec = context.read<WhisperReadinessCubit>().spec;
+        final mb = (spec.totalBytes / (1024 * 1024)).round();
+        final confirmed = await _confirm(
+          context,
+          title: 'Re-download transcription model?',
+          body: 'This downloads about $mb MB. The current model file is '
+              'replaced when the new one is verified.',
+          confirmLabel: 'Re-download',
+        );
+        if (confirmed != true) return;
+        if (!context.mounted) return;
+        final cubit = context.read<WhisperReadinessCubit>();
+        await cubit.disable();
+        if (!context.mounted) return;
+        await cubit.start();
+        if (!context.mounted) return;
+        await WhisperDownloadProgressModal.show(context);
+      },
+    );
+  }
+}
+
+class _WhisperDeleteTile extends StatelessWidget {
+  const _WhisperDeleteTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return _ActionTile(
+      label: 'Delete model and disable transcription',
+      description: 'Frees the on-device model. The audio files in your '
+          'notes are untouched. You can re-enable later.',
+      icon: Icons.delete_outline_rounded,
+      color: scheme.error,
+      onTap: () async {
+        final confirmed = await _confirm(
+          context,
+          title: 'Delete transcription model?',
+          body: 'Voice transcription will be turned off. You can re-enable '
+              'it later, but the model will need to be downloaded again.',
+          confirmLabel: 'Delete',
+          isDestructive: true,
+        );
+        if (confirmed != true) return;
+        if (!context.mounted) return;
+        await context.read<WhisperReadinessCubit>().disable();
+      },
+    );
+  }
 }

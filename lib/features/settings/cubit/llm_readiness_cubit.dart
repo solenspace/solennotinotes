@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../services/ai/llm_model_downloader.dart';
+import '../../../services/ai/llm_model_constants.dart';
+import '../../../services/ai/model_download_spec.dart';
+import '../../../services/ai/model_downloader.dart';
 import 'llm_readiness_state.dart';
 
 /// Owns the AI-assist row's lifecycle: probe disk on construction (so the
@@ -10,15 +12,24 @@ import 'llm_readiness_state.dart';
 /// there), kick off downloads on user opt-in, and cancel cleanly when the
 /// user backs out mid-stream.
 ///
-/// Mounted by `lib/features/settings/screen.dart` rather than at app root
-/// (per Spec 19 § F) so the cubit's lifecycle matches the AI-settings
-/// surface — opening / closing the screen builds and disposes the cubit.
+/// Hoisted at the app shell (Spec 20 § "Hoist LlmReadinessCubit") so both
+/// the settings tile and the editor's ✦ Assist button share a single
+/// readiness signal without redundant disk probes.
+///
+/// The downloader instance is shared with `WhisperReadinessCubit` (Spec
+/// 21); this cubit always passes [LlmModelConstants.spec] to its
+/// methods, while the Whisper sibling passes its own spec — the
+/// downloader stays model-agnostic.
 class LlmReadinessCubit extends Cubit<LlmReadinessState> {
-  LlmReadinessCubit({required LlmModelDownloader downloader})
-      : _downloader = downloader,
+  LlmReadinessCubit({
+    required ModelDownloader downloader,
+    ModelDownloadSpec spec = LlmModelConstants.spec,
+  })  : _downloader = downloader,
+        _spec = spec,
         super(const LlmReadinessState.idle());
 
-  final LlmModelDownloader _downloader;
+  final ModelDownloader _downloader;
+  final ModelDownloadSpec _spec;
   StreamSubscription<DownloadProgress>? _downloadSub;
 
   /// Probe the application-support directory for an already-verified model
@@ -28,7 +39,7 @@ class LlmReadinessCubit extends Cubit<LlmReadinessState> {
   /// frame for users who already downloaded on a previous run.
   Future<void> bootstrap() async {
     if (state.phase != LlmReadinessPhase.idle) return;
-    if (await _downloader.isAlreadyDownloaded()) {
+    if (await _downloader.isAlreadyDownloaded(_spec)) {
       emit(const LlmReadinessState(phase: LlmReadinessPhase.ready));
     }
   }
@@ -46,7 +57,7 @@ class LlmReadinessCubit extends Cubit<LlmReadinessState> {
       ),
     );
 
-    _downloadSub = _downloader.download().listen(
+    _downloadSub = _downloader.download(_spec).listen(
           _onProgress,
           onError: _onStreamError,
         );
@@ -97,7 +108,7 @@ class LlmReadinessCubit extends Cubit<LlmReadinessState> {
   Future<void> cancel() async {
     await _downloadSub?.cancel();
     _downloadSub = null;
-    await _downloader.deletePartial();
+    await _downloader.deletePartial(_spec);
     emit(const LlmReadinessState.idle());
   }
 
@@ -108,7 +119,7 @@ class LlmReadinessCubit extends Cubit<LlmReadinessState> {
   Future<void> disable() async {
     await _downloadSub?.cancel();
     _downloadSub = null;
-    await _downloader.deleteAll();
+    await _downloader.deleteAll(_spec);
     emit(const LlmReadinessState.idle());
   }
 
