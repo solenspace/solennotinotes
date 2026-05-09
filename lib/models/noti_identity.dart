@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -19,6 +20,7 @@ class NotiIdentity {
     this.signaturePatternKey,
     this.signatureAccent,
     this.signatureTagline = '',
+    this.publicKey = const <int>[],
   });
 
   /// Stable per-install UUID. Never changes after first generation.
@@ -43,6 +45,13 @@ class NotiIdentity {
   /// card the receiver sees before accepting a note.
   String signatureTagline;
 
+  /// 32-byte Ed25519 public key. Travels with shared notes so receivers can
+  /// verify the sender's signature. Empty on a legacy record loaded before
+  /// the keypair migration runs; the repository fills it on next [init].
+  /// The matching private key never appears on this model — it lives only
+  /// inside [KeypairService] and the platform keychain.
+  List<int> publicKey;
+
   /// Returns a fresh [NotiIdentity] with the given fields overridden. Pass
   /// `clearProfilePicture: true` (or `clearSignaturePatternKey: true` /
   /// `clearSignatureAccent: true`) to set a nullable field back to null —
@@ -55,6 +64,7 @@ class NotiIdentity {
     String? signaturePatternKey,
     String? signatureAccent,
     String? signatureTagline,
+    List<int>? publicKey,
     bool clearProfilePicture = false,
     bool clearSignaturePatternKey = false,
     bool clearSignatureAccent = false,
@@ -69,6 +79,7 @@ class NotiIdentity {
           clearSignaturePatternKey ? null : (signaturePatternKey ?? this.signaturePatternKey),
       signatureAccent: clearSignatureAccent ? null : (signatureAccent ?? this.signatureAccent),
       signatureTagline: signatureTagline ?? this.signatureTagline,
+      publicKey: publicKey ?? this.publicKey,
     );
   }
 
@@ -81,9 +92,11 @@ class NotiIdentity {
         'signaturePatternKey': signaturePatternKey,
         'signatureAccent': signatureAccent,
         'signatureTagline': signatureTagline,
+        'publicKey': publicKey.isEmpty ? null : base64Encode(publicKey),
       };
 
   factory NotiIdentity.fromJson(Map<String, dynamic> json) {
+    final pubKeyRaw = json['publicKey'];
     return NotiIdentity(
       id: json['id'] as String,
       displayName: (json['displayName'] ?? json['name'] ?? '') as String,
@@ -95,6 +108,7 @@ class NotiIdentity {
       signaturePatternKey: json['signaturePatternKey'] as String?,
       signatureAccent: json['signatureAccent'] as String?,
       signatureTagline: (json['signatureTagline'] as String?) ?? '',
+      publicKey: pubKeyRaw is String ? base64Decode(pubKeyRaw) : const <int>[],
     );
   }
 

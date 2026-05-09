@@ -9,6 +9,8 @@ import 'package:noti_notes_app/models/noti_identity.dart';
 import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 
+import '../../services/crypto/fake_keypair_service.dart';
+
 class _RecordingImageService implements ImagePickerService {
   final List<File> removed = [];
 
@@ -60,6 +62,7 @@ void main() {
       repo = HiveNotiIdentityRepository.withBox(
         box: box,
         imageService: imageService,
+        keypairService: FakeKeypairService(),
       );
     });
 
@@ -256,7 +259,7 @@ void main() {
     });
 
     test('fresh install generates a new identity with a starter palette', () async {
-      final repo = HiveNotiIdentityRepository();
+      final repo = HiveNotiIdentityRepository(keypairService: FakeKeypairService());
       await repo.init();
 
       final fetched = await repo.getCurrent();
@@ -296,7 +299,7 @@ void main() {
       await legacy.close();
       await Hive.close();
 
-      final repo = HiveNotiIdentityRepository();
+      final repo = HiveNotiIdentityRepository(keypairService: FakeKeypairService());
       await repo.init();
 
       final fetched = await repo.getCurrent();
@@ -313,7 +316,7 @@ void main() {
     });
 
     test('init is idempotent when called twice (no double-migration)', () async {
-      final repo = HiveNotiIdentityRepository();
+      final repo = HiveNotiIdentityRepository(keypairService: FakeKeypairService());
       await repo.init();
       final firstId = (await repo.getCurrent()).id;
 
