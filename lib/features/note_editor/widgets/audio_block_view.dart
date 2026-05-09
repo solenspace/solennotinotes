@@ -10,18 +10,28 @@ import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Inline playback pill for an [AudioBlock]. Renders the pre-computed
 /// 80-bucket waveform with a playhead overlay; tap toggles play/pause;
-/// long-press opens a context menu (`Re-record`, `Delete`).
+/// long-press opens a context menu (`Transcribe` (Spec 21, conditional),
+/// `Re-record`, `Delete`).
 class AudioBlockView extends StatefulWidget {
   const AudioBlockView({
     super.key,
     required this.block,
     required this.onDelete,
     required this.onReRecord,
+    this.onTranscribe,
   });
 
   final AudioBlock block;
   final VoidCallback onDelete;
   final VoidCallback onReRecord;
+
+  /// Spec 21 — when non-null, the long-press menu surfaces a
+  /// "Transcribe" entry that invokes this callback. The screen wires
+  /// the callback only when `aiTier.canRunWhisper` AND
+  /// `WhisperReadinessCubit == ready` (otherwise null hides the entry
+  /// entirely; users on unsupported devices or without the model
+  /// downloaded see the existing menu unchanged).
+  final VoidCallback? onTranscribe;
 
   @override
   State<AudioBlockView> createState() => _AudioBlockViewState();
@@ -72,13 +82,21 @@ class _AudioBlockViewState extends State<AudioBlockView> {
         Rect.fromPoints(globalPosition, globalPosition),
         Offset.zero & overlay.size,
       ),
-      items: const [
-        PopupMenuItem<String>(value: 're-record', child: Text('Re-record')),
-        PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
+      items: <PopupMenuEntry<String>>[
+        if (widget.onTranscribe != null)
+          const PopupMenuItem<String>(
+            value: 'transcribe',
+            child: Text('Transcribe'),
+          ),
+        const PopupMenuItem<String>(value: 're-record', child: Text('Re-record')),
+        const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
       ],
     );
     if (!mounted || selected == null) return;
     switch (selected) {
+      case 'transcribe':
+        await _player.stop();
+        widget.onTranscribe?.call();
       case 're-record':
         await _player.stop();
         widget.onReRecord();

@@ -1,3 +1,5 @@
+import 'model_download_spec.dart';
+
 /// Frozen identity of the on-device LLM model file shipped with v1 of the
 /// AI assist flow (Spec 19). The values are locked by architecture decision
 /// #32 in `context/progress-tracker.md` and the harness README at
@@ -9,6 +11,9 @@
 /// point of the offline invariant (architecture.md #1) is that the user can
 /// audit *exactly one* outbound URL the app will hit; making this swappable
 /// at runtime would defeat the audit.
+///
+/// Consumers pass [spec] to [`ModelDownloader`] (Spec 21 generalised the
+/// downloader so Whisper can ride the same single network surface).
 class LlmModelConstants {
   /// Schema version of these constants. Bumped when `filename` / `url` /
   /// `sha256` change in lock-step (e.g. switching to a different quant or
@@ -39,6 +44,18 @@ class LlmModelConstants {
   /// pre-size progress bars when the HTTP response omits `Content-Length`
   /// (rare but possible on `Range` resumes).
   static const int totalBytes = 668788096;
+
+  /// Bundled value passed to `ModelDownloader.{resolveTargetFile,
+  /// isAlreadyDownloaded, download, deletePartial, deleteAll}`. Files
+  /// land under `<app_support>/llm/`.
+  static const ModelDownloadSpec spec = ModelDownloadSpec(
+    subdirectory: 'llm',
+    filename: filename,
+    url: url,
+    sha256: sha256,
+    totalBytes: totalBytes,
+    version: version,
+  );
 
   const LlmModelConstants._();
 }

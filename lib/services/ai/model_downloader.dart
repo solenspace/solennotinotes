@@ -1,7 +1,7 @@
 // ignore_for_file: forbidden_import
-// Allowed by scripts/.offline-allowlist for Spec 19 (model download). This
-// is the only file under lib/ permitted to import dart:io.HttpClient — see
-// architecture.md invariant 1 and the allowlist comment for the audit
+// Allowed by scripts/.offline-allowlist for Specs 19 + 21 (model download).
+// This is the only file under lib/ permitted to import dart:io.HttpClient —
+// see architecture.md invariant 1 and the allowlist comment for the audit
 // trail. Adding a second consumer requires a written rationale and a new
 // architecture-decision entry; do not silently extend.
 
@@ -12,64 +12,81 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import 'llm_model_constants.dart';
+import 'model_download_spec.dart';
 
-/// One-shot, resumable, integrity-checked downloader for the GGUF model
-/// file Spec 19 freezes in [LlmModelConstants]. Lifecycle:
+/// One-shot, resumable, integrity-checked downloader for any on-device
+/// model file frozen as a [ModelDownloadSpec]. Spec 19 introduced this
+/// for the LLM GGUF; Spec 21 reuses the same code path (parameterised by
+/// spec) for the Whisper model — keeping the single network surface in
+/// `architecture.md` invariant 1.
 ///
-///   1. Caller (typically `LlmReadinessCubit`) checks
+/// Lifecycle, per call site:
+///
+///   1. Caller (typically a readiness cubit) checks
 ///      [isAlreadyDownloaded] on app start. If true, the runtime can load
 ///      the file directly — no UI involvement.
-///   2. Otherwise the user opts in via the disclosure sheet, [download] is
+///   2. Otherwise the user opts in via a disclosure sheet, [download] is
 ///      subscribed, and progress events drive the UI.
-///   3. The sink writes to `<app_support>/llm/<filename>.partial`. On
+///   3. The sink writes to
+///      `<app_support>/<spec.subdirectory>/<spec.filename>.partial`. On
 ///      success the partial is atomically renamed to its final name; on
 ///      failure / cancel the partial stays on disk so the next attempt's
 ///      `Range` request can resume from where this one stopped.
 ///   4. SHA-256 is computed in a single pass: every byte written to disk
 ///      is also fed through the digest, so verification at the end is a
 ///      memory-only string compare. This avoids the second 700 MB read
-///      the spec text sketched (verify-equivalent, half the disk I/O).
+///      the original spec text sketched (verify-equivalent, half the disk
+///      I/O).
 ///
 /// Cancellation: closing the [download] subscription terminates the
 /// `await for` loop, the `finally` block closes the sink + HttpClient, and
 /// the partial file is left on disk. The caller is expected to invoke
 /// [deletePartial] when the user explicitly cancels (vs. a transient
 /// network drop the user wants to resume from).
-class LlmModelDownloader {
-  const LlmModelDownloader();
+///
+/// The downloader is stateless: a single instance handles any number of
+/// concurrent [download] subscriptions for distinct specs (LLM + Whisper
+/// at the same time would each run their own HttpClient, write under
+/// their own subdirectory, and never share digest state). One instance
+/// per app is registered via `RepositoryProvider<ModelDownloader>` in
+/// `main.dart`.
+class ModelDownloader {
+  const ModelDownloader();
 
-  Future<File> resolveTargetFile() async {
+  /// Resolves the canonical on-disk path for [spec] and ensures its
+  /// parent directory exists. Idempotent.
+  Future<File> resolveTargetFile(ModelDownloadSpec spec) async {
     final supportDir = await getApplicationSupportDirectory();
-    final llmDir = Directory(p.join(supportDir.path, 'llm'));
-    if (!llmDir.existsSync()) llmDir.createSync(recursive: true);
-    return File(p.join(llmDir.path, LlmModelConstants.filename));
+    final modelDir = Directory(p.join(supportDir.path, spec.subdirectory));
+    if (!modelDir.existsSync()) modelDir.createSync(recursive: true);
+    return File(p.join(modelDir.path, spec.filename));
   }
 
-  Future<File> _resolvePartialFile() async {
-    final target = await resolveTargetFile();
+  Future<File> _resolvePartialFile(ModelDownloadSpec spec) async {
+    final target = await resolveTargetFile(spec);
     return File('${target.path}.partial');
   }
 
-  /// Returns true when the canonical model file is on disk *and* its
-  /// SHA-256 matches [LlmModelConstants.sha256]. A mismatching file is
-  /// silently treated as not-downloaded so the next start triggers a
+  /// Returns true when the canonical file for [spec] is on disk *and*
+  /// its SHA-256 matches [ModelDownloadSpec.sha256]. A mismatching file
+  /// is silently treated as not-downloaded so the next start triggers a
   /// re-fetch (the file is the source of truth, not a flag in settings).
-  Future<bool> isAlreadyDownloaded() async {
-    final target = await resolveTargetFile();
+  Future<bool> isAlreadyDownloaded(ModelDownloadSpec spec) async {
+    final target = await resolveTargetFile(spec);
     if (!target.existsSync()) return false;
-    return _verifyFileDigest(target);
+    return _verifyFileDigest(target, spec);
   }
 
-  /// Streams the download lifecycle. Resumable across app launches via the
-  /// `.partial` sidecar file: a fresh subscription with bytes already on
-  /// disk issues an HTTP `Range: bytes=N-` request and appends from there.
-  /// Servers that honor the range respond `206 Partial Content`; the rare
-  /// server that ignores Range and replies `200 OK` triggers a full
-  /// restart (partial is truncated; digest reset).
-  Stream<DownloadProgress> download() async* {
-    final target = await resolveTargetFile();
-    final partial = await _resolvePartialFile();
+  /// Streams the download lifecycle for [spec]. Resumable across app
+  /// launches via the `.partial` sidecar file: a fresh subscription with
+  /// bytes already on disk issues an HTTP `Range: bytes=N-` request and
+  /// appends from there. Servers that honor the range respond `206
+  /// Partial Content`; the rare server that ignores Range and replies
+  /// `200 OK` triggers a full restart (partial is truncated; digest
+  /// reset).
+  Stream<DownloadProgress> download(ModelDownloadSpec spec) async* {
+    final target = await resolveTargetFile(spec);
+    final partial = await _resolvePartialFile(spec);
 
     final client = HttpClient();
     IOSink? sink;
@@ -77,7 +94,7 @@ class LlmModelDownloader {
     try {
       final initialPartialBytes = partial.existsSync() ? partial.lengthSync() : 0;
 
-      final request = await client.getUrl(Uri.parse(LlmModelConstants.url));
+      final request = await client.getUrl(Uri.parse(spec.url));
       if (initialPartialBytes > 0) {
         request.headers.add(
           HttpHeaders.rangeHeader,
@@ -92,7 +109,7 @@ class LlmModelDownloader {
         throw HttpException(
           'Unexpected HTTP status while downloading model: '
           '${response.statusCode}',
-          uri: Uri.parse(LlmModelConstants.url),
+          uri: Uri.parse(spec.url),
         );
       }
 
@@ -123,7 +140,7 @@ class LlmModelDownloader {
       );
 
       final declaredLength = response.contentLength;
-      final total = declaredLength > 0 ? startByte + declaredLength : LlmModelConstants.totalBytes;
+      final total = declaredLength > 0 ? startByte + declaredLength : spec.totalBytes;
       var written = startByte;
 
       await for (final chunk in response) {
@@ -139,7 +156,7 @@ class LlmModelDownloader {
 
       yield const DownloadProgress.verifying();
       final actualHex = accumulator.digest.toString();
-      if (actualHex != LlmModelConstants.sha256) {
+      if (actualHex != spec.sha256) {
         // Corrupt download — remove the partial so the next attempt
         // restarts cleanly rather than resuming on a poisoned prefix.
         if (partial.existsSync()) await partial.delete();
@@ -156,23 +173,24 @@ class LlmModelDownloader {
     }
   }
 
-  /// Deletes the partial file if present. Idempotent. Called by the cubit
-  /// on user-initiated cancel (vs. transient errors where we want resume
-  /// to pick the partial back up on the next attempt).
-  Future<void> deletePartial() async {
-    final partial = await _resolvePartialFile();
+  /// Deletes the partial file for [spec] if present. Idempotent. Called
+  /// by the cubit on user-initiated cancel (vs. transient errors where
+  /// we want resume to pick the partial back up on the next attempt).
+  Future<void> deletePartial(ModelDownloadSpec spec) async {
+    final partial = await _resolvePartialFile(spec);
     if (partial.existsSync()) await partial.delete();
   }
 
-  /// Removes both the canonical file and any partial sidecar. Wired up for
-  /// future "Disable AI assist" affordances; not consumed by Spec 19's UI.
-  Future<void> deleteAll() async {
-    final target = await resolveTargetFile();
+  /// Removes both the canonical file and any partial sidecar for [spec].
+  /// Used by "Disable AI" / "Disable transcription" affordances in the
+  /// Manage AI surface.
+  Future<void> deleteAll(ModelDownloadSpec spec) async {
+    final target = await resolveTargetFile(spec);
     if (target.existsSync()) await target.delete();
-    await deletePartial();
+    await deletePartial(spec);
   }
 
-  bool _verifyFileDigest(File f) {
+  bool _verifyFileDigest(File f, ModelDownloadSpec spec) {
     final accumulator = _DigestSink();
     final digestSink = crypto.sha256.startChunkedConversion(accumulator);
     final raf = f.openSync();
@@ -187,7 +205,7 @@ class LlmModelDownloader {
       raf.closeSync();
     }
     digestSink.close();
-    return accumulator.digest.toString() == LlmModelConstants.sha256;
+    return accumulator.digest.toString() == spec.sha256;
   }
 }
 
@@ -219,7 +237,7 @@ class _DigestSink implements Sink<crypto.Digest> {
   }
 }
 
-/// Phase + payload of a single emission from [LlmModelDownloader.download].
+/// Phase + payload of a single emission from [ModelDownloader.download].
 /// Sealed so the cubit's `switch` over phases is exhaustively type-checked.
 sealed class DownloadProgress {
   const DownloadProgress();

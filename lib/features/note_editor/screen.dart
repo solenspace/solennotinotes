@@ -11,11 +11,19 @@ import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_cubit.dart';
+import 'package:noti_notes_app/features/note_editor/cubit/transcription_cubit.dart';
+import 'package:noti_notes_app/features/note_editor/widgets/transcription_overlay.dart';
+import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.dart';
+import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_state.dart';
 import 'package:noti_notes_app/repositories/audio/audio_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
-import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
+import 'package:noti_notes_app/services/ai/llm_model_constants.dart';
 import 'package:noti_notes_app/services/ai/llm_runtime.dart';
+import 'package:noti_notes_app/services/ai/model_downloader.dart';
+import 'package:noti_notes_app/services/ai/whisper_model_constants.dart';
+import 'package:noti_notes_app/services/ai/whisper_runtime.dart';
+import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
@@ -84,7 +92,8 @@ class NoteEditorScreen extends StatelessWidget {
           create: (ctx) => AiAssistCubit(
             runtime: ctx.read<LlmRuntime>(),
             modelPathResolver: () async {
-              final file = await ctx.read<LlmModelDownloader>().resolveTargetFile();
+              final file =
+                  await ctx.read<ModelDownloader>().resolveTargetFile(LlmModelConstants.spec);
               return file.path;
             },
           ),
@@ -273,6 +282,65 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   void _reRecordAudio(String audioId) {
     _deleteAudioBlock(audioId);
     context.read<NoteEditorBloc>().add(const AudioCaptureRequested());
+  }
+
+  /// Spec 21 — open the transcription overlay for [block]. Constructs a
+  /// per-overlay [TranscriptionCubit] that shares the hoisted
+  /// [WhisperRuntime]; on close, applies the user's chosen accept path
+  /// (Insert below / Replace audio / Discard).
+  ///
+  /// The screen owns the block-list mutation, mirroring the existing
+  /// audio-capture and dictation flows — the cubit / overlay never
+  /// touches `note.blocks` directly.
+  Future<void> _transcribeAudio(AudioBlock block) async {
+    final tier = context.read<DeviceCapabilityService>().aiTier;
+    if (!tier.canRunWhisper) return; // defence-in-depth
+    final runtime = context.read<WhisperRuntime>();
+    final downloader = context.read<ModelDownloader>();
+
+    final result = await TranscriptionOverlay.show(
+      context,
+      audioFilePath: block.path,
+      cubitFactory: () => TranscriptionCubit(
+        runtime: runtime,
+        modelPathResolver: () async {
+          final file = await downloader.resolveTargetFile(
+            WhisperModelConstants.specForTier(tier),
+          );
+          return file.path;
+        },
+      ),
+    );
+
+    if (!mounted) return;
+    final transcript = result.transcript?.trim() ?? '';
+    if (transcript.isEmpty) return;
+
+    switch (result.kind) {
+      case TranscriptionAcceptance.insertBelow:
+        _insertTextBlockBelow(block.id, transcript);
+      case TranscriptionAcceptance.replaceAudio:
+        _replaceAudioWithTranscript(block.id, transcript);
+      case TranscriptionAcceptance.discard:
+        break;
+    }
+  }
+
+  /// Replace the audio block at [audioId] with a new text block carrying
+  /// [transcript]. Persists via `BlocksReplaced` and dispatches
+  /// `AudioBlockRemoved(audioId)` so the underlying `.m4a` file is
+  /// cleaned up by `AudioRepository.delete`.
+  void _replaceAudioWithTranscript(String audioId, String transcript) {
+    final i = _blocks.indexWhere((b) => b is AudioBlock && b.id == audioId);
+    if (i < 0) return;
+    final replacement = newTextBlock(transcript);
+    setState(() => _blocks[i] = replacement);
+    _persistBlocks();
+    context.read<NoteEditorBloc>().add(AudioBlockRemoved(audioId));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _focusBlock(replacement.id);
+    });
   }
 
   void _showMicrophoneExplainer() {
@@ -564,6 +632,35 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
     );
   }
 
+  /// Audio block render — wraps [AudioBlockView] with a `BlocSelector`
+  /// that surfaces "Transcribe" only when the device can run Whisper
+  /// AND the model is downloaded + verified. Spec 21 § "Audio block
+  /// menu integration": both gates must pass; otherwise `onTranscribe`
+  /// is null and the menu entry is hidden entirely (matching the
+  /// project posture from STT — affordances disappear, no greyed-out
+  /// teasers).
+  Widget _buildAudioBlock(AudioBlock block) {
+    final tier = context.read<DeviceCapabilityService>().aiTier;
+    if (!tier.canRunWhisper) {
+      return AudioBlockView(
+        block: block,
+        onDelete: () => _deleteAudioBlock(block.id),
+        onReRecord: () => _reRecordAudio(block.id),
+      );
+    }
+    return BlocSelector<WhisperReadinessCubit, WhisperReadinessState, bool>(
+      selector: (state) => state.phase == WhisperReadinessPhase.ready,
+      builder: (context, ready) {
+        return AudioBlockView(
+          block: block,
+          onDelete: () => _deleteAudioBlock(block.id),
+          onReRecord: () => _reRecordAudio(block.id),
+          onTranscribe: ready ? () => _transcribeAudio(block) : null,
+        );
+      },
+    );
+  }
+
   Widget _buildBlock(EditorBlock block, Color? textColor, {required int blockIndex}) {
     return KeyedSubtree(
       key: ValueKey(block.id),
@@ -606,11 +703,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
             path: block.path,
             onDelete: () => _deleteImageBlock(block.id),
           ),
-        AudioBlock() => AudioBlockView(
-            block: block,
-            onDelete: () => _deleteAudioBlock(block.id),
-            onReRecord: () => _reRecordAudio(block.id),
-          ),
+        AudioBlock() => _buildAudioBlock(block),
       },
     );
   }
