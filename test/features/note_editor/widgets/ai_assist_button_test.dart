@@ -11,14 +11,14 @@ import 'package:noti_notes_app/theme/app_theme.dart';
 import 'package:noti_notes_app/theme/app_typography.dart';
 import 'package:noti_notes_app/theme/tokens/typography_tokens.dart';
 
-import '../../../services/ai/fake_llm_model_downloader.dart';
+import '../../../services/ai/fake_model_downloader.dart';
 import '../../../services/device/fake_device_capability_service.dart';
 
 /// Builds a `NotiText` with empty styles so widget tests don't go through
 /// GoogleFonts (which would touch the asset bundle).
 NotiText _stubText() {
   const blank = TextStyle();
-  return NotiText(
+  return const NotiText(
     writingFont: WritingFont.inter,
     brightness: Brightness.light,
     displayLg: blank,
@@ -45,7 +45,7 @@ Future<LlmReadinessCubit> _pumpButton(
   required LlmReadinessPhase phase,
 }) async {
   final capability = FakeDeviceCapabilityService()..aiTier = tier;
-  final downloader = FakeLlmModelDownloader();
+  final downloader = FakeModelDownloader();
   final cubit = LlmReadinessCubit(downloader: downloader);
   if (phase == LlmReadinessPhase.ready) {
     cubit.emit(const LlmReadinessState(phase: LlmReadinessPhase.ready));

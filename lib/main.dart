@@ -21,12 +21,16 @@ import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
+import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/screens/manage_ai_screen.dart';
 import 'package:noti_notes_app/repositories/settings/hive_settings_repository.dart';
 import 'package:noti_notes_app/repositories/settings/settings_repository.dart';
 import 'package:noti_notes_app/services/ai/llama_cpp_llm_runtime.dart';
-import 'package:noti_notes_app/services/ai/llm_model_downloader.dart';
 import 'package:noti_notes_app/services/ai/llm_runtime.dart';
+import 'package:noti_notes_app/services/ai/model_downloader.dart';
+import 'package:noti_notes_app/services/ai/whisper_cpp_runtime.dart';
+import 'package:noti_notes_app/services/ai/whisper_runtime.dart';
+import 'package:noti_notes_app/services/device/ai_tier.dart';
 import 'package:noti_notes_app/services/device/device_capability_probe.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
@@ -152,10 +156,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),
-        // Spec 19: stateless downloader. The cubit that drives the AI
-        // assist row + the editor's ✦ button (hoisted below) reads it.
-        RepositoryProvider<LlmModelDownloader>.value(
-          value: const LlmModelDownloader(),
+        // Specs 19 + 21: stateless model downloader, the one authorised
+        // network surface. Both `LlmReadinessCubit` and (Spec 21)
+        // `WhisperReadinessCubit` resolve this single instance — each
+        // cubit injects its own `ModelDownloadSpec` so the downloader
+        // stays model-agnostic.
+        RepositoryProvider<ModelDownloader>.value(
+          value: const ModelDownloader(),
         ),
         // Spec 20: shared on-device LLM runtime. One worker isolate is
         // shared across the editor's `AiAssistCubit` and any future
@@ -163,6 +170,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // for the app lifetime.
         RepositoryProvider<LlmRuntime>(
           create: (_) => LlamaCppLlmRuntime(),
+          dispose: (runtime) => runtime.unload(),
+        ),
+        // Spec 21: shared on-device Whisper runtime. One worker isolate
+        // is reused across every `TranscriptionCubit` (one per
+        // long-pressed audio block). Stateful — singleton for the app
+        // lifetime, torn down via `dispose`.
+        RepositoryProvider<WhisperRuntime>(
+          create: (_) => WhisperCppRuntime(),
           dispose: (runtime) => runtime.unload(),
         ),
       ],
@@ -191,8 +206,33 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           // downloaded on a previous run.
           BlocProvider(
             create: (ctx) => LlmReadinessCubit(
-              downloader: ctx.read<LlmModelDownloader>(),
+              downloader: ctx.read<ModelDownloader>(),
             )..bootstrap(),
+          ),
+          // Spec 21: hoisted next to LLM readiness so the editor's
+          // audio-block "Transcribe" affordance and the settings
+          // "Voice transcription" tile read the same readiness state.
+          // The tier is read once at construction (architecture
+          // decision #7); UI must additionally check
+          // `aiTier.canRunWhisper` before rendering, since the cubit
+          // would throw `StateError` for `AiTier.unsupported`.
+          BlocProvider(
+            create: (ctx) {
+              final tier = ctx.read<DeviceCapabilityService>().aiTier;
+              if (!tier.canRunWhisper) {
+                // Cubit factory still must return a cubit; we hand back
+                // an idle one without bootstrap so it never resolves a
+                // spec. UI gates ensure no consumer reads its state.
+                return WhisperReadinessCubit(
+                  downloader: ctx.read<ModelDownloader>(),
+                  tier: AiTier.compact,
+                );
+              }
+              return WhisperReadinessCubit(
+                downloader: ctx.read<ModelDownloader>(),
+                tier: tier,
+              )..bootstrap();
+            },
           ),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
