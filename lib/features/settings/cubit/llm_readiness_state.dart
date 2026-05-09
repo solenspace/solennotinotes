@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Phase of the LLM-model download flow as observed by the UI. Mirrors the
-/// internal phases of `LlmModelDownloader.download()` but is decoupled —
+/// internal phases of `ModelDownloader.download(...)` but is decoupled —
 /// the UI talks to this enum, not to the downloader's `DownloadProgress`
 /// sealed class, so a future change to the downloader's reporting (e.g.
 /// adding "checksumming" mid-stream) does not ripple into widget code.

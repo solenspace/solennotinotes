@@ -19,11 +19,14 @@ lib/services/speech/tts_service.dart
 # wrapper at lib/services/device/device_capability_service.dart.
 lib/services/device/device_capability_probe.dart
 
-# Spec 19: model download is the one authorized network surface.
-# The user opts in explicitly via the AI assist disclosure; the file is
-# fetched once, SHA-256 verified, and lives in app-support storage.
-# Never extend this allowlist without a written rationale.
-lib/services/ai/llm_model_downloader.dart
+# Specs 19 + 21: model download is the one authorized network surface.
+# The user opts in explicitly via the AI / transcription disclosure; each
+# file is fetched once, SHA-256 verified, and lives in app-support storage.
+# A single `ModelDownloader` serves both the LLM (Spec 19) and Whisper
+# (Spec 21) by accepting a `ModelDownloadSpec` parameter — no second
+# network surface was added. Never extend this allowlist without a
+# written rationale.
+lib/services/ai/model_downloader.dart
 
 # Spec 20: llama_cpp_dart is the on-device LLM binding (decision #32).
 # The package is FFI to a vendored llama.cpp shared library — no network
