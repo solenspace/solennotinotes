@@ -44,6 +44,5 @@ app.*.map.json
 /android/app/release
 
 .claude/settings.local.json
-.claude/skills/
-.agents/skills/
+.claude/scheduled_tasks.lock
 node_modules/
