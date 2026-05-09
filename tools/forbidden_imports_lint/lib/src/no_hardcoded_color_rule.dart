@@ -33,6 +33,9 @@ class NoHardcodedColorRule extends DartLintRule {
     // Model deserialization needs to construct Color from persisted ARGB
     // ints; these are not hardcoded literals.
     '/lib/models/',
+    // Spec 23 share codec deserializes Color from peer-supplied signed
+    // manifest ARGB ints; same rationale as /lib/models/.
+    '/lib/services/share/',
   ];
 
   @override
