@@ -28,6 +28,13 @@ This is an offline-first Flutter notes app. The full project context lives in [c
   ```
   Use a slug that names the spec or feature (e.g. `feature/01-lint-and-format-hardening`, `feature/04-repository-layer`).
 - Open a PR `feature/<slug>` → `development` when the spec's verification checklist is green.
+- **After a PR is merged, delete the branch — both remote and local — in the same step**, so stale branches don't pile up:
+  ```
+  gh pr merge <number> --merge --delete-branch
+  git checkout development && git pull --ff-only
+  git branch -D feature/<slug>     # deletes the local copy
+  ```
+  Treat the merge as incomplete until both branches are gone. The same applies to `chore/<slug>` and `hotfix/<slug>` branches.
 - Releases land on `main` via a PR `development` → `main`. No feature branches target `main` directly.
 - Hotfix branches (`hotfix/<slug>`) may branch off `main` and merge back to both `main` and `development` — only when production is broken.
 
