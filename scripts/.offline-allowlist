@@ -33,3 +33,13 @@ lib/services/ai/model_downloader.dart
 # transitively. Wrapping it here keeps Spec 20 success criterion #5 enforceable
 # (only this file imports the chosen LLM package directly).
 lib/services/ai/llama_cpp_llm_runtime.dart
+
+# Spec 22: KeypairService Ed25519 implementation. cryptography is pure-Dart;
+# flutter_secure_storage is a thin OS-keychain wrapper. Both make no network
+# calls; the wrapper centralizes private-key handling so no other layer can
+# touch the bytes.
+lib/services/crypto/flutter_secure_keypair_service.dart
+# Spec 22: keypair contract round-trip test exercises the same Ed25519 algorithm
+# the wrapper delegates to. No platform plugin is involved; this verifies the
+# crypto invariants without requiring a real keychain.
+test/services/crypto/keypair_service_test.dart
