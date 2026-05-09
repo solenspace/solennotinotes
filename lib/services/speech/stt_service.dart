@@ -96,23 +96,29 @@ class PluginSttService implements SttService {
         onResult: (result) {
           if (controller.isClosed) return;
           if (result.finalResult) {
-            controller.add(SttFinalResult(
-              text: result.recognizedWords,
-              confidence: result.confidence,
-            ));
+            controller.add(
+              SttFinalResult(
+                text: result.recognizedWords,
+                confidence: result.confidence,
+              ),
+            );
             controller.close();
           } else {
-            controller.add(SttPartialResult(
-              text: result.recognizedWords,
-              confidence: result.confidence,
-            ));
+            controller.add(
+              SttPartialResult(
+                text: result.recognizedWords,
+                confidence: result.confidence,
+              ),
+            );
           }
         },
         localeId: localeId,
-        onDevice: true,
-        partialResults: true,
-        listenMode: stt.ListenMode.dictation,
-        cancelOnError: true,
+        listenOptions: stt.SpeechListenOptions(
+          onDevice: true,
+          partialResults: true,
+          listenMode: stt.ListenMode.dictation,
+          cancelOnError: true,
+        ),
       );
     } on Object catch (e) {
       if (!controller.isClosed) {

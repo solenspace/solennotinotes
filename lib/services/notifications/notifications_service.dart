@@ -30,7 +30,7 @@ class TimeZone {
 class LocalNotificationService {
   static final _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  static Future<void> setup(Function(NotificationResponse) notificationResponse) async {
+  static Future<void> setup(void Function(NotificationResponse) notificationResponse) async {
     const androidSetting = AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const initSettings = InitializationSettings(android: androidSetting);
