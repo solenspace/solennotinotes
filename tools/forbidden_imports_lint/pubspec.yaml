@@ -1,0 +1,12 @@
+name: forbidden_imports_lint
+description: Custom Dart lint that enforces Notinotes' offline-invariant — bans network/cloud package imports under lib/.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  analyzer: ^7.0.0
+  analyzer_plugin: ^0.13.0
+  custom_lint_builder: ^0.7.0

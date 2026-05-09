@@ -1,0 +1,45 @@
+# File-path allowlist for offline-invariant exemptions.
+# One file path per line, relative to repo root.
+# Each entry MUST include a comment with the spec number that authorized it.
+
+# Spec 15: speech_to_text is allowed only inside the STT service wrapper.
+# The plugin's onDevice flag is enforced inside the wrapper; consumers
+# elsewhere import lib/services/speech/stt_service.dart instead.
+lib/services/speech/stt_service.dart
+lib/services/speech/stt_capability_probe.dart
+
+# Spec 16: flutter_tts is allowed only inside the TTS service wrapper.
+# The plugin's native engines (AVSpeechSynthesizer / Android TextToSpeech)
+# run fully offline; consumers elsewhere import lib/services/speech/tts_service.dart.
+lib/services/speech/tts_service.dart
+
+# Spec 17: device_info_plus is allowed only inside the device-capability probe.
+# The plugin reads system properties (UIDevice / android.os.Build) and makes
+# no network calls; consumers elsewhere import the DeviceCapabilityService
+# wrapper at lib/services/device/device_capability_service.dart.
+lib/services/device/device_capability_probe.dart
+
+# Specs 19 + 21: model download is the one authorized network surface.
+# The user opts in explicitly via the AI / transcription disclosure; each
+# file is fetched once, SHA-256 verified, and lives in app-support storage.
+# A single `ModelDownloader` serves both the LLM (Spec 19) and Whisper
+# (Spec 21) by accepting a `ModelDownloadSpec` parameter — no second
+# network surface was added. Never extend this allowlist without a
+# written rationale.
+lib/services/ai/model_downloader.dart
+
+# Spec 20: llama_cpp_dart is the on-device LLM binding (decision #32).
+# The package is FFI to a vendored llama.cpp shared library — no network
+# transitively. Wrapping it here keeps Spec 20 success criterion #5 enforceable
+# (only this file imports the chosen LLM package directly).
+lib/services/ai/llama_cpp_llm_runtime.dart
+
+# Spec 22: KeypairService Ed25519 implementation. cryptography is pure-Dart;
+# flutter_secure_storage is a thin OS-keychain wrapper. Both make no network
+# calls; the wrapper centralizes private-key handling so no other layer can
+# touch the bytes.
+lib/services/crypto/flutter_secure_keypair_service.dart
+# Spec 22: keypair contract round-trip test exercises the same Ed25519 algorithm
+# the wrapper delegates to. No platform plugin is involved; this verifies the
+# crypto invariants without requiring a real keychain.
+test/services/crypto/keypair_service_test.dart

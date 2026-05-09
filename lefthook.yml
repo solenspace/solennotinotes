@@ -1,0 +1,45 @@
+# Notinotes git hooks. See https://github.com/evilmartians/lefthook
+#
+# Install: `lefthook install` (run once per clone)
+# Bypass:  `LEFTHOOK=0 git commit ...` (only with maintainer approval)
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed -l 100 {staged_files}
+    check-offline:
+      # Fast forbidden-imports grep, sourced from scripts/.forbidden-imports.txt.
+      # See specs/02-offline-invariant-ci-gate.md.
+      run: bash scripts/check-offline.sh
+    custom-lint:
+      # Fires the forbidden_import rule from tools/forbidden_imports_lint/.
+      # custom_lint v0.7 is its own runner; analyzer.plugins: [custom_lint]
+      # in analysis_options.yaml powers IDE surfacing only.
+      # Note: full `flutter analyze` is intentionally NOT in pre-commit while
+      # 61 pre-existing strict-mode lint debt items (see progress-tracker.md
+      # "Lint debt") are still open. Resolved per file by Specs 04/04b/08.
+      glob: "*.dart"
+      run: dart run custom_lint
+
+pre-push:
+  parallel: false
+  commands:
+    format:
+      run: dart format --set-exit-if-changed -l 100 lib/ test/
+
+commit-msg:
+  commands:
+    conventional:
+      # Subject line must be: type(scope?)!?: subject (≤80 chars).
+      # Allowed types: feat fix chore docs refactor test style perf ci build revert.
+      run: |
+        subject=$(head -1 "{1}")
+        if ! printf '%s' "$subject" | grep -qE '^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\([a-z0-9._-]+\))?!?: .{1,80}$'; then
+          echo "ERROR: commit message does not follow conventional commits."
+          echo "Got:    $subject"
+          echo "Expect: <type>(<scope>)?!?: <subject>"
+          echo "Types:  feat fix chore docs refactor test style perf ci build revert"
+          exit 1
+        fi

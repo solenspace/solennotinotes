@@ -1,0 +1,76 @@
+# Forbidden imports — sourced from context/code-standards.md.
+# One pattern per line. Lines starting with # are comments.
+# Both scripts/check-offline.sh and tools/forbidden_imports_lint read this file.
+
+# HTTP clients
+package:http
+package:dio
+package:chopper
+package:retrofit
+dart:io.HttpClient
+
+# Realtime
+package:web_socket_channel
+
+# Cloud SDKs
+package:cloud_firestore
+package:cloud_functions
+package:firebase_core
+package:firebase_auth
+package:firebase_storage
+package:firebase_database
+package:firebase_remote_config
+package:firebase_crashlytics
+package:firebase_analytics
+package:firebase_messaging
+package:firebase_dynamic_links
+package:firebase_performance
+package:firebase_in_app_messaging
+package:supabase_flutter
+package:supabase
+package:appwrite
+package:amplify_flutter
+package:amplify_api
+package:amplify_auth_cognito
+package:amplify_storage_s3
+package:amplify_datastore
+package:amplify_analytics_pinpoint
+package:amplify_push_notifications
+
+# Auth (cloud)
+package:google_sign_in
+
+# Telemetry / analytics
+package:sentry
+package:sentry_flutter
+package:posthog_flutter
+package:mixpanel_flutter
+package:amplitude_flutter
+
+# Banned post-Spec-10 (last consumer migrated to BLoC + RepositoryProvider).
+package:provider
+
+# Spec 15: hygiene gate — STT consumers go through SttService.
+# Allowed inside lib/services/speech/ via scripts/.offline-allowlist.
+package:speech_to_text
+
+# Spec 16: hygiene gate — TTS consumers go through TtsService.
+# Allowed inside lib/services/speech/ via scripts/.offline-allowlist.
+package:flutter_tts
+
+# Spec 17: hygiene gate — device-capability consumers go through DeviceCapabilityService.
+# Allowed inside lib/services/device/ via scripts/.offline-allowlist.
+package:device_info_plus
+
+# Spec 20: hygiene gate — LLM consumers go through LlmRuntime.
+# Allowed inside lib/services/ai/llama_cpp_llm_runtime.dart via
+# scripts/.offline-allowlist. The binding is native (FFI) and makes no
+# network calls; this gate enforces Spec 20 success criterion #5.
+package:llama_cpp_dart
+
+# Spec 22: P2P transport + identity signing.
+# - Native P2P uses platform channels in lib/services/share/channel_peer_service.dart;
+#   no Dart plugin imports are involved (iOS Multipeer, Android Nearby).
+# - flutter_secure_storage + cryptography are confined to lib/services/crypto/.
+package:flutter_secure_storage
+package:cryptography

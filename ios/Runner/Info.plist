@@ -49,5 +49,26 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Notinotes uses the microphone to record audio notes and dictation. Audio never leaves your device.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>Notinotes uses on-device speech recognition to type what you say. Recognition runs entirely on this device and never leaves it.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Notinotes uses the camera to capture photos for image notes. Photos stay on your device.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Notinotes reads photos so you can attach them to notes. Notinotes never uploads anything.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Notinotes saves images to your photo library when you export a note.</string>
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>Notinotes uses Bluetooth to share notes with nearby devices. Sharing is opt-in per session and never goes through the internet.</string>
+		<key>NSBluetoothPeripheralUsageDescription</key>
+		<string>Notinotes uses Bluetooth to share notes with nearby devices. Sharing is opt-in per session and never goes through the internet.</string>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>Notinotes discovers nearby devices over Wi-Fi for peer-to-peer note sharing. Notes never travel through the internet.</string>
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_noti-share._tcp</string>
+			<string>_noti-share._udp</string>
+		</array>
 	</dict>
 </plist>

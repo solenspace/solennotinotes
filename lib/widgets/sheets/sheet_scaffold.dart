@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-import '../../theme/app_tokens.dart';
+import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Shared bottom-sheet container. Provides a draggable handle, a title row,
 /// safe-area padding, and consistent spacing.
@@ -28,10 +28,10 @@ class SheetScaffold extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          top: AppSpacing.sm,
-          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+          left: SpacingPrimitives.lg,
+          right: SpacingPrimitives.lg,
+          top: SpacingPrimitives.sm,
+          bottom: MediaQuery.of(context).viewInsets.bottom + SpacingPrimitives.lg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -48,7 +48,7 @@ class SheetScaffold extends StatelessWidget {
                 if (actions != null) ...actions!,
               ],
             ),
-            const Gap(AppSpacing.md),
+            const Gap(SpacingPrimitives.md),
             Flexible(child: child),
           ],
         ),

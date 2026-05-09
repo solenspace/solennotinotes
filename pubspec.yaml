@@ -25,7 +25,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  provider: ^6.1.5
   intl: ^0.20.2
   flutter_staggered_grid_view: ^0.7.0
   flutter_svg: ^2.2.4
@@ -45,9 +44,31 @@ dependencies:
   hive_ce_flutter: ^2.3.4
   flutter_local_notifications: ^21.0.0
   permission_handler: ^12.0.1
+  device_info_plus: ^11.2.0
   flutter_timezone: ^5.0.2
   timezone: ^0.11.0
   collection: ^1.19.1
+  flutter_bloc: ^9.1.1
+  bloc: ^9.0.0
+  equatable: ^2.0.7
+  characters: ^1.4.0
+  meta: ^1.16.0
+  record: ^5.1.2
+  audioplayers: ^6.1.0
+  speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.0
+  crypto: ^3.0.6
+  # Spec 20: on-device LLM binding locked by architecture decision #32.
+  # Allowed only inside lib/services/ai/llama_cpp_llm_runtime.dart via
+  # scripts/.offline-allowlist; every other file goes through LlmRuntime.
+  llama_cpp_dart: ^0.2.2
+  # Spec 22: identity signing for shared notes.
+  # Confined by scripts/.offline-allowlist to lib/services/crypto/.
+  flutter_secure_storage: ^9.2.2
+  cryptography: ^2.7.0
+  # Spec 23: pure-Dart ZIP for the .noti share archive. Confined by
+  # tools/forbidden_imports_lint to lib/services/share/share_codec.dart.
+  archive: ^4.0.1
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +77,13 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_lints: ^6.0.0
   build_runner: ^2.4.15
+  custom_lint: ^0.7.0
+  forbidden_imports_lint:
+    path: tools/forbidden_imports_lint
+  # Test-only: explicit deps for path_provider mocking in repository tests.
+  # Both ride along as transitive deps of path_provider already.
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
 
 flutter_native_splash:
   color: "#2D2D2D"
