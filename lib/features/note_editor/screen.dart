@@ -38,6 +38,7 @@ import 'bloc/note_editor_event.dart';
 import 'bloc/note_editor_state.dart';
 import 'note_type.dart';
 import 'widgets/ai_assist_button.dart';
+import 'widgets/share_button.dart';
 import 'widgets/audio_block_view.dart';
 import 'widgets/audio_capture_button.dart';
 import 'widgets/checklist_block.dart';
@@ -620,6 +621,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                         dictationButton: const DictationButton(),
                         readAloudButton: const ReadAloudButton(),
                         assistButton: const AiAssistButton(),
+                        shareButton: const ShareButton(),
                       ),
                     ],
                   ),

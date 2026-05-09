@@ -42,6 +42,11 @@ class EditorToolbar extends StatelessWidget {
   /// or the model is not yet downloaded.
   final Widget? assistButton;
 
+  /// Optional nearby-share affordance (e.g. `ShareButton`). Sits next
+  /// to the assist button per Spec 24; opens the share sheet for the
+  /// open note.
+  final Widget? shareButton;
+
   const EditorToolbar({
     super.key,
     required this.currentBlockIsChecklist,
@@ -56,6 +61,7 @@ class EditorToolbar extends StatelessWidget {
     this.dictationButton,
     this.readAloudButton,
     this.assistButton,
+    this.shareButton,
   });
 
   @override
@@ -111,6 +117,10 @@ class EditorToolbar extends StatelessWidget {
             if (assistButton != null) ...[
               const Gap(SpacingPrimitives.xs),
               assistButton!,
+            ],
+            if (shareButton != null) ...[
+              const Gap(SpacingPrimitives.xs),
+              shareButton!,
             ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
