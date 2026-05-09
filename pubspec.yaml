@@ -62,6 +62,10 @@ dependencies:
   # Allowed only inside lib/services/ai/llama_cpp_llm_runtime.dart via
   # scripts/.offline-allowlist; every other file goes through LlmRuntime.
   llama_cpp_dart: ^0.2.2
+  # Spec 22: identity signing for shared notes.
+  # Confined by scripts/.offline-allowlist to lib/services/crypto/.
+  flutter_secure_storage: ^9.2.2
+  cryptography: ^2.7.0
 
 dev_dependencies:
   flutter_test:
