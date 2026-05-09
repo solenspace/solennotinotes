@@ -66,6 +66,9 @@ dependencies:
   # Confined by scripts/.offline-allowlist to lib/services/crypto/.
   flutter_secure_storage: ^9.2.2
   cryptography: ^2.7.0
+  # Spec 23: pure-Dart ZIP for the .noti share archive. Confined by
+  # tools/forbidden_imports_lint to lib/services/share/share_codec.dart.
+  archive: ^4.0.1
 
 dev_dependencies:
   flutter_test:
