@@ -17,7 +17,8 @@
 | Image capture | `image_picker` + `flutter_image_compress` | Camera/gallery + size cap |
 | Audio capture | `record` 5.x | M4A/AAC-LC at 64 kbps mono; amplitude stream feeds the live meter and the pre-rendered waveform |
 | Audio playback | `audioplayers` 6.x | `DeviceFileSource` playback for audio blocks; offline-only |
-| P2P transport | `flutter_nearby_connections` | Apple Multipeer + Android Nearby Connections; messages, bytes, files |
+| P2P transport | Native platform channels — iOS `MultipeerConnectivity` (Swift), Android `Nearby.getConnectionsClient()` (Kotlin, `play-services-nearby` 19.x); Spec 22 dropped `flutter_nearby_connections` after the §0 viability probe found the package's API too narrow for byte/file transfers, accept-or-reject invitations, and progress events | Discovery, byte + file transfer with progress and cancellation, opt-in per share session via `PeerService` wrapper at `lib/services/share/peer_service.dart`. Channels: `noti.peer/control` (method) + `noti.peer/{peers,invites,payloads,transfers}` (event). |
+| Identity signing | `cryptography` 2.x (Ed25519, pure Dart) + `flutter_secure_storage` 9.x (Keychain / EncryptedSharedPreferences) via `KeypairService` wrapper at `lib/services/crypto/keypair_service.dart` | Ed25519 keypair generated lazily on first use, private bytes never leave the platform keychain. `NotiIdentity.publicKey` travels with shared notes so receivers can verify the sender (Spec 22). |
 | STT | `speech_to_text` 7.x via `SttService` wrapper | Native dictation, `onDevice: true` enforced on every recognition request; cold-start `SttCapabilityProbe` caches `sttOfflineCapable: bool` in `settings_v2`, dictation UI hides itself when the probe returns false (Spec 15) |
 | TTS | `flutter_tts` 4.x via `TtsService` wrapper | Native text-to-speech (`AVSpeechSynthesizer` / Android `TextToSpeech`); fully offline; per-word `setProgressHandler` drives the read-aloud overlay's word highlight; pause is iOS-true / Android-best-effort (Spec 16, open question 20) |
 | On-device LLM | `fllama` (llama.cpp + GGUF) — to validate per spec | Summarize, rewrite, suggest titles |
@@ -59,7 +60,7 @@ A **cross-cutting repository** (under `lib/repositories/<resource>/`) owns a dom
 - `notes` — primary note records keyed by uuid
 - `tags` — tag definitions (name, color)
 - `themes` — saved NotiTheme presets
-- `noti_identity` — single record: this user's noti (id, displayName, bornDate, profilePicture, signaturePalette, signaturePatternKey, signatureAccent, signatureTagline). Migrated from legacy `user_v2` on first launch after Spec 09. Cryptographic keypair for share-payload signing is added by the future P2P share spec.
+- `noti_identity` — single record: this user's noti (id, displayName, bornDate, profilePicture, signaturePalette, signaturePatternKey, signatureAccent, signatureTagline, **publicKey**). Migrated from legacy `user_v2` on first launch after Spec 09. Spec 22 added the 32-byte Ed25519 `publicKey`; the matching private key lives in `flutter_secure_storage` (Keychain on iOS, EncryptedSharedPreferences on Android) under `noti_identity_ed25519_private_v1` and is reachable only via `KeypairService`.
 - `settings` — app-level preferences (themeMode, writingFont, plus the `sttOfflineCapable: bool` capability cache written by Spec 15's startup probe)
 - `received_inbox` — incoming shares awaiting accept/discard
 
