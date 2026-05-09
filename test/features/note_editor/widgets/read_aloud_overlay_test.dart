@@ -41,7 +41,7 @@ Note _noteWith(List<String> texts) {
 /// `_stubText` pattern in `permission_explainer_sheet_test.dart`.
 NotiText _stubText() {
   const blank = TextStyle();
-  return NotiText(
+  return const NotiText(
     writingFont: WritingFont.inter,
     brightness: Brightness.light,
     displayLg: blank,

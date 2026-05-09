@@ -19,7 +19,7 @@ import '../bloc/recording_note_editor_bloc.dart';
 
 NotiText _stubText() {
   const blank = TextStyle();
-  return NotiText(
+  return const NotiText(
     writingFont: WritingFont.inter,
     brightness: Brightness.light,
     displayLg: blank,

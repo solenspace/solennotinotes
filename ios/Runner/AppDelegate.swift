@@ -8,6 +8,9 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    if let registrar = self.registrar(forPlugin: "PeerServicePlugin") {
+      PeerServicePlugin.register(with: registrar)
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -68,23 +70,19 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     super.dispose();
   }
 
-  void _onTap() async {
-    HapticFeedback.lightImpact();
+  Future<void> _onTap() async {
+    unawaited(HapticFeedback.lightImpact());
     setState(() => _showHint = true);
 
-    // Quick pop-out animation to show options exist
-    // animateTo duration isn't a direct parameter. Need to use duration explicitly if needed.
     _expandController.duration = const Duration(milliseconds: 150);
     await _expandController.animateTo(0.4, curve: Curves.easeOut);
 
     _expandController.duration = const Duration(milliseconds: 200);
     await _expandController.reverse();
 
-    // Restore base duration
     _expandController.duration = const Duration(milliseconds: 600);
 
-    // Hide hint after delay
-    await Future.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(seconds: 2));
     if (mounted) setState(() => _showHint = false);
   }
 

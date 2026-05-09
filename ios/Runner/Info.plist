@@ -67,7 +67,8 @@
 		<string>Notinotes discovers nearby devices over Wi-Fi for peer-to-peer note sharing. Notes never travel through the internet.</string>
 		<key>NSBonjourServices</key>
 		<array>
-			<string>_notinotes._tcp</string>
+			<string>_noti-share._tcp</string>
+			<string>_noti-share._udp</string>
 		</array>
 	</dict>
 </plist>

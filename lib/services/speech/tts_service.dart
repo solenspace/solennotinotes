@@ -65,7 +65,7 @@ class PluginTtsService implements TtsService {
     final raw = await _tts.getVoices;
     if (raw is! List) return const <TtsVoice>[];
     return raw
-        .whereType<Map>()
+        .whereType<Map<Object?, Object?>>()
         .map(
           (m) => TtsVoice(
             name: (m['name'] ?? '').toString(),

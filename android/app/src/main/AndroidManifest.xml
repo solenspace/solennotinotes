@@ -30,6 +30,12 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
 
+    <!-- Nearby Connections requires fine location for BLE scanning on Android 11
+         and below. On 12+ the BLUETOOTH_SCAN permission with neverForLocation
+         flag covers it. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="31"/>
+
     <!--
       Spec 15: Android 11+ package-visibility filter for the offline speech
       recognition service. Without this query, SpeechRecognizer cannot

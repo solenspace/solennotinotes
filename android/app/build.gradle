@@ -62,4 +62,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    // Spec 22: Google Nearby Connections (local BLE/Wi-Fi P2P; not a network SDK).
+    implementation 'com.google.android.gms:play-services-nearby:19.0.0'
 }
