@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:noti_notes_app/models/noti_identity.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
+import 'package:noti_notes_app/services/crypto/keypair_service.dart';
 import 'package:noti_notes_app/services/image/image_picker_service.dart';
 
 /// Hive-backed implementation of [NotiIdentityRepository]. Stores the
@@ -18,14 +19,19 @@ import 'package:noti_notes_app/services/image/image_picker_service.dart';
 /// after Spec 09 ships, [init] migrates the legacy `'user_v2'` box once,
 /// then deletes it from disk.
 class HiveNotiIdentityRepository implements NotiIdentityRepository {
-  HiveNotiIdentityRepository({ImagePickerService? imageService})
-      : _imageService = imageService ?? const ImagePickerService();
+  HiveNotiIdentityRepository({
+    required KeypairService keypairService,
+    ImagePickerService? imageService,
+  })  : _keypairService = keypairService,
+        _imageService = imageService ?? const ImagePickerService();
 
   @visibleForTesting
   HiveNotiIdentityRepository.withBox({
     required Box<dynamic> box,
+    required KeypairService keypairService,
     ImagePickerService? imageService,
   })  : _box = box,
+        _keypairService = keypairService,
         _imageService = imageService ?? const ImagePickerService();
 
   static const String _newBoxName = 'noti_identity_v2';
@@ -33,6 +39,7 @@ class HiveNotiIdentityRepository implements NotiIdentityRepository {
   static const String _key = 'identityFromDevice';
 
   final ImagePickerService _imageService;
+  final KeypairService _keypairService;
   Box<dynamic>? _box;
   final StreamController<NotiIdentity> _controller = StreamController<NotiIdentity>.broadcast();
 
@@ -54,6 +61,16 @@ class HiveNotiIdentityRepository implements NotiIdentityRepository {
       _validate(fresh);
       await box.put(_key, jsonEncode(fresh.toJson()));
     }
+    await _ensurePublicKey();
+  }
+
+  Future<void> _ensurePublicKey() async {
+    final raw = _openBox.get(_key);
+    if (raw is! String) return;
+    final loaded = NotiIdentity.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    if (loaded.publicKey.isNotEmpty) return;
+    loaded.publicKey = await _keypairService.publicKey();
+    await _openBox.put(_key, jsonEncode(loaded.toJson()));
   }
 
   Box<dynamic> get _openBox {
