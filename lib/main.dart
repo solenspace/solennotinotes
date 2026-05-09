@@ -30,11 +30,15 @@ import 'package:noti_notes_app/services/ai/llm_runtime.dart';
 import 'package:noti_notes_app/services/ai/model_downloader.dart';
 import 'package:noti_notes_app/services/ai/whisper_cpp_runtime.dart';
 import 'package:noti_notes_app/services/ai/whisper_runtime.dart';
+import 'package:noti_notes_app/services/crypto/flutter_secure_keypair_service.dart';
+import 'package:noti_notes_app/services/crypto/keypair_service.dart';
 import 'package:noti_notes_app/services/device/ai_tier.dart';
 import 'package:noti_notes_app/services/device/device_capability_probe.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
+import 'package:noti_notes_app/services/share/channel_peer_service.dart';
+import 'package:noti_notes_app/services/share/peer_service.dart';
 import 'package:noti_notes_app/services/speech/stt_capability_probe.dart';
 import 'package:noti_notes_app/services/speech/stt_service.dart';
 import 'package:noti_notes_app/services/speech/tts_service.dart';
@@ -47,7 +51,8 @@ void main() async {
   }
 
   final notesRepository = HiveNotesRepository();
-  final notiIdentityRepository = HiveNotiIdentityRepository();
+  final keypairService = FlutterSecureKeypairService();
+  final notiIdentityRepository = HiveNotiIdentityRepository(keypairService: keypairService);
   final settingsRepository = HiveSettingsRepository();
   final audioRepository = FileSystemAudioRepository();
   await notesRepository.init();
@@ -79,6 +84,12 @@ void main() async {
   // patchy). See architecture.md decision 29.
   final ttsService = PluginTtsService();
 
+  // Spec 22: P2P transport, opt-in per session. The service starts no
+  // listener at construction — the share UI calls start()/stop() around
+  // its sheet. PermissionsService is shared with the rest of the app.
+  const permissions = PluginPermissionsService();
+  final peerService = ChannelPeerService(permissions: permissions);
+
   runApp(
     MyApp(
       notesRepository: notesRepository,
@@ -88,6 +99,8 @@ void main() async {
       deviceCapabilityService: deviceCapabilityService,
       sttService: sttService,
       ttsService: ttsService,
+      keypairService: keypairService,
+      peerService: peerService,
     ),
   );
 }
@@ -102,6 +115,8 @@ class MyApp extends StatefulWidget {
     required this.deviceCapabilityService,
     required this.sttService,
     required this.ttsService,
+    required this.keypairService,
+    required this.peerService,
   });
 
   final NotesRepository notesRepository;
@@ -111,6 +126,8 @@ class MyApp extends StatefulWidget {
   final DeviceCapabilityService deviceCapabilityService;
   final SttService sttService;
   final TtsService ttsService;
+  final KeypairService keypairService;
+  final PeerService peerService;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -120,7 +137,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    Future.delayed(Duration.zero).then(
+    Future<void>.delayed(Duration.zero).then(
       (_) {
         LocalNotificationService.setup(notificationResponse).asStream().listen(
               (event) => notificationResponse,
@@ -131,8 +148,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   void notificationResponse(NotificationResponse response) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
         builder: (context) => NoteEditorScreen(noteId: response.payload),
       ),
     );
@@ -156,6 +173,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         RepositoryProvider<PermissionsService>.value(
           value: const PluginPermissionsService(),
         ),
+        RepositoryProvider<KeypairService>.value(value: widget.keypairService),
+        RepositoryProvider<PeerService>.value(value: widget.peerService),
         // Specs 19 + 21: stateless model downloader, the one authorised
         // network surface. Both `LlmReadinessCubit` and (Spec 21)
         // `WhisperReadinessCubit` resolve this single instance — each
