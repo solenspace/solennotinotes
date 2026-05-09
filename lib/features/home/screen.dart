@@ -128,14 +128,14 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.only(bottom: 8.0),
             child: ExpandableFab(
               onContent: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(builder: (_) => const NoteEditorScreen()),
                 );
                 if (mounted) setState(() {});
               },
               onTodo: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
                     builder: (_) => const NoteEditorScreen(noteType: NoteType.todo),
                   ),
                 );

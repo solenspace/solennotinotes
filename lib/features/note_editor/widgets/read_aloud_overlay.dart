@@ -8,7 +8,6 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart'
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/services/speech/tts_models.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
-import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Floating control rendered above the editor toolbar while the
 /// synthesizer is reading. Shows the active block's text with the current
