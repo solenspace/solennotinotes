@@ -30,6 +30,7 @@ class NoHardcodedColorRule extends DartLintRule {
     // Test files legitimately construct Color fixtures as input data; the
     // rule applies to production code only.
     '/test/',
+    '/integration_test/',
     // Model deserialization needs to construct Color from persisted ARGB
     // ints; these are not hardcoded literals.
     '/lib/models/',

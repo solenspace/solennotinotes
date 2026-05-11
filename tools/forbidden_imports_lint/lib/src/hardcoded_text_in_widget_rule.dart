@@ -40,6 +40,7 @@ class HardcodedTextInWidgetRule extends DartLintRule {
     '/lib/repositories/',
     '/lib/theme/',
     '/test/',
+    '/integration_test/',
   ];
 
   @override
