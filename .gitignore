@@ -32,6 +32,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Spec 26: gen_l10n output (regenerated on every `flutter pub get`).
+lib/generated/
+
 # Symbolication related
 app.*.symbols
 

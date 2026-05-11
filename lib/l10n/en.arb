@@ -1,0 +1,431 @@
+{
+  "@@locale": "en",
+
+  "common_cancel": "Cancel",
+  "common_delete": "Delete",
+  "common_done": "Done",
+  "common_back": "Back",
+  "common_share": "Share",
+  "common_ok": "OK",
+  "common_not_now": "Not now",
+  "common_open_settings": "Open settings",
+  "common_close": "Close",
+  "common_retry": "Retry",
+  "common_download": "Download",
+  "common_apply": "Apply",
+  "common_stop": "Stop",
+  "common_discard": "Discard",
+  "common_accept": "Accept",
+
+  "home_search_hint": "Search notes...",
+  "home_empty_state_message": "Tap + to write your first note",
+  "home_section_pinned": "Pinned",
+  "home_section_notes": "Notes",
+  "home_section_all_notes": "All notes",
+  "home_settings_tooltip": "Settings",
+  "home_inbox_tooltip": "Inbox",
+  "home_inbox_tooltip_count": "Inbox ({count} new)",
+  "@home_inbox_tooltip_count": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "filter_all": "All",
+  "filter_reminders": "Reminders",
+  "filter_checklists": "Checklists",
+  "filter_images": "Images",
+
+  "card_empty_note": "Empty note",
+  "card_untitled_task": "Untitled task",
+  "card_checklist_more_count": "+{count} more",
+  "@card_checklist_more_count": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "menu_untitled_note": "Untitled note",
+  "menu_pin": "Pin",
+  "menu_unpin": "Unpin",
+  "menu_delete": "Delete",
+
+  "fab_hint_hold_and_swipe": "Hold and swipe",
+  "fab_hint_content": "Content",
+  "fab_hint_todo": "Todo",
+
+  "editor_pin_tooltip": "Pin",
+  "editor_unpin_tooltip": "Unpin",
+  "editor_title_hint": "Title",
+  "editor_text_block_hint": "Start typing…",
+  "editor_checklist_block_hint": "List item",
+  "editor_read_block_tooltip": "Read this block",
+  "editor_delete_confirm_title": "Delete note?",
+  "editor_delete_confirm_body": "This cannot be undone.",
+  "editor_note_not_found": "Note not found.",
+
+  "editor_mic_explainer_title": "Microphone access needed",
+  "editor_mic_explainer_body": "Notinotes records audio notes locally on your device. Enable microphone access in Settings to record voice notes.",
+  "editor_dictation_unavailable_title": "Dictation unavailable",
+  "editor_dictation_unavailable_body": "Speech recognition needs to run entirely on this device, but this device does not support offline recognition for your language. Notinotes will not use cloud recognition.",
+
+  "toolbar_toggle_checklist": "Toggle checklist",
+  "toolbar_add_image": "Add image",
+  "toolbar_style_tooltip": "Style — long-press to reset",
+  "toolbar_reminder": "Reminder",
+  "toolbar_tags": "Tags",
+
+  "audio_record": "Record audio",
+  "audio_stop_recording": "Stop recording",
+  "audio_hold_record": "Hold to record",
+  "audio_recording_release": "Recording — release to save, slide to cancel",
+  "audio_transcribe": "Transcribe",
+  "audio_re_record": "Re-record",
+  "audio_recording_exceeded_cap": "Recording exceeded 10 MB cap",
+
+  "dictation_start": "Dictate",
+  "dictation_stop": "Stop dictation",
+  "dictation_hold": "Hold to dictate",
+  "dictation_release": "Dictating — release to commit, slide to cancel",
+
+  "read_aloud_start": "Read note aloud",
+  "read_aloud_stop": "Stop reading",
+  "read_aloud_reading": "Reading aloud",
+  "read_aloud_block_count": "Reading block {current} of {total}",
+  "@read_aloud_block_count": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "share_nearby_button_tooltip": "Share nearby",
+  "share_nearby_button_label": "Share nearby",
+
+  "ai_assist_tooltip": "AI assist — long-press to manage",
+  "ai_assist_label": "AI assist",
+  "ai_assist_privacy_banner": "Running on this device — nothing leaves it.",
+  "ai_assist_add_text_first": "Add some text to the note first.",
+  "ai_assist_use_title": "Use this title",
+  "ai_assist_append": "Append",
+  "ai_assist_replace": "Replace",
+
+  "transcription_cancel_label": "Cancel",
+  "transcription_progress_semantic": "Transcribing, {percent} percent complete",
+  "@transcription_progress_semantic": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "transcription_insert_below_label": "Insert transcript as a text block below the audio block",
+  "transcription_insert_below": "Insert below",
+  "transcription_replace_audio_label": "Replace the audio block with the transcript text",
+  "transcription_replace_audio": "Replace audio",
+  "transcription_discard_label": "Discard the transcript and keep the original audio",
+  "transcription_try_again": "Try again",
+
+  "reminder_sheet_title": "Remind me",
+  "reminder_past_time_error": "Pick a future time",
+  "reminder_later_today": "Later today",
+  "reminder_tomorrow_morning": "Tomorrow morning",
+  "reminder_this_weekend": "This weekend",
+  "reminder_next_week": "Next week",
+  "reminder_pick_custom": "Pick date & time",
+  "reminder_cancel_reminder": "Cancel reminder",
+  "reminder_set": "Set reminder",
+
+  "tag_sheet_title": "Tags",
+  "tag_section_suggested": "SUGGESTED",
+  "tag_section_your_tags": "YOUR TAGS",
+  "tag_input_hint": "Add a tag, comma to confirm",
+
+  "from_sender_tooltip": "Sender options",
+  "from_sender_keep_style": "Keep their style",
+  "from_sender_convert_mine": "Convert to mine",
+  "from_sender_semantic_label": "From {name}, sender options",
+  "@from_sender_semantic_label": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "overlay_tab_palette": "Palette",
+  "overlay_tab_pattern": "Pattern",
+  "overlay_tab_accent": "Accent",
+  "overlay_palette_custom_label": "Custom palette",
+  "overlay_palette_custom_surface": "Surface",
+  "overlay_palette_custom_accent": "Accent",
+  "overlay_palette_custom_apply": "Apply",
+  "overlay_palette_sample_title": "Sample title",
+  "overlay_palette_sample_body": "Body copy",
+  "overlay_accent_semantic_label": "Use {glyph} as the note signature",
+  "@overlay_accent_semantic_label": {
+    "placeholders": { "glyph": { "type": "String" } }
+  },
+
+  "inbox_title": "Inbox",
+  "inbox_empty_title": "Nothing received yet.",
+  "inbox_empty_description": "Notes shared with you over Bluetooth land here for review before joining your library.",
+  "inbox_receive_title": "Receive a shared note",
+  "inbox_receive_off": "Off — tap to start receiving nearby notes.",
+  "inbox_receive_starting": "Starting…",
+  "inbox_receive_on": "Discoverable nearby. Nothing leaves your device.",
+  "inbox_receive_failed": "Could not start. Check Bluetooth permissions.",
+  "inbox_unreadable_share": "Discarded an unreadable share.",
+  "inbox_receive_start_failed": "Could not start receiving.",
+  "inbox_accept_failed": "Could not accept share: {error}",
+  "@inbox_accept_failed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "inbox_untitled_note": "Untitled note",
+  "inbox_row_semantic_label": "From {name}, {preview}, received {ago}",
+  "@inbox_row_semantic_label": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "preview": { "type": "String" },
+      "ago": { "type": "String" }
+    }
+  },
+
+  "relative_time_just_now": "just now",
+  "relative_time_min": "{minutes} min",
+  "@relative_time_min": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "relative_time_hour": "{hours} h",
+  "@relative_time_hour": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "relative_time_day": "{days} d",
+  "@relative_time_day": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "relative_time_week": "{weeks} w",
+  "@relative_time_week": {
+    "placeholders": { "weeks": { "type": "int" } }
+  },
+
+  "share_preview_discard_label": "Discard this shared note",
+  "share_preview_accept_label": "Accept this shared note into your library",
+  "share_preview_from_semantic": "From {name}",
+  "@share_preview_from_semantic": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "share_preview_audio_duration": "Audio · {duration}",
+  "@share_preview_audio_duration": {
+    "placeholders": { "duration": { "type": "String" } }
+  },
+
+  "settings_title": "Settings",
+  "settings_appearance": "Appearance",
+  "settings_app_font": "App font",
+  "settings_ai_section": "AI",
+  "settings_sharing": "Sharing",
+  "settings_receive_shared": "Receive a shared note",
+  "settings_receive_description": "Review notes other devices send you. Receiving is off by default.",
+  "settings_about": "About",
+
+  "theme_system": "System",
+  "theme_light": "Light",
+  "theme_dark": "Dark",
+
+  "ai_settings_enable_label": "Enable AI assist (around 640 MB)",
+  "ai_settings_downloading": "Downloading…",
+  "ai_settings_downloading_progress": "Downloading… {percent}%",
+  "@ai_settings_downloading_progress": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "ai_settings_verifying": "Verifying…",
+  "ai_settings_enabled": "AI assist enabled",
+  "ai_settings_failed_retry": "Download failed — retry",
+  "ai_settings_description_idle": "On-device language model. Downloaded once, kept on this device.",
+  "ai_settings_description_downloading": "One-time, one-way download.",
+  "ai_settings_description_ready": "Model on this device. No network calls during AI use.",
+  "ai_settings_description_failed": "The previous attempt did not finish.",
+
+  "whisper_settings_enable_label": "Enable voice transcription (around {mb} MB)",
+  "@whisper_settings_enable_label": {
+    "placeholders": { "mb": { "type": "int" } }
+  },
+  "whisper_settings_downloading": "Downloading…",
+  "whisper_settings_downloading_progress": "Downloading… {percent}%",
+  "@whisper_settings_downloading_progress": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "whisper_settings_verifying": "Verifying…",
+  "whisper_settings_enabled": "Voice transcription enabled",
+  "whisper_settings_failed_retry": "Download failed — retry",
+  "whisper_settings_description_idle": "On-device Whisper model. Audio note → text, fully local.",
+  "whisper_settings_description_downloading": "One-time, one-way download.",
+  "whisper_settings_description_ready": "Model on this device. Audio never leaves it during transcription.",
+  "whisper_settings_description_failed": "The previous attempt did not finish.",
+
+  "about_app_name": "NotiNotes 2.0",
+  "about_description": "A customizable, offline notes app built with Flutter.",
+
+  "ai_disclosure_title": "Enable AI assist?",
+  "ai_disclosure_body_capability": "The AI features summarize, rewrite, and suggest titles using a small language model that runs entirely on this device.",
+  "ai_disclosure_body_privacy": "Notinotes will download the model file once (around 640 MB). The download is a one-time, one-way connection. Nothing else leaves your device — not now, not later. You can cancel any time.",
+
+  "whisper_disclosure_title": "Enable voice transcription?",
+  "whisper_disclosure_body_capability": "Voice transcription turns recorded audio notes into text using a small Whisper model that runs entirely on this device.",
+  "whisper_disclosure_body_privacy": "Notinotes will download the model file once (around {mb} MB). The download is a one-time, one-way connection. Audio never leaves your device — not now, not later. You can cancel any time.",
+  "@whisper_disclosure_body_privacy": {
+    "placeholders": { "mb": { "type": "int" } }
+  },
+
+  "llm_progress_privacy_footer": "Downloading once. Nothing else leaves your device.",
+  "llm_progress_title_downloading": "Downloading AI model",
+  "llm_progress_title_verifying": "Verifying download",
+  "llm_progress_title_ready": "AI assist enabled",
+  "llm_progress_title_failed": "Download failed",
+  "llm_progress_semantic_downloading": "Downloading AI model: {percent} percent",
+  "@llm_progress_semantic_downloading": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "llm_progress_semantic_verifying": "Verifying AI model download",
+  "llm_progress_semantic_failed": "Download failed: {reason}",
+  "@llm_progress_semantic_failed": {
+    "placeholders": { "reason": { "type": "String" } }
+  },
+  "llm_progress_unknown_error": "Unknown error.",
+  "llm_progress_cancel": "Cancel download",
+
+  "whisper_progress_privacy_footer": "Downloading once. Audio never leaves your device.",
+  "whisper_progress_title_downloading": "Downloading transcription model",
+  "whisper_progress_title_verifying": "Verifying download",
+  "whisper_progress_title_ready": "Voice transcription enabled",
+  "whisper_progress_title_failed": "Download failed",
+  "whisper_progress_semantic_downloading": "Downloading transcription model: {percent} percent",
+  "@whisper_progress_semantic_downloading": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "whisper_progress_semantic_verifying": "Verifying transcription model download",
+  "whisper_progress_semantic_failed": "Download failed: {reason}",
+  "@whisper_progress_semantic_failed": {
+    "placeholders": { "reason": { "type": "String" } }
+  },
+
+  "manage_ai_title": "Manage AI",
+  "manage_ai_section_assist": "AI assist",
+  "manage_ai_section_voice": "Voice transcription",
+  "manage_ai_model_label": "Model",
+  "manage_ai_size_label": "Size",
+  "manage_ai_schema_label": "Schema",
+  "manage_ai_status_label": "Status",
+  "manage_ai_size_value": "{mb} MB",
+  "@manage_ai_size_value": {
+    "placeholders": { "mb": { "type": "int" } }
+  },
+  "manage_ai_status_not_installed": "Not on this device",
+  "manage_ai_status_downloading": "Downloading…",
+  "manage_ai_status_verifying": "Verifying…",
+  "manage_ai_status_ready": "On this device, verified",
+  "manage_ai_status_failed": "Last attempt failed",
+  "manage_ai_redownload_label": "Re-download model",
+  "manage_ai_redownload_confirm_title": "Re-download model?",
+  "manage_ai_redownload_confirm_body": "This downloads about 640 MB. The current model file is deleted first, so AI assist will be off until the download finishes.",
+  "manage_ai_delete_label": "Delete model and disable AI",
+  "manage_ai_delete_confirm_title": "Delete model?",
+  "manage_ai_delete_confirm_body": "AI assist will be turned off. You can re-enable it later, which downloads the model again.",
+  "manage_whisper_redownload_label": "Re-download transcription model",
+  "manage_whisper_redownload_confirm_title": "Re-download transcription model?",
+  "manage_whisper_redownload_confirm_body": "This downloads about {mb} MB. The current model file is deleted first, so voice transcription will be off until the download finishes.",
+  "@manage_whisper_redownload_confirm_body": {
+    "placeholders": { "mb": { "type": "int" } }
+  },
+  "manage_whisper_delete_label": "Delete model and disable transcription",
+  "manage_whisper_delete_confirm_title": "Delete transcription model?",
+  "manage_whisper_delete_confirm_body": "Voice transcription will be turned off. You can re-enable it later, which downloads the model again.",
+
+  "profile_title": "Profile",
+  "profile_image_source_gallery": "Choose from gallery",
+  "profile_image_source_camera": "Take a photo",
+  "profile_name_hint": "Your name",
+  "profile_notes_count": "{count} notes on this device",
+  "@profile_notes_count": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "profile_tags_most_used": "TAGS YOU USE THE MOST",
+  "profile_no_tags": "No tags yet.",
+  "profile_signature_palette": "SIGNATURE PALETTE",
+  "profile_signature_pattern": "SIGNATURE PATTERN",
+  "profile_pattern_none": "No pattern",
+  "profile_signature_accent": "SIGNATURE ACCENT",
+  "profile_accent_hint": "Single character",
+  "profile_signature_tagline": "SIGNATURE TAGLINE",
+  "profile_tagline_hint": "A short line shown on shared notes",
+
+  "share_sheet_discovering": "Looking for nearby people…",
+  "share_sheet_pick_recipient": "Pick someone to send to.",
+  "share_sheet_ready_count": "{count} notes ready to send.",
+  "@share_sheet_ready_count": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share_sheet_hint_discovery": "Searching for nearby people. Make sure their app is open and Bluetooth is on.",
+  "share_sheet_hint_app_bluetooth": "Make sure their app is open and Bluetooth is on.",
+  "share_sheet_sending_to": "Sending to {name}",
+  "@share_sheet_sending_to": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "share_sheet_sending_percent": "Sending — {percent}%",
+  "@share_sheet_sending_percent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "share_sheet_sending_count": "Sending {current} of {total} — {percent}%",
+  "@share_sheet_sending_count": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
+  "share_sheet_sent": "Sent.",
+  "share_sheet_sent_count": "Sent {count} notes.",
+  "@share_sheet_sent_count": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share_sheet_bluetooth_notice": "Sent over Bluetooth — never through the internet.",
+  "share_sheet_bluetooth_permission_title": "Nearby sharing needs Bluetooth",
+  "share_sheet_bluetooth_permission_body": "Notinotes uses Bluetooth to find devices near you and send notes directly. Nothing leaves your device over the internet.",
+  "share_peer_card_semantic_label": "Share with {name}",
+  "@share_peer_card_semantic_label": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "note_app_bar_share": "Share",
+  "note_app_bar_delete": "Delete",
+
+  "tag_chip_label": "#{tag}",
+  "@tag_chip_label": {
+    "placeholders": { "tag": { "type": "String" } }
+  },
+  "percent_value": "{percent}%",
+  "@percent_value": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+
+  "overlay_palette_custom_grid_label": "Custom",
+  "overlay_palette_custom_title": "Custom palette",
+  "overlay_accent_section_title": "Note signature",
+  "overlay_accent_section_body": "A single character or emoji that travels with this note.",
+  "overlay_accent_suggestions": "Suggestions",
+
+  "transcription_privacy_banner": "Running on this device — audio never leaves it.",
+  "transcription_progress_title": "Transcribing audio",
+  "transcription_progress_body": "Whisper is processing your recording on this device. This may take a moment for longer clips.",
+  "transcription_ready_title": "Transcript ready",
+  "transcription_failed_title": "Transcription failed",
+
+  "ai_streaming_first_token_hint": "First token in 5 to 15 seconds…",
+
+  "from_sender_chip_label": "from {name}",
+  "@from_sender_chip_label": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "share_preview_from_caption": "from {name}",
+  "@share_preview_from_caption": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "inbox_row_subtitle": "{name} · {preview}",
+  "@inbox_row_subtitle": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "preview": { "type": "String" }
+    }
+  },
+
+  "settings_font_specimen": "The quick brown fox jumps over the lazy dog"
+}

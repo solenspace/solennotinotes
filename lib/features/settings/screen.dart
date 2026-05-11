@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:noti_notes_app/features/inbox/screen.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_state.dart';
@@ -30,29 +31,29 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settings_title)),
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: SpacingPrimitives.lg,
           vertical: SpacingPrimitives.md,
         ),
-        children: const [
-          _SectionLabel('Appearance'),
-          Gap(SpacingPrimitives.sm),
-          _ThemeModePicker(),
-          Gap(SpacingPrimitives.xl),
-          _SectionLabel('App font'),
-          Gap(SpacingPrimitives.sm),
-          _AppFontPicker(),
-          Gap(SpacingPrimitives.xl),
-          _AiAssistSection(),
-          _SectionLabel('Sharing'),
-          Gap(SpacingPrimitives.sm),
-          _InboxTile(),
-          Gap(SpacingPrimitives.xl),
-          _SectionLabel('About'),
-          Gap(SpacingPrimitives.sm),
-          _AboutTile(),
+        children: [
+          _SectionLabel(context.l10n.settings_appearance),
+          const Gap(SpacingPrimitives.sm),
+          const _ThemeModePicker(),
+          const Gap(SpacingPrimitives.xl),
+          _SectionLabel(context.l10n.settings_app_font),
+          const Gap(SpacingPrimitives.sm),
+          const _AppFontPicker(),
+          const Gap(SpacingPrimitives.xl),
+          const _AiAssistSection(),
+          _SectionLabel(context.l10n.settings_sharing),
+          const Gap(SpacingPrimitives.sm),
+          const _InboxTile(),
+          const Gap(SpacingPrimitives.xl),
+          _SectionLabel(context.l10n.settings_about),
+          const Gap(SpacingPrimitives.sm),
+          const _AboutTile(),
         ],
       ),
     );
@@ -83,21 +84,21 @@ class _ThemeModePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final mode = context.select<ThemeCubit, ThemeMode>((c) => c.state.themeMode);
     return SegmentedButton<ThemeMode>(
-      segments: const [
+      segments: [
         ButtonSegment(
           value: ThemeMode.system,
-          label: Text('System'),
-          icon: Icon(Icons.brightness_auto_outlined),
+          label: Text(context.l10n.theme_system),
+          icon: const Icon(Icons.brightness_auto_outlined),
         ),
         ButtonSegment(
           value: ThemeMode.light,
-          label: Text('Light'),
-          icon: Icon(Icons.light_mode_outlined),
+          label: Text(context.l10n.theme_light),
+          icon: const Icon(Icons.light_mode_outlined),
         ),
         ButtonSegment(
           value: ThemeMode.dark,
-          label: Text('Dark'),
-          icon: Icon(Icons.dark_mode_outlined),
+          label: Text(context.l10n.theme_dark),
+          icon: const Icon(Icons.dark_mode_outlined),
         ),
       ],
       selected: {mode},
@@ -146,7 +147,7 @@ class _AppFontPicker extends StatelessWidget {
                             ),
                             const Gap(SpacingPrimitives.xs),
                             Text(
-                              'The quick brown fox jumps over the lazy dog',
+                              context.l10n.settings_font_specimen,
                               style: GoogleFonts.getFont(
                                 font.googleFontName,
                                 fontSize: 16,
@@ -185,7 +186,7 @@ class _AiAssistSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionLabel('AI'),
+        _SectionLabel(context.l10n.settings_ai_section),
         const Gap(SpacingPrimitives.sm),
         if (tier.canRunLlm) ...[
           const _AiAssistTile(),
@@ -228,12 +229,12 @@ class _AiAssistTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _labelFor(state),
+                          _labelFor(context, state),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const Gap(SpacingPrimitives.xs),
                         Text(
-                          _descriptionFor(state),
+                          _descriptionFor(context, state),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: scheme.onSurface.withValues(alpha: 0.7),
                               ),
@@ -287,24 +288,27 @@ class _AiAssistTile extends StatelessWidget {
     }
   }
 
-  static String _labelFor(LlmReadinessState state) {
+  static String _labelFor(BuildContext context, LlmReadinessState state) {
     return switch (state.phase) {
-      LlmReadinessPhase.idle => 'Enable AI assist (around 640 MB)',
+      LlmReadinessPhase.idle => context.l10n.ai_settings_enable_label,
       LlmReadinessPhase.downloading => state.totalBytes > 0
-          ? 'Downloading… ${(state.progressFraction * 100).round()}%'
-          : 'Downloading…',
-      LlmReadinessPhase.verifying => 'Verifying…',
-      LlmReadinessPhase.ready => 'AI assist enabled',
-      LlmReadinessPhase.failed => 'Download failed — retry',
+          ? context.l10n.ai_settings_downloading_progress((state.progressFraction * 100).round())
+          : context.l10n.ai_settings_downloading,
+      LlmReadinessPhase.verifying => context.l10n.ai_settings_verifying,
+      LlmReadinessPhase.ready => context.l10n.ai_settings_enabled,
+      LlmReadinessPhase.failed => context.l10n.ai_settings_failed_retry,
     };
   }
 
-  static String _descriptionFor(LlmReadinessState state) {
+  static String _descriptionFor(BuildContext context, LlmReadinessState state) {
     return switch (state.phase) {
-      LlmReadinessPhase.idle => 'On-device language model. Downloaded once, kept on this device.',
-      LlmReadinessPhase.downloading || LlmReadinessPhase.verifying => 'One-time, one-way download.',
-      LlmReadinessPhase.ready => 'Model on this device. No network calls during AI use.',
-      LlmReadinessPhase.failed => state.failureReason ?? 'The previous attempt did not finish.',
+      LlmReadinessPhase.idle => context.l10n.ai_settings_description_idle,
+      LlmReadinessPhase.downloading ||
+      LlmReadinessPhase.verifying =>
+        context.l10n.ai_settings_description_downloading,
+      LlmReadinessPhase.ready => context.l10n.ai_settings_description_ready,
+      LlmReadinessPhase.failed =>
+        state.failureReason ?? context.l10n.ai_settings_description_failed,
     };
   }
 }
@@ -347,7 +351,7 @@ class _VoiceTranscriptionTile extends StatelessWidget {
                         ),
                         const Gap(SpacingPrimitives.xs),
                         Text(
-                          _descriptionFor(state),
+                          _descriptionFor(context, state),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: scheme.onSurface.withValues(alpha: 0.7),
                               ),
@@ -400,25 +404,26 @@ class _VoiceTranscriptionTile extends StatelessWidget {
   static String _labelFor(BuildContext context, WhisperReadinessState state) {
     final mb = (context.read<WhisperReadinessCubit>().spec.totalBytes / (1024 * 1024)).round();
     return switch (state.phase) {
-      WhisperReadinessPhase.idle => 'Enable voice transcription (around $mb MB)',
+      WhisperReadinessPhase.idle => context.l10n.whisper_settings_enable_label(mb),
       WhisperReadinessPhase.downloading => state.totalBytes > 0
-          ? 'Downloading… ${(state.progressFraction * 100).round()}%'
-          : 'Downloading…',
-      WhisperReadinessPhase.verifying => 'Verifying…',
-      WhisperReadinessPhase.ready => 'Voice transcription enabled',
-      WhisperReadinessPhase.failed => 'Download failed — retry',
+          ? context.l10n
+              .whisper_settings_downloading_progress((state.progressFraction * 100).round())
+          : context.l10n.whisper_settings_downloading,
+      WhisperReadinessPhase.verifying => context.l10n.whisper_settings_verifying,
+      WhisperReadinessPhase.ready => context.l10n.whisper_settings_enabled,
+      WhisperReadinessPhase.failed => context.l10n.whisper_settings_failed_retry,
     };
   }
 
-  static String _descriptionFor(WhisperReadinessState state) {
+  static String _descriptionFor(BuildContext context, WhisperReadinessState state) {
     return switch (state.phase) {
-      WhisperReadinessPhase.idle => 'On-device Whisper model. Audio note → text, fully local.',
+      WhisperReadinessPhase.idle => context.l10n.whisper_settings_description_idle,
       WhisperReadinessPhase.downloading ||
       WhisperReadinessPhase.verifying =>
-        'One-time, one-way download.',
-      WhisperReadinessPhase.ready =>
-        'Model on this device. Audio never leaves it during transcription.',
-      WhisperReadinessPhase.failed => state.failureReason ?? 'The previous attempt did not finish.',
+        context.l10n.whisper_settings_description_downloading,
+      WhisperReadinessPhase.ready => context.l10n.whisper_settings_description_ready,
+      WhisperReadinessPhase.failed =>
+        state.failureReason ?? context.l10n.whisper_settings_description_failed,
     };
   }
 }
@@ -453,12 +458,12 @@ class _InboxTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Receive a shared note',
+                      context.l10n.settings_receive_shared,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const Gap(SpacingPrimitives.xs),
                     Text(
-                      'Review notes other devices send you. Receiving is off by default.',
+                      context.l10n.settings_receive_description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurface.withValues(alpha: 0.7),
                           ),
@@ -492,10 +497,10 @@ class _AboutTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('NotiNotes 2.0', style: Theme.of(context).textTheme.titleMedium),
+            Text(context.l10n.about_app_name, style: Theme.of(context).textTheme.titleMedium),
             const Gap(SpacingPrimitives.xs),
             Text(
-              'A customizable, offline notes app built with Flutter.',
+              context.l10n.about_description,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

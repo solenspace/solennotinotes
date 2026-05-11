@@ -46,3 +46,4 @@ custom_lint:
   rules:
     - forbidden_import
     - no_hardcoded_color
+    - hardcoded_text_in_widget

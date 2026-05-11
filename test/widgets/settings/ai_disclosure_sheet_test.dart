@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noti_notes_app/features/settings/widgets/ai_disclosure_sheet.dart';
 import 'package:noti_notes_app/theme/app_theme.dart';
@@ -30,6 +31,8 @@ ThemeData _theme() => AppTheme.bone(text: _stubText(WritingFont.inter, Brightnes
 
 Widget _harness({required void Function(bool? confirmed) onResult}) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: _theme(),
     home: Builder(
       builder: (context) {

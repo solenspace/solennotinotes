@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
@@ -57,7 +58,7 @@ class _OverlayPaletteCustomPickerState extends State<OverlayPaletteCustomPicker>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Custom palette',
+              context.l10n.overlay_palette_custom_title,
               style: tokens.text.titleMd.copyWith(color: tokens.colors.onSurface),
             ),
             SizedBox(height: tokens.spacing.md),
@@ -68,13 +69,13 @@ class _OverlayPaletteCustomPickerState extends State<OverlayPaletteCustomPicker>
             ),
             SizedBox(height: tokens.spacing.lg),
             _ColorControls(
-              label: 'Surface',
+              label: context.l10n.overlay_palette_custom_surface,
               color: _surface,
               onChanged: (c) => setState(() => _surface = c),
             ),
             SizedBox(height: tokens.spacing.md),
             _ColorControls(
-              label: 'Accent',
+              label: context.l10n.overlay_palette_custom_accent,
               color: _accent,
               onChanged: (c) => setState(() => _accent = c),
             ),
@@ -90,14 +91,14 @@ class _OverlayPaletteCustomPickerState extends State<OverlayPaletteCustomPicker>
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(context.l10n.common_cancel),
                   ),
                 ),
                 SizedBox(width: tokens.spacing.md),
                 Expanded(
                   child: FilledButton(
                     onPressed: _meetsAA ? () => Navigator.of(context).pop(_build()) : null,
-                    child: const Text('Apply'),
+                    child: Text(context.l10n.common_apply),
                   ),
                 ),
               ],
@@ -147,8 +148,14 @@ class _PreviewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Sample title', style: tokens.text.titleSm.copyWith(color: fg)),
-                Text('Body copy', style: tokens.text.bodySm.copyWith(color: fg)),
+                Text(
+                  context.l10n.overlay_palette_sample_title,
+                  style: tokens.text.titleSm.copyWith(color: fg),
+                ),
+                Text(
+                  context.l10n.overlay_palette_sample_body,
+                  style: tokens.text.bodySm.copyWith(color: fg),
+                ),
               ],
             ),
           ),

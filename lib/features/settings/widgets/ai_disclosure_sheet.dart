@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../../l10n/build_context_l10n.dart';
 import '../../../theme/tokens.dart';
 
 /// Modal bottom sheet that asks the user to confirm the one-time download
@@ -59,21 +60,17 @@ class AiDisclosureSheet extends StatelessWidget {
               ),
             ),
             Text(
-              'Enable AI assist?',
+              context.l10n.ai_disclosure_title,
               style: tokens.text.titleLg.copyWith(color: tokens.colors.onSurface),
             ),
             Gap(tokens.spacing.md),
             Text(
-              'The AI features summarize, rewrite, and suggest titles using a '
-              'small language model that runs entirely on this device.',
+              context.l10n.ai_disclosure_body_capability,
               style: tokens.text.bodyMd.copyWith(color: tokens.colors.onSurface),
             ),
             Gap(tokens.spacing.sm),
             Text(
-              'Notinotes will download the model file once (around 640 MB). '
-              'The download is a one-time, one-way connection. Nothing else '
-              'leaves your device — not now, not later. You can cancel any '
-              'time.',
+              context.l10n.ai_disclosure_body_privacy,
               style: tokens.text.bodyMd.copyWith(color: tokens.colors.onSurfaceMuted),
             ),
             Gap(tokens.spacing.lg),
@@ -82,14 +79,14 @@ class AiDisclosureSheet extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(context.l10n.common_cancel),
                   ),
                 ),
                 Gap(tokens.spacing.md),
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Download'),
+                    child: Text(context.l10n.common_download),
                   ),
                 ),
               ],

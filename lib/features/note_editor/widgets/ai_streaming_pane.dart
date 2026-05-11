@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_cubit.dart';
 import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Renders the live-streaming pane Spec 20 § "Streaming UX" describes:
@@ -88,7 +89,7 @@ class _DraftBody extends StatelessWidget {
     if (isWaiting) {
       return Center(
         child: Text(
-          'First token in 5 to 15 seconds…',
+          context.l10n.ai_streaming_first_token_hint,
           style: tokens.text.bodyMd.copyWith(
             color: scheme.onSurface.withValues(alpha: 0.6),
             fontStyle: FontStyle.italic,

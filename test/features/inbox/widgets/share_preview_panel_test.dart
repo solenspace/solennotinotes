@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noti_notes_app/features/inbox/widgets/share_preview_panel.dart';
 import 'package:noti_notes_app/models/received_share.dart';
@@ -37,6 +38,8 @@ Future<void> _pump(
 }) {
   return tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.bone(text: _stubText()),
       home: SharePreviewPanel(
         share: share,

@@ -12,6 +12,8 @@ import 'package:noti_notes_app/services/image/image_picker_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
+
 import 'cubit/noti_identity_cubit.dart';
 
 class UserInfoScreen extends StatelessWidget {
@@ -26,12 +28,12 @@ class UserInfoScreen extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(context.l10n.profile_image_source_gallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take a photo'),
+              title: Text(context.l10n.profile_image_source_camera),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
           ],
@@ -57,7 +59,7 @@ class UserInfoScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(context.l10n.profile_title)),
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: SpacingPrimitives.lg,
@@ -97,9 +99,9 @@ class UserInfoScreen extends StatelessWidget {
                   initialValue: identity.displayName,
                   maxLength: 30,
                   style: Theme.of(context).textTheme.titleLarge,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     counterText: '',
-                    hintText: 'Your name',
+                    hintText: context.l10n.profile_name_hint,
                   ),
                   onChanged: (name) => context.read<NotiIdentityCubit>().updateDisplayName(name),
                 ),
@@ -108,7 +110,7 @@ class UserInfoScreen extends StatelessWidget {
           ),
           const Gap(SpacingPrimitives.xl),
           Text(
-            '${notesState.notes.length} notes on this device',
+            context.l10n.profile_notes_count(notesState.notes.length),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const Gap(SpacingPrimitives.xl),
@@ -118,7 +120,7 @@ class UserInfoScreen extends StatelessWidget {
           _SignaturePlumbing(identity: identity),
           const Gap(SpacingPrimitives.xl),
           Text(
-            'TAGS YOU USE THE MOST',
+            context.l10n.profile_tags_most_used,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   letterSpacing: 1.2,
                   color: scheme.onSurfaceVariant,
@@ -127,7 +129,7 @@ class UserInfoScreen extends StatelessWidget {
           const Gap(SpacingPrimitives.sm),
           if (mostUsed.isEmpty)
             Text(
-              'No tags yet.',
+              context.l10n.profile_no_tags,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontStyle: FontStyle.italic,
                   ),
@@ -139,7 +141,7 @@ class UserInfoScreen extends StatelessWidget {
               children: mostUsed
                   .map(
                     (t) => Chip(
-                      label: Text('#$t'),
+                      label: Text(context.l10n.tag_chip_label(t)),
                       backgroundColor: scheme.surfaceContainerHigh,
                     ),
                   )
@@ -168,7 +170,7 @@ class _SignaturePlumbing extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('SIGNATURE PALETTE', style: sectionLabelStyle),
+        Text(context.l10n.profile_signature_palette, style: sectionLabelStyle),
         const Gap(SpacingPrimitives.sm),
         Wrap(
           spacing: SpacingPrimitives.sm,
@@ -207,16 +209,16 @@ class _SignaturePlumbing extends StatelessWidget {
           }).toList(),
         ),
         const Gap(SpacingPrimitives.lg),
-        Text('SIGNATURE PATTERN', style: sectionLabelStyle),
+        Text(context.l10n.profile_signature_pattern, style: sectionLabelStyle),
         const Gap(SpacingPrimitives.sm),
         DropdownButton<String?>(
           value: NotiPatternKey.fromString(identity.signaturePatternKey)?.name,
           isExpanded: true,
-          hint: const Text('No pattern'),
+          hint: Text(context.l10n.profile_pattern_none),
           items: <DropdownMenuItem<String?>>[
-            const DropdownMenuItem<String?>(
+            DropdownMenuItem<String?>(
               value: null,
-              child: Text('No pattern'),
+              child: Text(context.l10n.profile_pattern_none),
             ),
             ...NotiPatternKey.values.map(
               (p) => DropdownMenuItem<String?>(
@@ -228,14 +230,14 @@ class _SignaturePlumbing extends StatelessWidget {
           onChanged: cubit.updatePatternKey,
         ),
         const Gap(SpacingPrimitives.lg),
-        Text('SIGNATURE ACCENT', style: sectionLabelStyle),
+        Text(context.l10n.profile_signature_accent, style: sectionLabelStyle),
         const Gap(SpacingPrimitives.sm),
         TextFormField(
           initialValue: identity.signatureAccent ?? '',
           maxLength: 8, // grapheme-counted in cubit; allow combining marks
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             counterText: '',
-            hintText: 'Single character',
+            hintText: context.l10n.profile_accent_hint,
           ),
           onChanged: (value) async {
             try {
@@ -247,13 +249,13 @@ class _SignaturePlumbing extends StatelessWidget {
           },
         ),
         const Gap(SpacingPrimitives.lg),
-        Text('SIGNATURE TAGLINE', style: sectionLabelStyle),
+        Text(context.l10n.profile_signature_tagline, style: sectionLabelStyle),
         const Gap(SpacingPrimitives.sm),
         TextFormField(
           initialValue: identity.signatureTagline,
           maxLength: 60,
-          decoration: const InputDecoration(
-            hintText: 'A short line shown on shared notes',
+          decoration: InputDecoration(
+            hintText: context.l10n.profile_tagline_hint,
           ),
           onChanged: cubit.updateTagline,
         ),

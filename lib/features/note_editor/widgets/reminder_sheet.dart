@@ -8,6 +8,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/notification_id.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/notifications/notifications_service.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
@@ -37,7 +38,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
   Future<void> _setReminder(DateTime date) async {
     if (date.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick a future time')),
+        SnackBar(content: Text(context.l10n.reminder_past_time_error)),
       );
       return;
     }
@@ -78,7 +79,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
       builder: (context, state) {
         final hasReminder = state.note?.reminder != null;
         return SheetScaffold(
-          title: 'Remind me',
+          title: context.l10n.reminder_sheet_title,
           child: AnimatedSize(
             duration: DurationPrimitives.standard,
             curve: CurvePrimitives.calm,
@@ -107,27 +108,27 @@ class _ReminderSheetState extends State<ReminderSheet> {
           children: [
             if (laterToday.isAfter(now))
               _Chip(
-                label: 'Later today',
+                label: context.l10n.reminder_later_today,
                 sublabel: DateFormat('HH:mm').format(laterToday),
                 onTap: () => _setReminder(laterToday),
               ),
             _Chip(
-              label: 'Tomorrow morning',
+              label: context.l10n.reminder_tomorrow_morning,
               sublabel: DateFormat('EEE HH:mm').format(tomorrow),
               onTap: () => _setReminder(tomorrow),
             ),
             _Chip(
-              label: 'This weekend',
+              label: context.l10n.reminder_this_weekend,
               sublabel: DateFormat('EEE HH:mm').format(saturday),
               onTap: () => _setReminder(saturday),
             ),
             _Chip(
-              label: 'Next week',
+              label: context.l10n.reminder_next_week,
               sublabel: DateFormat('EEE HH:mm').format(nextMonday),
               onTap: () => _setReminder(nextMonday),
             ),
             _Chip(
-              label: 'Pick date & time',
+              label: context.l10n.reminder_pick_custom,
               icon: Icons.calendar_month_outlined,
               onTap: () => setState(() => _showPicker = true),
             ),
@@ -138,7 +139,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
           TextButton.icon(
             onPressed: _cancelReminder,
             icon: const Icon(Icons.notifications_off_outlined),
-            label: const Text('Cancel reminder'),
+            label: Text(context.l10n.reminder_cancel_reminder),
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
           ),
         ],
@@ -169,13 +170,13 @@ class _ReminderSheetState extends State<ReminderSheet> {
           children: [
             TextButton(
               onPressed: () => setState(() => _showPicker = false),
-              child: const Text('Back'),
+              child: Text(context.l10n.common_back),
             ),
             const Spacer(),
             FilledButton.icon(
               onPressed: () => _setReminder(_pendingDate),
               icon: const Icon(Icons.notifications_active_outlined, size: 18),
-              label: const Text('Set reminder'),
+              label: Text(context.l10n.reminder_set),
             ),
           ],
         ),

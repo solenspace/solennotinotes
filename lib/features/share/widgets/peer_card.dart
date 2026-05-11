@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/share/peer_models.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
@@ -23,7 +24,7 @@ class PeerCard extends StatelessWidget {
     final tappable = onTap != null && !inFlight && !dimmed;
 
     return Semantics(
-      label: 'Share with ${peer.displayName}',
+      label: context.l10n.share_peer_card_semantic_label(peer.displayName),
       button: tappable,
       child: Material(
         color: colors.surfaceVariant,

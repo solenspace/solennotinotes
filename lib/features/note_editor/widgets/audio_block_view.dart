@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
@@ -84,12 +85,12 @@ class _AudioBlockViewState extends State<AudioBlockView> {
       ),
       items: <PopupMenuEntry<String>>[
         if (widget.onTranscribe != null)
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'transcribe',
-            child: Text('Transcribe'),
+            child: Text(context.l10n.audio_transcribe),
           ),
-        const PopupMenuItem<String>(value: 're-record', child: Text('Re-record')),
-        const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
+        PopupMenuItem<String>(value: 're-record', child: Text(context.l10n.audio_re_record)),
+        PopupMenuItem<String>(value: 'delete', child: Text(context.l10n.common_delete)),
       ],
     );
     if (!mounted || selected == null) return;
@@ -183,7 +184,7 @@ class _AudioBlockViewState extends State<AudioBlockView> {
                 if (widget.block.truncated) ...[
                   const Gap(SpacingPrimitives.xs),
                   Tooltip(
-                    message: 'Recording exceeded 10 MB cap',
+                    message: context.l10n.audio_recording_exceeded_cap,
                     child: Icon(
                       Icons.warning_amber_rounded,
                       size: 16,

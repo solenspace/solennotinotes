@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
@@ -37,6 +38,8 @@ ThemeData _theme() => AppTheme.bone(text: _stubText(WritingFont.inter, Brightnes
 /// the modal through every phase.
 Widget _harness({required FakeModelDownloader fake}) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: _theme(),
     home: BlocProvider<LlmReadinessCubit>(
       create: (_) => LlmReadinessCubit(downloader: fake),

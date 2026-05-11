@@ -7,6 +7,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/search/cubit/search_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
@@ -72,13 +73,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const SliverToBoxAdapter(child: FilterChipsRow()),
               const SliverToBoxAdapter(child: SizedBox(height: SpacingPrimitives.md)),
               if (isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
-                  child: EmptyState(),
+                  child: EmptyState(message: context.l10n.home_empty_state_message),
                 )
               else ...[
                 if (pinned.isNotEmpty) ...[
-                  const SliverToBoxAdapter(child: SectionHeader('Pinned')),
+                  SliverToBoxAdapter(child: SectionHeader(context.l10n.home_section_pinned)),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: SpacingPrimitives.lg,
@@ -99,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (unpinned.isNotEmpty)
                   SliverToBoxAdapter(
                     child: SectionHeader(
-                      pinned.isNotEmpty ? 'Notes' : 'All notes',
+                      pinned.isNotEmpty
+                          ? context.l10n.home_section_notes
+                          : context.l10n.home_section_all_notes,
                     ),
                   ),
                 if (unpinned.isNotEmpty)

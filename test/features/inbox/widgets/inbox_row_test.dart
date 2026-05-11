@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noti_notes_app/features/inbox/widgets/inbox_row.dart';
 import 'package:noti_notes_app/models/received_share.dart';
@@ -32,6 +33,8 @@ NotiText _stubText() {
 Future<void> _pumpRow(WidgetTester tester, ReceivedShare share, {VoidCallback? onTap}) {
   return tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.bone(text: _stubText()),
       home: Scaffold(body: InboxRow(share: share, onTap: onTap ?? () {})),
     ),

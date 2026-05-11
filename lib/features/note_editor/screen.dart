@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
@@ -347,9 +348,8 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   void _showMicrophoneExplainer() {
     PermissionExplainerSheet.show(
       context,
-      title: 'Microphone access needed',
-      body: 'Notinotes records audio notes locally on your device. '
-          'Enable microphone access in Settings to record voice notes.',
+      title: context.l10n.editor_mic_explainer_title,
+      body: context.l10n.editor_mic_explainer_body,
       result: PermissionResult.permanentlyDenied,
       service: context.read<PermissionsService>(),
     );
@@ -358,10 +358,8 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   void _showDictationUnavailableExplainer() {
     PermissionExplainerSheet.show(
       context,
-      title: 'Dictation unavailable',
-      body: 'Speech recognition needs to run entirely on this device, but '
-          'this device does not support offline recognition for your '
-          'language. Notinotes will not use cloud recognition.',
+      title: context.l10n.editor_dictation_unavailable_title,
+      body: context.l10n.editor_dictation_unavailable_body,
       // No actual permission to repair: this is a capability hard-gate.
       // `restricted` surfaces a single "OK" path with no Settings button.
       result: PermissionResult.restricted,
@@ -507,17 +505,17 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                   final confirmed = await showDialog<bool>(
                     context: themedCtx,
                     builder: (_) => AlertDialog(
-                      title: const Text('Delete note?'),
-                      content: const Text('This cannot be undone.'),
+                      title: Text(context.l10n.editor_delete_confirm_title),
+                      content: Text(context.l10n.editor_delete_confirm_body),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(themedCtx).pop(false),
-                          child: const Text('Cancel'),
+                          child: Text(context.l10n.common_cancel),
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(themedCtx).pop(true),
                           child: Text(
-                            'Delete',
+                            context.l10n.common_delete,
                             style: TextStyle(color: tokens.colors.error),
                           ),
                         ),
@@ -561,7 +559,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                                 filled: false,
                                 counterText: '',
                                 contentPadding: EdgeInsets.zero,
-                                hintText: 'Title',
+                                hintText: context.l10n.editor_title_hint,
                                 hintStyle: tokens.text.displayLg.copyWith(
                                   color: tokens.colors.onSurface.withValues(alpha: 0.4),
                                 ),
@@ -787,7 +785,7 @@ class _NotFoundScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: const Center(child: Text('Note not found.')),
+      body: Center(child: Text(context.l10n.editor_note_not_found)),
     );
   }
 }
@@ -877,7 +875,7 @@ class _TagsRow extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              '#$tag',
+              context.l10n.tag_chip_label(tag),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: color,
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
@@ -62,13 +63,13 @@ class _ChipPopup extends StatelessWidget {
         ? displayName!.trim()
         : (fromId.length >= 6 ? fromId.substring(0, 6) : fromId);
     return Semantics(
-      label: 'From $label, sender options',
+      label: context.l10n.from_sender_semantic_label(label),
       button: true,
       child: PopupMenuButton<String>(
-        tooltip: 'Sender options',
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'keep', child: Text('Keep their style')),
-          PopupMenuItem(value: 'mine', child: Text('Convert to mine')),
+        tooltip: context.l10n.from_sender_tooltip,
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'keep', child: Text(context.l10n.from_sender_keep_style)),
+          PopupMenuItem(value: 'mine', child: Text(context.l10n.from_sender_convert_mine)),
         ],
         onSelected: (value) {
           if (value == 'mine') {
@@ -88,7 +89,7 @@ class _ChipPopup extends StatelessWidget {
                 SizedBox(width: tokens.spacing.xs),
               ],
               Text(
-                'from $label',
+                context.l10n.from_sender_chip_label(label),
                 style: tokens.text.labelMd.copyWith(color: tokens.colors.onSurface),
               ),
               const Icon(Icons.arrow_drop_down, size: 16),

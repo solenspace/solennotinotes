@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
 
@@ -23,21 +24,21 @@ class LongPressMenuSheet extends StatelessWidget {
       builder: (context, state) {
         final note = state.notes.firstWhereOrNull((n) => n.id == noteId);
         if (note == null) {
-          return const SheetScaffold(
-            title: 'Untitled note',
+          return SheetScaffold(
+            title: context.l10n.menu_untitled_note,
             maxHeightFactor: 0.5,
-            child: SizedBox.shrink(),
+            child: const SizedBox.shrink(),
           );
         }
         return SheetScaffold(
-          title: note.title.isEmpty ? 'Untitled note' : note.title,
+          title: note.title.isEmpty ? context.l10n.menu_untitled_note : note.title,
           maxHeightFactor: 0.5,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuTile(
                 icon: note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                label: note.isPinned ? 'Unpin' : 'Pin',
+                label: note.isPinned ? context.l10n.menu_unpin : context.l10n.menu_pin,
                 onTap: () {
                   HapticFeedback.selectionClick();
                   context.read<NotesListBloc>().add(PinToggled(noteId));
@@ -47,7 +48,7 @@ class LongPressMenuSheet extends StatelessWidget {
               const Gap(SpacingPrimitives.xs),
               _MenuTile(
                 icon: Icons.delete_outline,
-                label: 'Delete',
+                label: context.l10n.menu_delete,
                 destructive: true,
                 onTap: () {
                   HapticFeedback.selectionClick();

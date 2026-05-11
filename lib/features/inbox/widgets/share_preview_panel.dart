@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/received_share.dart';
 import 'package:noti_notes_app/services/share/share_models.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
@@ -110,7 +111,7 @@ class SharePreviewPanel extends StatelessWidget {
                       Expanded(
                         child: Semantics(
                           button: true,
-                          label: 'Discard this shared note',
+                          label: context.l10n.share_preview_discard_label,
                           child: OutlinedButton(
                             onPressed: onDiscard,
                             style: OutlinedButton.styleFrom(
@@ -118,7 +119,7 @@ class SharePreviewPanel extends StatelessWidget {
                               side: BorderSide(color: tokens.colors.error.withValues(alpha: 0.5)),
                               padding: EdgeInsets.symmetric(vertical: tokens.spacing.md),
                             ),
-                            child: const Text('Discard'),
+                            child: Text(context.l10n.common_discard),
                           ),
                         ),
                       ),
@@ -127,7 +128,7 @@ class SharePreviewPanel extends StatelessWidget {
                         flex: 2,
                         child: Semantics(
                           button: true,
-                          label: 'Accept this shared note into your library',
+                          label: context.l10n.share_preview_accept_label,
                           child: FilledButton(
                             onPressed: onAccept,
                             style: FilledButton.styleFrom(
@@ -135,7 +136,7 @@ class SharePreviewPanel extends StatelessWidget {
                               foregroundColor: tokens.colors.onAccent,
                               padding: EdgeInsets.symmetric(vertical: tokens.spacing.md),
                             ),
-                            child: const Text('Accept'),
+                            child: Text(context.l10n.common_accept),
                           ),
                         ),
                       ),
@@ -162,7 +163,7 @@ class _PreviewSenderChip extends StatelessWidget {
     final tokens = context.tokens;
     final glyph = sender.signatureAccent;
     return Semantics(
-      label: 'From ${sender.displayName}',
+      label: context.l10n.share_preview_from_semantic(sender.displayName),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -171,7 +172,7 @@ class _PreviewSenderChip extends StatelessWidget {
             SizedBox(width: tokens.spacing.xs),
           ],
           Text(
-            'from ${sender.displayName}',
+            context.l10n.share_preview_from_caption(sender.displayName),
             style: tokens.text.labelMd.copyWith(color: tokens.colors.onSurface),
           ),
         ],
@@ -257,7 +258,10 @@ class _BlockPreview extends StatelessWidget {
             children: [
               Icon(Icons.graphic_eq_rounded, color: tokens.colors.accent),
               SizedBox(width: tokens.spacing.sm),
-              Text('Audio · ${_formatDuration(durationMs)}', style: tokens.text.labelMd),
+              Text(
+                context.l10n.share_preview_audio_duration(_formatDuration(durationMs)),
+                style: tokens.text.labelMd,
+              ),
             ],
           ),
         );

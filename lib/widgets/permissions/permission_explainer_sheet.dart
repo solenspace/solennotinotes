@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
@@ -67,7 +68,7 @@ class PermissionExplainerSheet extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  showSettingsAction ? 'Not now' : 'OK',
+                  showSettingsAction ? context.l10n.common_not_now : context.l10n.common_ok,
                   style: TextStyle(color: tokens.colors.onSurfaceMuted),
                 ),
               ),
@@ -78,7 +79,7 @@ class PermissionExplainerSheet extends StatelessWidget {
                     await service.openSettings();
                     if (context.mounted) Navigator.of(context).pop();
                   },
-                  child: const Text('Open settings'),
+                  child: Text(context.l10n.common_open_settings),
                 ),
               ],
             ],

@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/note_editor/cubit/transcription_cubit.dart';
 import 'package:noti_notes_app/features/note_editor/cubit/transcription_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Outcome the editor screen reacts to when [TranscriptionOverlay]
@@ -200,7 +201,7 @@ class _PrivacyBanner extends StatelessWidget {
             Gap(tokens.spacing.sm),
             Expanded(
               child: Text(
-                'Running on this device — audio never leaves it.',
+                context.l10n.transcription_privacy_banner,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurface.withValues(alpha: 0.85),
                     ),
@@ -234,13 +235,12 @@ class _RunningBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Transcribing audio',
+            context.l10n.transcription_progress_title,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Gap(tokens.spacing.xs),
           Text(
-            'Whisper is processing your recording on this device. This may '
-            'take a moment for longer clips.',
+            context.l10n.transcription_progress_body,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -250,7 +250,7 @@ class _RunningBody extends StatelessWidget {
           // per processed segment. liveRegion announces percent to AT.
           Semantics(
             liveRegion: true,
-            label: 'Transcribing, $percent percent complete',
+            label: context.l10n.transcription_progress_semantic(percent),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -265,7 +265,7 @@ class _RunningBody extends StatelessWidget {
                 ),
                 Gap(tokens.spacing.xs),
                 Text(
-                  '$percent%',
+                  context.l10n.percent_value(percent),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: scheme.onSurface.withValues(alpha: 0.7),
                       ),
@@ -290,7 +290,7 @@ class _RunningBody extends StatelessWidget {
                 unawaited(context.read<TranscriptionCubit>().cancel());
               },
               icon: const Icon(Icons.close_rounded),
-              label: const Text('Cancel'),
+              label: Text(context.l10n.common_cancel),
             ),
           ),
         ],
@@ -319,7 +319,7 @@ class _ReadyBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Transcript ready',
+            context.l10n.transcription_ready_title,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Gap(tokens.spacing.sm),
@@ -341,37 +341,37 @@ class _ReadyBody extends StatelessWidget {
           // (Insert) → destructive (Replace) → escape (Discard).
           Semantics(
             button: true,
-            label: 'Insert transcript as a text block below the audio block',
+            label: context.l10n.transcription_insert_below_label,
             child: FilledButton.icon(
               onPressed: () => Navigator.of(context).pop(
                 TranscriptionAcceptanceResult.insertBelow(state.result),
               ),
               icon: const Icon(Icons.subdirectory_arrow_right_rounded),
-              label: const Text('Insert below'),
+              label: Text(context.l10n.transcription_insert_below),
             ),
           ),
           Gap(tokens.spacing.sm),
           Semantics(
             button: true,
-            label: 'Replace the audio block with the transcript text',
+            label: context.l10n.transcription_replace_audio_label,
             child: OutlinedButton.icon(
               onPressed: () => Navigator.of(context).pop(
                 TranscriptionAcceptanceResult.replaceAudio(state.result),
               ),
               icon: const Icon(Icons.swap_horiz_rounded),
-              label: const Text('Replace audio'),
+              label: Text(context.l10n.transcription_replace_audio),
             ),
           ),
           Gap(tokens.spacing.sm),
           Semantics(
             button: true,
-            label: 'Discard the transcript and keep the original audio',
+            label: context.l10n.transcription_discard_label,
             child: TextButton.icon(
               onPressed: () => Navigator.of(context).pop(
                 const TranscriptionAcceptanceResult.discard(),
               ),
               icon: const Icon(Icons.close_rounded),
-              label: const Text('Discard'),
+              label: Text(context.l10n.common_discard),
             ),
           ),
         ],
@@ -409,7 +409,7 @@ class _FailedBody extends StatelessWidget {
               Icon(Icons.error_outline_rounded, color: scheme.error),
               Gap(tokens.spacing.sm),
               Text(
-                'Transcription failed',
+                context.l10n.transcription_failed_title,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
@@ -434,7 +434,7 @@ class _FailedBody extends StatelessWidget {
               await context.read<TranscriptionCubit>().start(audioFilePath);
             },
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            label: Text(context.l10n.transcription_try_again),
           ),
           Gap(tokens.spacing.sm),
           TextButton.icon(
@@ -442,7 +442,7 @@ class _FailedBody extends StatelessWidget {
               const TranscriptionAcceptanceResult.discard(),
             ),
             icon: const Icon(Icons.close_rounded),
-            label: const Text('Discard'),
+            label: Text(context.l10n.common_discard),
           ),
         ],
       ),

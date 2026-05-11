@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 const List<String> _suggestedAccents = [
@@ -89,12 +90,12 @@ class _OverlayAccentPickerState extends State<OverlayAccentPicker> {
           padding: EdgeInsets.all(tokens.spacing.lg),
           children: [
             Text(
-              'Note signature',
+              context.l10n.overlay_accent_section_title,
               style: tokens.text.titleSm.copyWith(color: tokens.colors.onSurface),
             ),
             SizedBox(height: tokens.spacing.sm),
             Text(
-              'A single character or emoji that travels with this note.',
+              context.l10n.overlay_accent_section_body,
               style: tokens.text.bodySm.copyWith(color: tokens.colors.onSurfaceMuted),
             ),
             SizedBox(height: tokens.spacing.md),
@@ -122,7 +123,7 @@ class _OverlayAccentPickerState extends State<OverlayAccentPicker> {
             ),
             SizedBox(height: tokens.spacing.md),
             Text(
-              'Suggestions',
+              context.l10n.overlay_accent_suggestions,
               style: tokens.text.labelLg.copyWith(color: tokens.colors.onSurfaceMuted),
             ),
             SizedBox(height: tokens.spacing.sm),
@@ -165,7 +166,7 @@ class _SuggestionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Semantics(
-      label: 'Use $glyph as the note signature',
+      label: context.l10n.overlay_accent_semantic_label(glyph),
       button: true,
       selected: selected,
       child: InkWell(

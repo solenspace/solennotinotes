@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/share/cubit/share_nearby_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 class TransferProgressPanel extends StatelessWidget {
@@ -23,8 +24,8 @@ class TransferProgressPanel extends StatelessWidget {
     final queueSize = state.queue.length;
     final isMulti = queueSize > 1;
     final progressLine = isMulti
-        ? 'Sending ${state.queueIndex + 1} of $queueSize — $percent%'
-        : 'Sending — $percent%';
+        ? context.l10n.share_sheet_sending_count(state.queueIndex + 1, queueSize, percent)
+        : context.l10n.share_sheet_sending_percent(percent);
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -36,7 +37,7 @@ class TransferProgressPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Sending to $peerName',
+            context.l10n.share_sheet_sending_to(peerName),
             style: tokens.text.headlineMd.copyWith(color: colors.onSurface),
           ),
           Gap(tokens.spacing.md),
@@ -60,7 +61,7 @@ class TransferProgressPanel extends StatelessWidget {
             child: TextButton(
               onPressed: onCancel,
               child: Text(
-                'Cancel',
+                context.l10n.common_cancel,
                 style: TextStyle(color: colors.error),
               ),
             ),

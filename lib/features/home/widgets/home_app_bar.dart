@@ -11,6 +11,7 @@ import 'package:noti_notes_app/features/settings/screen.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_state.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Large collapsing app bar with greeting, profile/settings actions, and a
@@ -100,7 +101,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       },
                       style: Theme.of(context).textTheme.bodyLarge,
                       decoration: InputDecoration(
-                        hintText: 'Search notes...',
+                        hintText: context.l10n.home_search_hint,
                         hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
                             ),
@@ -177,7 +178,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
-                  tooltip: 'Settings',
+                  tooltip: context.l10n.home_settings_tooltip,
                   onPressed: () => Navigator.of(context).pushNamed(SettingsScreen.routeName),
                 ),
                 const Gap(8),
@@ -201,7 +202,9 @@ class _InboxBadgeButton extends StatelessWidget {
     final count = context.watch<InboxBadgeCubit>().state;
     final tokens = context.tokens;
     return IconButton(
-      tooltip: count > 0 ? 'Inbox ($count new)' : 'Inbox',
+      tooltip: count > 0
+          ? context.l10n.home_inbox_tooltip_count(count)
+          : context.l10n.home_inbox_tooltip,
       icon: Badge.count(
         count: count,
         isLabelVisible: count > 0,

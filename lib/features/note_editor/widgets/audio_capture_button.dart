@@ -8,6 +8,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/audio_amplitude_meter.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Mic affordance in the editor toolbar. Two interaction modes, picked at
@@ -151,8 +152,8 @@ class _MicButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final iconColor = capturing ? scheme.error : scheme.onSurface.withValues(alpha: 0.85);
     final tooltip = tapToToggle
-        ? (capturing ? 'Stop recording' : 'Record audio')
-        : (capturing ? 'Recording — release to save, slide to cancel' : 'Hold to record');
+        ? (capturing ? context.l10n.audio_stop_recording : context.l10n.audio_record)
+        : (capturing ? context.l10n.audio_recording_release : context.l10n.audio_hold_record);
     return Semantics(
       button: true,
       label: tooltip,

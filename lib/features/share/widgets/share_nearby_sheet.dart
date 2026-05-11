@@ -16,6 +16,7 @@ import 'package:noti_notes_app/services/permissions/permission_result.dart';
 import 'package:noti_notes_app/services/permissions/permissions_service.dart';
 import 'package:noti_notes_app/services/share/peer_service.dart';
 import 'package:noti_notes_app/services/share/share_codec.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 import 'package:noti_notes_app/widgets/permissions/permission_explainer_sheet.dart';
 
@@ -114,7 +115,7 @@ class ShareNearbySheet extends StatelessWidget {
                       Gap(tokens.spacing.xs),
                       Expanded(
                         child: Text(
-                          'Sent over Bluetooth — never through the internet.',
+                          themedCtx.l10n.share_sheet_bluetooth_notice,
                           style: tokens.text.labelSm.copyWith(
                             color: tokens.colors.onSurfaceMuted,
                           ),
@@ -175,14 +176,14 @@ class _DiscoverBody extends StatelessWidget {
       ),
       children: [
         Text(
-          'Looking for nearby people…',
+          context.l10n.share_sheet_discovering,
           style: tokens.text.headlineMd.copyWith(color: colors.onSurface),
         ),
         Gap(tokens.spacing.xs),
         Text(
           state.queue.length > 1
-              ? '${state.queue.length} notes ready to send.'
-              : 'Pick someone to send to.',
+              ? context.l10n.share_sheet_ready_count(state.queue.length)
+              : context.l10n.share_sheet_pick_recipient,
           style: tokens.text.bodyMd.copyWith(color: colors.onSurfaceMuted),
         ),
         Gap(tokens.spacing.lg),
@@ -216,7 +217,7 @@ class _EmptyDiscoveryHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true,
-      label: 'Searching for nearby people. Make sure their app is open and Bluetooth is on.',
+      label: context.l10n.share_sheet_hint_discovery,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: spacing),
         child: Row(
@@ -232,7 +233,7 @@ class _EmptyDiscoveryHint extends StatelessWidget {
             Gap(spacing),
             Expanded(
               child: Text(
-                'Make sure their app is open and Bluetooth is on.',
+                context.l10n.share_sheet_hint_app_bluetooth,
                 style: text.bodyMd.copyWith(color: colors.onSurfaceMuted),
               ),
             ),
@@ -275,7 +276,9 @@ class _CompletedBodyState extends State<_CompletedBody> {
     final tokens = context.tokens;
     final colors = tokens.colors;
     final notesSent = context.read<ShareNearbyCubit>().state.queue.length;
-    final label = notesSent > 1 ? 'Sent $notesSent notes.' : 'Sent.';
+    final label = notesSent > 1
+        ? context.l10n.share_sheet_sent_count(notesSent)
+        : context.l10n.share_sheet_sent;
     return Semantics(
       liveRegion: true,
       label: label,
@@ -335,7 +338,7 @@ class _FailedBody extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: FilledButton(
               onPressed: () => Navigator.of(context).maybePop(),
-              child: const Text('Close'),
+              child: Text(context.l10n.common_close),
             ),
           ),
         ],
@@ -441,9 +444,8 @@ Future<bool> _ensureBluetoothPermissions(
     if (!context.mounted) return false;
     await PermissionExplainerSheet.show(
       context,
-      title: 'Nearby sharing needs Bluetooth',
-      body:
-          'Noti uses Bluetooth to find devices near you and send notes directly. Nothing leaves your device over the internet.',
+      title: context.l10n.share_sheet_bluetooth_permission_title,
+      body: context.l10n.share_sheet_bluetooth_permission_body,
       result: result,
       service: service,
     );
