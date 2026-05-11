@@ -6,6 +6,7 @@ import 'package:noti_notes_app/features/note_editor/widgets/ai_assist_sheet.dart
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/screens/manage_ai_screen.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
@@ -56,9 +57,9 @@ class _AssistToolButtonState extends State<_AssistToolButton> {
     final scheme = Theme.of(context).colorScheme;
     final glyph = context.tokens.signature.accent ?? '✦';
     return Tooltip(
-      message: 'AI assist — long-press to manage',
+      message: context.l10n.ai_assist_tooltip,
       child: Semantics(
-        label: 'AI assist',
+        label: context.l10n.ai_assist_label,
         button: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,

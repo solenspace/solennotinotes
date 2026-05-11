@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:noti_notes_app/app/logging_bloc_observer.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_event.dart';
 import 'package:noti_notes_app/features/home/screen.dart';
@@ -290,6 +291,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               theme: state.boneTheme,
               darkTheme: state.darkTheme,
               themeMode: state.themeMode,
+              locale: const Locale('en'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
               home: const HomeScreen(),
               routes: {
                 HomeScreen.routeName: (context) => const HomeScreen(),

@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/search/cubit/search_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Horizontal row of filter chips below the search bar. Selection is single.
@@ -13,11 +14,11 @@ class FilterChipsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchCubit>().state;
-    final entries = const [
-      (NoteFilter.all, 'All', Icons.notes_outlined),
-      (NoteFilter.reminders, 'Reminders', Icons.notifications_outlined),
-      (NoteFilter.checklists, 'Checklists', Icons.checklist_rounded),
-      (NoteFilter.images, 'Images', Icons.image_outlined),
+    final entries = [
+      (NoteFilter.all, context.l10n.filter_all, Icons.notes_outlined),
+      (NoteFilter.reminders, context.l10n.filter_reminders, Icons.notifications_outlined),
+      (NoteFilter.checklists, context.l10n.filter_checklists, Icons.checklist_rounded),
+      (NoteFilter.images, context.l10n.filter_images, Icons.image_outlined),
     ];
     return SizedBox(
       height: 40,

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Read-aloud affordance in the editor toolbar. Tap toggles whole-note
@@ -58,7 +59,7 @@ class _ReadAloudGlyphState extends State<_ReadAloudGlyph> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final iconColor = widget.reading ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85);
-    final tooltip = widget.reading ? 'Stop reading' : 'Read note aloud';
+    final tooltip = widget.reading ? context.l10n.read_aloud_stop : context.l10n.read_aloud_start;
     return Semantics(
       button: true,
       label: tooltip,

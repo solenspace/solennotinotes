@@ -8,6 +8,7 @@ import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.d
 import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/widgets/llm_download_progress_modal.dart';
 import 'package:noti_notes_app/features/settings/widgets/whisper_download_progress_modal.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/ai/llm_model_constants.dart';
 import 'package:noti_notes_app/services/device/device_capability_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
@@ -33,31 +34,31 @@ class ManageAiScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final tier = context.read<DeviceCapabilityService>().aiTier;
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage AI')),
+      appBar: AppBar(title: Text(context.l10n.manage_ai_title)),
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: SpacingPrimitives.lg,
           vertical: SpacingPrimitives.md,
         ),
         children: [
-          if (tier.canRunLlm) ...const [
-            _SectionLabel('AI assist'),
-            Gap(SpacingPrimitives.sm),
-            _ModelInfoCard(),
-            Gap(SpacingPrimitives.sm),
-            _ReDownloadTile(),
-            Gap(SpacingPrimitives.sm),
-            _DeleteTile(),
-            Gap(SpacingPrimitives.xl),
+          if (tier.canRunLlm) ...[
+            _SectionLabel(context.l10n.manage_ai_section_assist),
+            const Gap(SpacingPrimitives.sm),
+            const _ModelInfoCard(),
+            const Gap(SpacingPrimitives.sm),
+            const _ReDownloadTile(),
+            const Gap(SpacingPrimitives.sm),
+            const _DeleteTile(),
+            const Gap(SpacingPrimitives.xl),
           ],
-          if (tier.canRunWhisper) ...const [
-            _SectionLabel('Voice transcription'),
-            Gap(SpacingPrimitives.sm),
-            _WhisperModelInfoCard(),
-            Gap(SpacingPrimitives.sm),
-            _WhisperReDownloadTile(),
-            Gap(SpacingPrimitives.sm),
-            _WhisperDeleteTile(),
+          if (tier.canRunWhisper) ...[
+            _SectionLabel(context.l10n.manage_ai_section_voice),
+            const Gap(SpacingPrimitives.sm),
+            const _WhisperModelInfoCard(),
+            const Gap(SpacingPrimitives.sm),
+            const _WhisperReDownloadTile(),
+            const Gap(SpacingPrimitives.sm),
+            const _WhisperDeleteTile(),
           ],
         ],
       ),
@@ -107,7 +108,7 @@ class _ModelInfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Model',
+                  context.l10n.manage_ai_model_label,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -118,9 +119,18 @@ class _ModelInfoCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Gap(SpacingPrimitives.md),
-                _InfoRow(label: 'Size', value: '$sizeMb MB'),
-                const _InfoRow(label: 'Schema', value: LlmModelConstants.version),
-                _InfoRow(label: 'Status', value: _statusText(state)),
+                _InfoRow(
+                  label: context.l10n.manage_ai_size_label,
+                  value: context.l10n.manage_ai_size_value(sizeMb),
+                ),
+                _InfoRow(
+                  label: context.l10n.manage_ai_schema_label,
+                  value: LlmModelConstants.version,
+                ),
+                _InfoRow(
+                  label: context.l10n.manage_ai_status_label,
+                  value: _statusText(context, state),
+                ),
               ],
             ),
           ),
@@ -129,12 +139,12 @@ class _ModelInfoCard extends StatelessWidget {
     );
   }
 
-  static String _statusText(LlmReadinessState state) => switch (state.phase) {
-        LlmReadinessPhase.idle => 'Not on this device',
-        LlmReadinessPhase.downloading => 'Downloading…',
-        LlmReadinessPhase.verifying => 'Verifying…',
-        LlmReadinessPhase.ready => 'On this device, verified',
-        LlmReadinessPhase.failed => 'Last attempt failed',
+  static String _statusText(BuildContext context, LlmReadinessState state) => switch (state.phase) {
+        LlmReadinessPhase.idle => context.l10n.manage_ai_status_not_installed,
+        LlmReadinessPhase.downloading => context.l10n.manage_ai_status_downloading,
+        LlmReadinessPhase.verifying => context.l10n.manage_ai_status_verifying,
+        LlmReadinessPhase.ready => context.l10n.manage_ai_status_ready,
+        LlmReadinessPhase.failed => context.l10n.manage_ai_status_failed,
       };
 }
 
@@ -178,17 +188,16 @@ class _ReDownloadTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return _ActionTile(
-      label: 'Re-download model',
+      label: context.l10n.manage_ai_redownload_label,
       description: 'Replace the file on this device with a fresh copy.',
       icon: Icons.refresh_rounded,
       color: scheme.primary,
       onTap: () async {
         final confirmed = await _confirm(
           context,
-          title: 'Re-download model?',
-          body: 'This downloads about 640 MB. The current model file is '
-              'replaced when the new one is verified.',
-          confirmLabel: 'Re-download',
+          title: context.l10n.manage_ai_redownload_confirm_title,
+          body: context.l10n.manage_ai_redownload_confirm_body,
+          confirmLabel: context.l10n.manage_ai_redownload_label,
         );
         if (confirmed != true) return;
         if (!context.mounted) return;
@@ -210,7 +219,7 @@ class _DeleteTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return _ActionTile(
-      label: 'Delete model and disable AI',
+      label: context.l10n.manage_ai_delete_label,
       description: 'Frees about 640 MB. AI affordances disappear until you '
           'opt back in from Settings.',
       icon: Icons.delete_outline_rounded,
@@ -218,10 +227,9 @@ class _DeleteTile extends StatelessWidget {
       onTap: () async {
         final confirmed = await _confirm(
           context,
-          title: 'Delete model?',
-          body: 'AI assist will be turned off. You can re-enable it later, '
-              'but the model will need to be downloaded again.',
-          confirmLabel: 'Delete',
+          title: context.l10n.manage_ai_delete_confirm_title,
+          body: context.l10n.manage_ai_delete_confirm_body,
+          confirmLabel: context.l10n.manage_ai_delete_label,
           isDestructive: true,
         );
         if (confirmed != true) return;
@@ -310,7 +318,7 @@ Future<bool?> _confirm(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(dialogContext.l10n.common_cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -351,7 +359,7 @@ class _WhisperModelInfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Model',
+                  context.l10n.manage_ai_model_label,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -362,9 +370,18 @@ class _WhisperModelInfoCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Gap(SpacingPrimitives.md),
-                _InfoRow(label: 'Size', value: '$sizeMb MB'),
-                _InfoRow(label: 'Schema', value: spec.version),
-                _InfoRow(label: 'Status', value: _statusText(state)),
+                _InfoRow(
+                  label: context.l10n.manage_ai_size_label,
+                  value: context.l10n.manage_ai_size_value(sizeMb),
+                ),
+                _InfoRow(
+                  label: context.l10n.manage_ai_schema_label,
+                  value: spec.version,
+                ),
+                _InfoRow(
+                  label: context.l10n.manage_ai_status_label,
+                  value: _statusText(context, state),
+                ),
               ],
             ),
           ),
@@ -373,12 +390,13 @@ class _WhisperModelInfoCard extends StatelessWidget {
     );
   }
 
-  static String _statusText(WhisperReadinessState state) => switch (state.phase) {
-        WhisperReadinessPhase.idle => 'Not on this device',
-        WhisperReadinessPhase.downloading => 'Downloading…',
-        WhisperReadinessPhase.verifying => 'Verifying…',
-        WhisperReadinessPhase.ready => 'On this device, verified',
-        WhisperReadinessPhase.failed => 'Last attempt failed',
+  static String _statusText(BuildContext context, WhisperReadinessState state) =>
+      switch (state.phase) {
+        WhisperReadinessPhase.idle => context.l10n.manage_ai_status_not_installed,
+        WhisperReadinessPhase.downloading => context.l10n.manage_ai_status_downloading,
+        WhisperReadinessPhase.verifying => context.l10n.manage_ai_status_verifying,
+        WhisperReadinessPhase.ready => context.l10n.manage_ai_status_ready,
+        WhisperReadinessPhase.failed => context.l10n.manage_ai_status_failed,
       };
 }
 
@@ -389,7 +407,7 @@ class _WhisperReDownloadTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return _ActionTile(
-      label: 'Re-download transcription model',
+      label: context.l10n.manage_whisper_redownload_label,
       description: 'Replace the transcription model on this device with a fresh copy.',
       icon: Icons.refresh_rounded,
       color: scheme.primary,
@@ -398,10 +416,9 @@ class _WhisperReDownloadTile extends StatelessWidget {
         final mb = (spec.totalBytes / (1024 * 1024)).round();
         final confirmed = await _confirm(
           context,
-          title: 'Re-download transcription model?',
-          body: 'This downloads about $mb MB. The current model file is '
-              'replaced when the new one is verified.',
-          confirmLabel: 'Re-download',
+          title: context.l10n.manage_whisper_redownload_confirm_title,
+          body: context.l10n.manage_whisper_redownload_confirm_body(mb),
+          confirmLabel: context.l10n.manage_whisper_redownload_label,
         );
         if (confirmed != true) return;
         if (!context.mounted) return;
@@ -423,7 +440,7 @@ class _WhisperDeleteTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return _ActionTile(
-      label: 'Delete model and disable transcription',
+      label: context.l10n.manage_whisper_delete_label,
       description: 'Frees the on-device model. The audio files in your '
           'notes are untouched. You can re-enable later.',
       icon: Icons.delete_outline_rounded,
@@ -431,10 +448,9 @@ class _WhisperDeleteTile extends StatelessWidget {
       onTap: () async {
         final confirmed = await _confirm(
           context,
-          title: 'Delete transcription model?',
-          body: 'Voice transcription will be turned off. You can re-enable '
-              'it later, but the model will need to be downloaded again.',
-          confirmLabel: 'Delete',
+          title: context.l10n.manage_whisper_delete_confirm_title,
+          body: context.l10n.manage_whisper_delete_confirm_body,
+          confirmLabel: context.l10n.manage_whisper_delete_label,
           isDestructive: true,
         );
         if (confirmed != true) return;

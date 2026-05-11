@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 typedef ExpandableFabCallback = void Function();
@@ -243,7 +244,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                         ],
                       ),
                       child: Text(
-                        'Hold and swipe',
+                        context.l10n.fab_hint_hold_and_swipe,
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: scheme.surface,
                               fontWeight: FontWeight.w600,
@@ -263,7 +264,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                         : 0.0,
                     child: Transform.scale(
                       scale: _expandAnimation.value * _leftScaleAnimation.value,
-                      child: const _HintLabel(text: 'Content'),
+                      child: _HintLabel(text: context.l10n.fab_hint_content),
                     ),
                   ),
                 ),
@@ -278,7 +279,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                         : 0.0,
                     child: Transform.scale(
                       scale: _expandAnimation.value * _rightScaleAnimation.value,
-                      child: const _HintLabel(text: 'Todo'),
+                      child: _HintLabel(text: context.l10n.fab_hint_todo),
                     ),
                   ),
                 ),

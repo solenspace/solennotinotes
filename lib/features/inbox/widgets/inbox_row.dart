@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/received_share.dart';
 import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
@@ -24,13 +25,13 @@ class InboxRow extends StatelessWidget {
     final tokens = context.tokens;
     final scheme = Theme.of(context).colorScheme;
     final accent = share.senderAccentColor;
-    final preview = _titleOrPreview(share);
+    final preview = _titleOrPreview(context, share);
     final tagline = share.sender.signatureTagline;
-    final ago = _relative(share.receivedAt, _now?.call() ?? DateTime.now());
+    final ago = _relative(context, share.receivedAt, _now?.call() ?? DateTime.now());
 
     return Semantics(
       button: true,
-      label: 'From ${share.sender.displayName}, $preview, received $ago',
+      label: context.l10n.inbox_row_semantic_label(share.sender.displayName, preview, ago),
       child: InkWell(
         onTap: onTap,
         borderRadius: tokens.shape.mdRadius,
@@ -61,7 +62,7 @@ class InboxRow extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${share.sender.displayName} · $preview',
+                            context.l10n.inbox_row_subtitle(share.sender.displayName, preview),
                             style: tokens.text.bodyLg,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -131,7 +132,7 @@ class _SenderChip extends StatelessWidget {
   }
 }
 
-String _titleOrPreview(ReceivedShare share) {
+String _titleOrPreview(BuildContext context, ReceivedShare share) {
   final title = share.note.title.trim();
   if (title.isNotEmpty) return title;
   for (final block in share.note.blocks) {
@@ -143,7 +144,7 @@ String _titleOrPreview(ReceivedShare share) {
       }
     }
   }
-  return 'Untitled note';
+  return context.l10n.inbox_untitled_note;
 }
 
 String _initialFor(String name) {
@@ -152,11 +153,11 @@ String _initialFor(String name) {
   return trimmed.characters.first.toUpperCase();
 }
 
-String _relative(DateTime instant, DateTime now) {
+String _relative(BuildContext context, DateTime instant, DateTime now) {
   final diff = now.difference(instant);
-  if (diff.inSeconds < 60) return 'just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} min';
-  if (diff.inHours < 24) return '${diff.inHours} h';
-  if (diff.inDays < 7) return '${diff.inDays} d';
-  return '${diff.inDays ~/ 7} w';
+  if (diff.inSeconds < 60) return context.l10n.relative_time_just_now;
+  if (diff.inMinutes < 60) return context.l10n.relative_time_min(diff.inMinutes);
+  if (diff.inHours < 24) return context.l10n.relative_time_hour(diff.inHours);
+  if (diff.inDays < 7) return context.l10n.relative_time_day(diff.inDays);
+  return context.l10n.relative_time_week(diff.inDays ~/ 7);
 }

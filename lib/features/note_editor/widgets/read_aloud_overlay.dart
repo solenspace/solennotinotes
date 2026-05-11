@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/speech/tts_models.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
@@ -71,8 +72,8 @@ class _OverlayPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final indexLabel = (blockIndex == null || totalBlocks == 0)
-        ? 'Reading aloud'
-        : 'Reading block ${blockIndex! + 1} of $totalBlocks';
+        ? context.l10n.read_aloud_reading
+        : context.l10n.read_aloud_block_count(blockIndex! + 1, totalBlocks);
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: tokens.spacing.lg,
@@ -149,7 +150,7 @@ class _OverlayPill extends StatelessWidget {
                   ),
                   Gap(tokens.spacing.xs),
                   _PillIconButton(
-                    tooltip: 'Stop reading',
+                    tooltip: context.l10n.read_aloud_stop,
                     icon: Icons.stop_rounded,
                     color: tokens.colors.onSurface,
                     onTap: () {

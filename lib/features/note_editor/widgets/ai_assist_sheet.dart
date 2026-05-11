@@ -7,6 +7,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart'
 import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_cubit.dart';
 import 'package:noti_notes_app/features/note_editor/cubit/ai_assist_state.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/ai_streaming_pane.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/services/ai/ai_action.dart';
@@ -124,7 +125,7 @@ class _PrivacyBanner extends StatelessWidget {
           Gap(tokens.spacing.xs),
           Expanded(
             child: Text(
-              'Running on this device — nothing leaves it.',
+              context.l10n.ai_assist_privacy_banner,
               style: tokens.text.labelSm.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
@@ -208,7 +209,7 @@ class _ActionTile extends StatelessWidget {
     final noteText = note == null ? '' : _extractNoteText(note);
     if (noteText.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add some text to the note first.')),
+        SnackBar(content: Text(context.l10n.ai_assist_add_text_first)),
       );
       return;
     }
@@ -236,7 +237,7 @@ class _StreamingBody extends StatelessWidget {
             children: [
               OutlinedButton.icon(
                 icon: const Icon(Icons.stop_rounded, size: 18),
-                label: const Text('Stop'),
+                label: Text(context.l10n.common_stop),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: scheme.onSurface,
                 ),
@@ -364,7 +365,7 @@ class _AcceptButtons extends StatelessWidget {
           Expanded(
             child: OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Discard'),
+              child: Text(context.l10n.common_discard),
             ),
           ),
           Gap(tokens.spacing.sm),
@@ -372,7 +373,7 @@ class _AcceptButtons extends StatelessWidget {
             child: FilledButton(
               onPressed:
                   titles.isEmpty ? null : () => _useTitle(context, titles[selectedTitleIndex]),
-              child: const Text('Use this title'),
+              child: Text(context.l10n.ai_assist_use_title),
             ),
           ),
         ],
@@ -384,21 +385,21 @@ class _AcceptButtons extends StatelessWidget {
         Expanded(
           child: OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Discard'),
+            child: Text(context.l10n.common_discard),
           ),
         ),
         Gap(tokens.spacing.sm),
         Expanded(
           child: OutlinedButton(
             onPressed: draftEmpty ? null : () => _append(context, state.draftOutput),
-            child: const Text('Append'),
+            child: Text(context.l10n.ai_assist_append),
           ),
         ),
         Gap(tokens.spacing.sm),
         Expanded(
           child: FilledButton(
             onPressed: draftEmpty ? null : () => _replace(context, state.draftOutput),
-            child: const Text('Replace'),
+            child: Text(context.l10n.ai_assist_replace),
           ),
         ),
       ],

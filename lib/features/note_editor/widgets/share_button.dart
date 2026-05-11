@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/share/widgets/share_nearby_sheet.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Editor-toolbar entry that opens the nearby share sheet for the
@@ -25,9 +26,9 @@ class _ShareButtonState extends State<ShareButton> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Tooltip(
-      message: 'Share nearby',
+      message: context.l10n.share_nearby_button_tooltip,
       child: Semantics(
-        label: 'Share nearby',
+        label: context.l10n.share_nearby_button_label,
         button: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,

@@ -4,6 +4,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/overlay_accent_picker.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/overlay_palette_grid.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/overlay_pattern_grid.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Three-tab modal bottom sheet — Palette / Pattern / Accent — invoked
@@ -64,10 +65,10 @@ class _OverlayPickerSheetState extends State<OverlayPickerSheet> with TickerProv
             indicatorColor: tokens.colors.accent,
             labelColor: tokens.colors.onSurface,
             unselectedLabelColor: tokens.colors.onSurfaceMuted,
-            tabs: const [
-              Tab(text: 'Palette'),
-              Tab(text: 'Pattern'),
-              Tab(text: 'Accent'),
+            tabs: [
+              Tab(text: context.l10n.overlay_tab_palette),
+              Tab(text: context.l10n.overlay_tab_pattern),
+              Tab(text: context.l10n.overlay_tab_accent),
             ],
           ),
           Expanded(

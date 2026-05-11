@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
@@ -185,7 +186,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
                   focusedBorder: InputBorder.none,
                   filled: false,
                   contentPadding: EdgeInsets.zero,
-                  hintText: 'List item',
+                  hintText: context.l10n.editor_checklist_block_hint,
                   hintStyle: style?.copyWith(
                     color: color.withValues(alpha: 0.35),
                   ),
@@ -228,7 +229,7 @@ class _ChecklistReadAloudButton extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(left: SpacingPrimitives.xs),
           child: Tooltip(
-            message: 'Read this block',
+            message: context.l10n.editor_read_block_tooltip,
             child: InkResponse(
               onTap: onTap,
               radius: 22,

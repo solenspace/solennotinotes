@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
+
 /// Slim editor app bar with back, pin, and overflow menu.
 class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isPinned;
@@ -47,7 +49,7 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       actions: [
         IconButton(
-          tooltip: isPinned ? 'Unpin' : 'Pin',
+          tooltip: isPinned ? context.l10n.editor_unpin_tooltip : context.l10n.editor_pin_tooltip,
           icon: Icon(
             isPinned ? Icons.push_pin : Icons.push_pin_outlined,
             color: fg,
@@ -72,20 +74,23 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
           },
           itemBuilder: (context) => [
             if (onShare != null)
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'share',
                 child: ListTile(
-                  leading: Icon(Icons.share_outlined),
-                  title: Text('Share'),
+                  leading: const Icon(Icons.share_outlined),
+                  title: Text(context.l10n.note_app_bar_share),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
               ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'delete',
               child: ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text(
+                  context.l10n.note_app_bar_delete,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
                 contentPadding: EdgeInsets.zero,
                 dense: true,
               ),

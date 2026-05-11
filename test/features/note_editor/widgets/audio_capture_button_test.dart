@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,6 +73,8 @@ Future<NoteEditorBloc> _readyBloc({
 
 Widget _harness({required NoteEditorBloc bloc}) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<NoteEditorBloc>.value(
       value: bloc,
       child: const Scaffold(body: Center(child: AudioCaptureButton())),

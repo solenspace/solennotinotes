@@ -11,6 +11,7 @@ import 'package:noti_notes_app/features/inbox/widgets/inbox_row.dart';
 import 'package:noti_notes_app/features/inbox/widgets/share_preview_panel.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/noti_identity.dart';
 import 'package:noti_notes_app/models/received_share.dart';
 import 'package:noti_notes_app/repositories/received_inbox/received_inbox_repository.dart';
@@ -115,8 +116,8 @@ class _InboxViewState extends State<_InboxView> {
   void _onListenerEvent(InboxListenerEvent event) {
     if (!mounted) return;
     final text = switch (event) {
-      DecodeRejected() => 'Discarded an unreadable share.',
-      PeerStartFailed() => 'Could not start receiving.',
+      DecodeRejected() => context.l10n.inbox_unreadable_share,
+      PeerStartFailed() => context.l10n.inbox_receive_start_failed,
       ShareReceived() => null,
     };
     if (text == null) return;
@@ -127,7 +128,7 @@ class _InboxViewState extends State<_InboxView> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Scaffold(
-      appBar: AppBar(title: const Text('Inbox')),
+      appBar: AppBar(title: Text(context.l10n.inbox_title)),
       body: BlocBuilder<InboxCubit, InboxState>(
         builder: (ctx, state) {
           return Column(
@@ -179,7 +180,11 @@ class _InboxViewState extends State<_InboxView> {
           );
         } catch (e) {
           if (!mounted) return;
-          messenger.showSnackBar(SnackBar(content: Text('Could not accept share: $e')));
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.inbox_accept_failed(e.toString())),
+            ),
+          );
         }
       case _PreviewOutcome.discard:
         await cubit.discard(share.shareId);
@@ -215,10 +220,10 @@ class _ReceiveToggle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Receive a shared note', style: tokens.text.titleSm),
+                Text(context.l10n.inbox_receive_title, style: tokens.text.titleSm),
                 Gap(tokens.spacing.xs),
                 Text(
-                  _subtitleFor(status),
+                  _subtitleFor(context, status),
                   style: tokens.text.bodySm.copyWith(color: scheme.onSurfaceVariant),
                 ),
               ],
@@ -248,11 +253,11 @@ class _ReceiveToggle extends StatelessWidget {
     );
   }
 
-  String _subtitleFor(InboxListenerStatus status) => switch (status) {
-        InboxListenerStatus.off => 'Off — tap to start receiving nearby notes.',
-        InboxListenerStatus.starting => 'Starting…',
-        InboxListenerStatus.on => 'Discoverable nearby. Nothing leaves your device.',
-        InboxListenerStatus.failed => 'Could not start. Check Bluetooth permissions.',
+  String _subtitleFor(BuildContext context, InboxListenerStatus status) => switch (status) {
+        InboxListenerStatus.off => context.l10n.inbox_receive_off,
+        InboxListenerStatus.starting => context.l10n.inbox_receive_starting,
+        InboxListenerStatus.on => context.l10n.inbox_receive_on,
+        InboxListenerStatus.failed => context.l10n.inbox_receive_failed,
       };
 }
 
@@ -271,10 +276,10 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(Icons.inbox_outlined, size: 64, color: scheme.onSurfaceVariant),
             Gap(tokens.spacing.md),
-            Text('Nothing received yet.', style: tokens.text.titleMd),
+            Text(context.l10n.inbox_empty_title, style: tokens.text.titleMd),
             Gap(tokens.spacing.xs),
             Text(
-              'Notes shared with you over Bluetooth land here for review before joining your library.',
+              context.l10n.inbox_empty_description,
               style: tokens.text.bodyMd.copyWith(color: scheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),

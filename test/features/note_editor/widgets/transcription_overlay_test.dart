@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noti_notes_app/features/note_editor/cubit/transcription_cubit.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/transcription_overlay.dart';
@@ -39,6 +40,8 @@ Widget _harness({
   required ValueNotifier<TranscriptionAcceptanceResult?> resultCell,
 }) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: AppTheme.bone(text: _stubText()),
     home: Builder(
       builder: (context) {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Docked toolbar above the keyboard. Each button is a [_ToolButton] with a
@@ -89,7 +90,7 @@ class EditorToolbar extends StatelessWidget {
               icon: currentBlockIsChecklist
                   ? Icons.check_box_rounded
                   : Icons.check_box_outline_blank_rounded,
-              tooltip: 'Toggle checklist',
+              tooltip: context.l10n.toolbar_toggle_checklist,
               selected: currentBlockIsChecklist,
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -99,7 +100,7 @@ class EditorToolbar extends StatelessWidget {
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.image_outlined,
-              tooltip: 'Add image',
+              tooltip: context.l10n.toolbar_add_image,
               onTap: onAddImage,
             ),
             if (audioCaptureButton != null) ...[
@@ -124,7 +125,7 @@ class EditorToolbar extends StatelessWidget {
             ],
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
-              tooltip: 'Style — long-press to reset',
+              tooltip: context.l10n.toolbar_style_tooltip,
               onTap: onOpenStyleSheet,
               onLongPress: onResetOverlay,
               builder: (color) => SvgPicture.asset(
@@ -137,19 +138,19 @@ class EditorToolbar extends StatelessWidget {
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.notifications_outlined,
-              tooltip: 'Reminder',
+              tooltip: context.l10n.toolbar_reminder,
               onTap: onOpenReminderSheet,
             ),
             const Gap(SpacingPrimitives.xs),
             _ToolButton(
               icon: Icons.tag_rounded,
-              tooltip: 'Tags',
+              tooltip: context.l10n.toolbar_tags,
               onTap: onOpenTagSheet,
             ),
             const Spacer(),
             TextButton(
               onPressed: onDoneEditing,
-              child: const Text('Done'),
+              child: Text(context.l10n.common_done),
             ),
           ],
         ),

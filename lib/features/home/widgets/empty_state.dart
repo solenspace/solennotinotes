@@ -8,7 +8,7 @@ class EmptyState extends StatelessWidget {
   final IconData icon;
   const EmptyState({
     super.key,
-    this.message = 'Tap + to write your first note',
+    required this.message,
     this.icon = Icons.edit_note_rounded,
   });
 

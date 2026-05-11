@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
+import '../../../l10n/build_context_l10n.dart';
 import '../../../theme/tokens.dart';
 import '../cubit/whisper_readiness_cubit.dart';
 import '../cubit/whisper_readiness_state.dart';
@@ -79,26 +80,26 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _titleFor(state.phase),
+          _titleFor(context, state.phase),
           style: tokens.text.titleLg.copyWith(color: tokens.colors.onSurface),
         ),
         Gap(tokens.spacing.xs),
         Text(
-          'Downloading once. Audio never leaves your device.',
+          context.l10n.whisper_progress_privacy_footer,
           style: tokens.text.bodySm.copyWith(color: tokens.colors.onSurfaceMuted),
         ),
       ],
     );
   }
 
-  static String _titleFor(WhisperReadinessPhase phase) {
+  static String _titleFor(BuildContext context, WhisperReadinessPhase phase) {
     return switch (phase) {
       WhisperReadinessPhase.idle ||
       WhisperReadinessPhase.downloading =>
-        'Downloading transcription model',
-      WhisperReadinessPhase.verifying => 'Verifying download',
-      WhisperReadinessPhase.ready => 'Voice transcription enabled',
-      WhisperReadinessPhase.failed => 'Download failed',
+        context.l10n.whisper_progress_title_downloading,
+      WhisperReadinessPhase.verifying => context.l10n.whisper_progress_title_verifying,
+      WhisperReadinessPhase.ready => context.l10n.whisper_progress_title_ready,
+      WhisperReadinessPhase.failed => context.l10n.whisper_progress_title_failed,
     };
   }
 }
@@ -120,10 +121,12 @@ class _ProgressBlock extends StatelessWidget {
       container: true,
       liveRegion: true,
       label: switch (state.phase) {
-        WhisperReadinessPhase.downloading => 'Downloading transcription model: $percent percent',
-        WhisperReadinessPhase.verifying => 'Verifying transcription model download',
-        WhisperReadinessPhase.failed =>
-          'Download failed: ${state.failureReason ?? 'unknown error'}',
+        WhisperReadinessPhase.downloading =>
+          context.l10n.whisper_progress_semantic_downloading(percent),
+        WhisperReadinessPhase.verifying => context.l10n.whisper_progress_semantic_verifying,
+        WhisperReadinessPhase.failed => context.l10n.whisper_progress_semantic_failed(
+            state.failureReason ?? context.l10n.llm_progress_unknown_error,
+          ),
         _ => '',
       },
       child: Column(
@@ -147,7 +150,7 @@ class _ProgressBlock extends StatelessWidget {
               children: [
                 Text(
                   isVerifying
-                      ? 'Verifying…'
+                      ? context.l10n.whisper_settings_verifying
                       : '${_formatBytes(state.progressBytes)} / '
                           '${_formatBytes(state.totalBytes)}',
                   style: tokens.text.bodySm.copyWith(
@@ -156,7 +159,7 @@ class _ProgressBlock extends StatelessWidget {
                 ),
                 if (!isVerifying)
                   Text(
-                    '$percent%',
+                    context.l10n.percent_value(percent),
                     style: tokens.text.bodySm.copyWith(
                       color: tokens.colors.onSurfaceMuted,
                     ),
@@ -167,7 +170,7 @@ class _ProgressBlock extends StatelessWidget {
           if (isFailed) ...[
             Gap(tokens.spacing.md),
             Text(
-              state.failureReason ?? 'Unknown error.',
+              state.failureReason ?? context.l10n.llm_progress_unknown_error,
               style: tokens.text.bodyMd.copyWith(color: tokens.colors.error),
             ),
           ],
@@ -200,7 +203,9 @@ class _CancelButton extends StatelessWidget {
         Expanded(
           child: OutlinedButton(
             onPressed: () => context.read<WhisperReadinessCubit>().cancel(),
-            child: Text(isFailed ? 'Close' : 'Cancel download'),
+            child: Text(
+              isFailed ? context.l10n.common_close : context.l10n.llm_progress_cancel,
+            ),
           ),
         ),
         if (isFailed) ...[
@@ -208,7 +213,7 @@ class _CancelButton extends StatelessWidget {
           Expanded(
             child: FilledButton(
               onPressed: () => context.read<WhisperReadinessCubit>().start(),
-              child: const Text('Retry'),
+              child: Text(context.l10n.common_retry),
             ),
           ),
         ],

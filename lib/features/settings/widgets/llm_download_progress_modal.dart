@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
+import '../../../l10n/build_context_l10n.dart';
 import '../../../theme/tokens.dart';
 import '../cubit/llm_readiness_cubit.dart';
 import '../cubit/llm_readiness_state.dart';
@@ -80,24 +81,26 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _titleFor(state.phase),
+          _titleFor(context, state.phase),
           style: tokens.text.titleLg.copyWith(color: tokens.colors.onSurface),
         ),
         Gap(tokens.spacing.xs),
         Text(
-          'Downloading once. Nothing else leaves your device.',
+          context.l10n.llm_progress_privacy_footer,
           style: tokens.text.bodySm.copyWith(color: tokens.colors.onSurfaceMuted),
         ),
       ],
     );
   }
 
-  static String _titleFor(LlmReadinessPhase phase) {
+  static String _titleFor(BuildContext context, LlmReadinessPhase phase) {
     return switch (phase) {
-      LlmReadinessPhase.idle || LlmReadinessPhase.downloading => 'Downloading AI model',
-      LlmReadinessPhase.verifying => 'Verifying download',
-      LlmReadinessPhase.ready => 'AI assist enabled',
-      LlmReadinessPhase.failed => 'Download failed',
+      LlmReadinessPhase.idle ||
+      LlmReadinessPhase.downloading =>
+        context.l10n.llm_progress_title_downloading,
+      LlmReadinessPhase.verifying => context.l10n.llm_progress_title_verifying,
+      LlmReadinessPhase.ready => context.l10n.llm_progress_title_ready,
+      LlmReadinessPhase.failed => context.l10n.llm_progress_title_failed,
     };
   }
 }
@@ -119,9 +122,11 @@ class _ProgressBlock extends StatelessWidget {
       container: true,
       liveRegion: true,
       label: switch (state.phase) {
-        LlmReadinessPhase.downloading => 'Downloading AI model: $percent percent',
-        LlmReadinessPhase.verifying => 'Verifying AI model download',
-        LlmReadinessPhase.failed => 'Download failed: ${state.failureReason ?? 'unknown error'}',
+        LlmReadinessPhase.downloading => context.l10n.llm_progress_semantic_downloading(percent),
+        LlmReadinessPhase.verifying => context.l10n.llm_progress_semantic_verifying,
+        LlmReadinessPhase.failed => context.l10n.llm_progress_semantic_failed(
+            state.failureReason ?? context.l10n.llm_progress_unknown_error,
+          ),
         _ => '',
       },
       child: Column(
@@ -145,7 +150,7 @@ class _ProgressBlock extends StatelessWidget {
               children: [
                 Text(
                   isVerifying
-                      ? 'Verifying…'
+                      ? context.l10n.ai_settings_verifying
                       : '${_formatBytes(state.progressBytes)} / '
                           '${_formatBytes(state.totalBytes)}',
                   style: tokens.text.bodySm.copyWith(
@@ -154,7 +159,7 @@ class _ProgressBlock extends StatelessWidget {
                 ),
                 if (!isVerifying)
                   Text(
-                    '$percent%',
+                    context.l10n.percent_value(percent),
                     style: tokens.text.bodySm.copyWith(
                       color: tokens.colors.onSurfaceMuted,
                     ),
@@ -165,7 +170,7 @@ class _ProgressBlock extends StatelessWidget {
           if (isFailed) ...[
             Gap(tokens.spacing.md),
             Text(
-              state.failureReason ?? 'Unknown error.',
+              state.failureReason ?? context.l10n.llm_progress_unknown_error,
               style: tokens.text.bodyMd.copyWith(color: tokens.colors.error),
             ),
           ],
@@ -198,7 +203,9 @@ class _CancelButton extends StatelessWidget {
         Expanded(
           child: OutlinedButton(
             onPressed: () => context.read<LlmReadinessCubit>().cancel(),
-            child: Text(isFailed ? 'Close' : 'Cancel download'),
+            child: Text(
+              isFailed ? context.l10n.common_close : context.l10n.llm_progress_cancel,
+            ),
           ),
         ),
         if (isFailed) ...[
@@ -206,7 +213,7 @@ class _CancelButton extends StatelessWidget {
           Expanded(
             child: FilledButton(
               onPressed: () => context.read<LlmReadinessCubit>().start(),
-              child: const Text('Retry'),
+              child: Text(context.l10n.common_retry),
             ),
           ),
         ],

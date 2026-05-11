@@ -4,6 +4,7 @@ import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
 import 'package:noti_notes_app/features/note_editor/widgets/overlay_palette_custom_picker.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
 import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
@@ -153,7 +154,7 @@ class _CustomTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Semantics(
-      label: 'Custom palette',
+      label: context.l10n.overlay_palette_custom_label,
       button: true,
       child: InkWell(
         onTap: onTap,
@@ -174,7 +175,7 @@ class _CustomTile extends StatelessWidget {
               Icon(Icons.tune, color: tokens.colors.onSurfaceMuted),
               SizedBox(height: tokens.spacing.xs),
               Text(
-                'Custom',
+                context.l10n.overlay_palette_custom_grid_label,
                 style: tokens.text.labelMd.copyWith(color: tokens.colors.onSurfaceMuted),
               ),
             ],

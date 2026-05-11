@@ -6,6 +6,7 @@ import 'package:material_tag_editor/tag_editor.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 import 'package:noti_notes_app/widgets/sheets/sheet_scaffold.dart';
@@ -69,7 +70,7 @@ class _TagSheetState extends State<TagSheet> {
         final scheme = Theme.of(context).colorScheme;
 
         return SheetScaffold(
-          title: 'Tags',
+          title: context.l10n.tag_sheet_title,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +78,7 @@ class _TagSheetState extends State<TagSheet> {
               children: [
                 if (suggested.isNotEmpty) ...[
                   Text(
-                    'SUGGESTED',
+                    context.l10n.tag_section_suggested,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           letterSpacing: 1.2,
                           color: scheme.onSurfaceVariant,
@@ -90,7 +91,7 @@ class _TagSheetState extends State<TagSheet> {
                     children: suggested
                         .map(
                           (tag) => ActionChip(
-                            label: Text('#$tag'),
+                            label: Text(context.l10n.tag_chip_label(tag)),
                             onPressed: () => _addTag(tag),
                           ),
                         )
@@ -99,7 +100,7 @@ class _TagSheetState extends State<TagSheet> {
                   const Gap(SpacingPrimitives.lg),
                 ],
                 Text(
-                  'YOUR TAGS',
+                  context.l10n.tag_section_your_tags,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         letterSpacing: 1.2,
                         color: scheme.onSurfaceVariant,
@@ -117,9 +118,9 @@ class _TagSheetState extends State<TagSheet> {
                     delimiters: const [','],
                     hasAddButton: false,
                     resetTextOnSubmitted: true,
-                    inputDecoration: const InputDecoration(
+                    inputDecoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: 'Add a tag, comma to confirm',
+                      hintText: context.l10n.tag_input_hint,
                     ),
                     textStyle: Theme.of(context).textTheme.bodyLarge,
                     onSubmitted: _addTag,
@@ -139,7 +140,7 @@ class _TagSheetState extends State<TagSheet> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '#${tags[index]}',
+                            context.l10n.tag_chip_label(tags[index]),
                             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                   color: scheme.primary,
                                 ),
@@ -163,7 +164,7 @@ class _TagSheetState extends State<TagSheet> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Done'),
+                    child: Text(context.l10n.common_done),
                   ),
                 ),
               ],

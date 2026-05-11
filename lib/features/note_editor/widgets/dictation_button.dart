@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_bloc.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_event.dart';
 import 'package:noti_notes_app/features/note_editor/bloc/note_editor_state.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/services/speech/stt_service.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
@@ -136,8 +137,8 @@ class _DictationGlyph extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final iconColor = dictating ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85);
     final tooltip = tapToToggle
-        ? (dictating ? 'Stop dictation' : 'Dictate')
-        : (dictating ? 'Dictating — release to commit, slide to cancel' : 'Hold to dictate');
+        ? (dictating ? context.l10n.dictation_stop : context.l10n.dictation_start)
+        : (dictating ? context.l10n.dictation_release : context.l10n.dictation_hold);
     return Semantics(
       button: true,
       label: tooltip,

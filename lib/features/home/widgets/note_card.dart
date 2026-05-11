@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
 import 'package:noti_notes_app/features/home/widgets/note_overlay_dot.dart';
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
@@ -204,7 +205,7 @@ class _NoteCardState extends State<NoteCard> {
                               const Gap(SpacingPrimitives.sm),
                               Expanded(
                                 child: Text(
-                                  b.text.isEmpty ? 'Untitled task' : b.text,
+                                  b.text.isEmpty ? context.l10n.card_untitled_task : b.text,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -224,7 +225,7 @@ class _NoteCardState extends State<NoteCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      '+${checklistBlocks.length - 4} more',
+                      context.l10n.card_checklist_more_count(checklistBlocks.length - 4),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: textColor.withValues(alpha: 0.6),
                           ),
@@ -252,7 +253,7 @@ class _NoteCardState extends State<NoteCard> {
                         border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1.0),
                       ),
                       child: Text(
-                        '#$t',
+                        context.l10n.tag_chip_label(t),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: textColor,
                             ),
@@ -283,7 +284,7 @@ class _NoteCardState extends State<NoteCard> {
               ],
               if (!hasContent)
                 Text(
-                  'Empty note',
+                  context.l10n.card_empty_note,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: textColor.withValues(alpha: 0.5),
                         fontStyle: FontStyle.italic,

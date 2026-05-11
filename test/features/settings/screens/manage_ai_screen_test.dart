@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
+import 'package:noti_notes_app/generated/app_localizations.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_state.dart';
@@ -61,6 +62,8 @@ Future<({LlmReadinessCubit llm, WhisperReadinessCubit whisper})> _pump(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.bone(text: _stubText()),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MultiRepositoryProvider(
         providers: [
           RepositoryProvider<DeviceCapabilityService>.value(value: capability),
@@ -111,7 +114,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Re-download model?'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Re-download'));
+      await tester.tap(find.widgetWithText(TextButton, 'Re-download model'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -131,7 +134,7 @@ void main() {
 
       await tester.tap(find.text('Re-download model'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel', skipOffstage: false));
       await tester.pumpAndSettle();
 
       expect(fake.deleteAllCountBySubdir['llm'], isNull);
@@ -148,7 +151,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Delete model?'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.tap(find.widgetWithText(TextButton, 'Delete model and disable AI'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -197,7 +200,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Re-download transcription model?'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Re-download'));
+      await tester.tap(find.widgetWithText(TextButton, 'Re-download transcription model'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -228,7 +231,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Delete transcription model?'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.tap(find.widgetWithText(TextButton, 'Delete model and disable transcription'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -251,6 +254,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.bone(text: _stubText()),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: MultiRepositoryProvider(
             providers: [
               RepositoryProvider<DeviceCapabilityService>.value(value: capability),
