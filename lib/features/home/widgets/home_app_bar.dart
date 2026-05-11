@@ -117,6 +117,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
                   ),
                 ),
               IconButton(
+                tooltip: _isSearching
+                    ? context.l10n.home_search_close_tooltip
+                    : context.l10n.home_search_open_tooltip,
                 icon: Icon(_isSearching ? Icons.close_rounded : Icons.search_rounded),
                 color: scheme.onSurface,
                 onPressed: () {
@@ -138,9 +141,11 @@ class _HomeAppBarState extends State<HomeAppBar> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
-          // Trailing cluster: inbox badge (48) + profile avatar (4 + 36 + 4) + settings (48) + 8.
+          // Trailing cluster: inbox badge (48) + profile (4 + 44 + 4) + settings (48) + 8.
+          // The profile slot wraps a 44x44 tap target around a 36x36 visible avatar
+          // per Spec 29 (WCAG 2.5.5), pushing the cluster from 148 to 156 px.
           // Shrinking to 0.0 effectively removes them from the layout smoothly.
-          width: _isSearching ? 0.0 : 148.0,
+          width: _isSearching ? 0.0 : 156.0,
           clipBehavior: Clip.hardEdge,
           decoration: const BoxDecoration(),
           child: SingleChildScrollView(
@@ -152,27 +157,43 @@ class _HomeAppBarState extends State<HomeAppBar> {
                 const _InboxBadgeButton(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pushNamed(UserInfoScreen.routeName),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                        border: Border.all(color: scheme.outline, width: 1.0),
-                        image: identity?.profilePicture != null
-                            ? DecorationImage(
-                                image: FileImage(
-                                  File(identity!.profilePicture!.path),
-                                ),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
+                  child: Semantics(
+                    button: true,
+                    label: context.l10n.home_profile_tooltip,
+                    child: Tooltip(
+                      message: context.l10n.home_profile_tooltip,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pushNamed(UserInfoScreen.routeName),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                              border: Border.all(color: scheme.outline, width: 1.0),
+                              image: identity?.profilePicture != null
+                                  ? DecorationImage(
+                                      image: FileImage(
+                                        File(identity!.profilePicture!.path),
+                                      ),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: identity?.profilePicture == null
+                                ? Icon(
+                                    Icons.person_outline,
+                                    color: scheme.onSurfaceVariant,
+                                    size: 20,
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
-                      child: identity?.profilePicture == null
-                          ? Icon(Icons.person_outline, color: scheme.onSurfaceVariant, size: 20)
-                          : null,
                     ),
                   ),
                 ),

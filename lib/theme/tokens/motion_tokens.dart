@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'primitives.dart';
 
+/// Halves [base] when the OS reports a reduce-motion preference via
+/// `MediaQuery.disableAnimationsOf(context)`. Returns [base] unchanged
+/// otherwise. The token table itself stays canonical; this helper is the
+/// single place call sites should reach for when consuming any
+/// `DurationPrimitives.*` or `tokens.motion.*` duration so reduced-motion
+/// behavior is consistent across the app (WCAG 2.3.3).
+Duration motionFor(BuildContext context, Duration base) {
+  return MediaQuery.disableAnimationsOf(context) ? base ~/ 2 : base;
+}
+
 /// Four motion tiers consumed app-wide. Reduced-motion handling lives at
-/// the call site: when `MediaQuery.disableAnimationsOf(context)` is true,
-/// consumers should halve the chosen duration. The token itself stays
-/// canonical.
+/// the call site via [motionFor]: when `MediaQuery.disableAnimationsOf`
+/// is true the duration is halved. The token itself stays canonical.
 @immutable
 class NotiMotion extends ThemeExtension<NotiMotion> {
   const NotiMotion({

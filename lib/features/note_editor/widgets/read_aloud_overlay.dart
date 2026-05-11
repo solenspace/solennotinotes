@@ -135,7 +135,9 @@ class _OverlayPill extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   _PillIconButton(
-                    tooltip: paused ? 'Resume reading' : 'Pause reading',
+                    tooltip: paused
+                        ? context.l10n.read_aloud_resume_tooltip
+                        : context.l10n.read_aloud_pause_tooltip,
                     icon: paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     color: tokens.colors.onSurface,
                     onTap: () {
@@ -241,14 +243,19 @@ class _PillIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 22,
-        child: Padding(
-          padding: const EdgeInsets.all(SpacingPrimitives.xs),
-          child: Icon(icon, size: 22, color: color),
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 22,
+          child: Padding(
+            // 44x44 tap target: 22px icon + 11px padding × 2
+            padding: const EdgeInsets.all(11),
+            child: Icon(icon, size: 22, color: color),
+          ),
         ),
       ),
     );

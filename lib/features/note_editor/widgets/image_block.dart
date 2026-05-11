@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// A full-width image block with a delete button overlay.
@@ -38,15 +39,23 @@ class ImageBlockWidget extends StatelessWidget {
             Positioned(
               top: SpacingPrimitives.sm,
               right: SpacingPrimitives.sm,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: const CircleBorder(),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: onDelete,
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(Icons.close, color: Colors.white, size: 18),
+              child: Semantics(
+                button: true,
+                label: context.l10n.image_block_delete_tooltip,
+                child: Tooltip(
+                  message: context.l10n.image_block_delete_tooltip,
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onDelete,
+                      child: const Padding(
+                        // 44x44 minimum tap target: 16px icon + 14px padding * 2
+                        padding: EdgeInsets.all(14),
+                        child: Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -113,13 +113,17 @@ Four-defense system locked by Spec 11:
 
 ## Accessibility floor
 
-- WCAG AA contrast minimum on text and primary chrome.
-- All interactive elements have an accessible name (`Semantics` widget where needed).
-- Touch targets ≥ 44×44 pt.
-- Focus rings on every focusable widget; `focus-visible` style only.
-- Reduce-motion respected via `MediaQuery.disableAnimations`.
-- AI-streaming copy uses `Semantics(liveRegion: true)` for screen-reader announcement.
-- Hold-to-record / hold-to-dictate gestures expose tap-to-toggle alternatives when `MediaQuery.accessibleNavigation` is true.
+Locked by Spec 29 (accessibility audit) and guarded by the widget tests in [`test/widget/a11y/`](../test/widget/a11y/):
+
+- **Contrast** ≥ 4.5:1 on body text and primary chrome; enforced at build time by `test/theme/curated_palettes_contrast_test.dart` for curated swatches and by the four-defense system in §"Pattern overlay readability" for custom HSV.
+- **Touch targets** ≥ 44×44 logical px on every interactive element. Custom-painted tappables (`InkWell`, `GestureDetector` outside Material widgets) size their hit-box explicitly; the editor toolbar's `_ToolButton` is 44×44.
+- **Accessible names** on every interactive widget — either a `Tooltip(message:)`, a wrapping `Semantics(label:)`, or both. New buttons land their copy in [`lib/l10n/en.arb`](../lib/l10n/en.arb) under the surface's namespace (`home_*`, `editor_*`, `toolbar_*`, `audio_*`, `share_*`, `inbox_*`, …); inline English in widget files is a defect.
+- **Gesture alternatives**: every long-press / hold-to-X affordance exposes a non-gesture path. The canonical pattern is `MediaQuery.accessibleNavigationOf(context)` → swap hold for tap-to-toggle, shipped in [`audio_capture_button.dart`](../lib/features/note_editor/widgets/audio_capture_button.dart) and [`dictation_button.dart`](../lib/features/note_editor/widgets/dictation_button.dart). Home note-card long-press (multi-select) and the FAB's drag-to-create both expose `CustomSemanticsAction` entries so screen-reader / switch-control users reach each branch without depending on the gesture timing.
+- **Color-only state is forbidden**: pin badge carries `Semantics(label: 'pinned')` alongside the icon; edit-mode selection carries `Semantics(selected: true)`; audio playback toggles its `Semantics(label:)` between playing / paused.
+- **Focus rings**: Material widgets get the default focus chrome; `tokens.colors.focus` (60% opacity accent at 2px) is reachable via `context.tokens.colors.focus` for custom-painted tappables that need to surface a visible ring.
+- **Reduced motion** is respected via `motionFor(BuildContext, Duration)` in [`lib/theme/tokens/motion_tokens.dart`](../lib/theme/tokens/motion_tokens.dart) — call sites pass any `DurationPrimitives.*` or `context.tokens.motion.*` through this helper so durations halve under `MediaQuery.disableAnimationsOf`.
+- **Live-region announcements** wrap streaming and progress UI: AI assist streaming pane, Whisper transcription progress overlay, LLM / Whisper model-download progress modals, and the share-sheet transfer panel all wrap their dynamic content in `Semantics(liveRegion: true)` so VoiceOver / TalkBack announce updates as they happen. Discovery hints + the "Sent." completion state are also live regions.
+- **Ambient state announcements**: surfaces that change state without redrawing focus (share completion, inbox arrival) announce themselves via `Semantics(liveRegion: true)` wrappers on the affected region. Discrete one-shot announcements use `SemanticsService.announce(...)` when added.
 
 ## Gestures and shortcuts
 

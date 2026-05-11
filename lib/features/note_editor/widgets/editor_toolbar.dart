@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/l10n/build_context_l10n.dart';
+import 'package:noti_notes_app/theme/tokens/motion_tokens.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 /// Docked toolbar above the keyboard. Each button is a [_ToolButton] with a
@@ -187,36 +188,42 @@ class _ToolButtonState extends State<_ToolButton> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final iconColor = widget.selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.85);
-    return Tooltip(
-      message: widget.tooltip,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress == null
-            ? null
-            : () {
-                HapticFeedback.mediumImpact();
-                widget.onLongPress!();
-              },
-        child: AnimatedScale(
-          scale: _pressed ? 0.92 : 1.0,
-          duration: DurationPrimitives.fast,
-          curve: CurvePrimitives.calm,
-          child: AnimatedContainer(
-            duration: DurationPrimitives.fast,
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: widget.selected ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
-              borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+    return Semantics(
+      button: true,
+      label: widget.tooltip,
+      toggled: widget.selected,
+      child: Tooltip(
+        message: widget.tooltip,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress == null
+              ? null
+              : () {
+                  HapticFeedback.mediumImpact();
+                  widget.onLongPress!();
+                },
+          child: AnimatedScale(
+            scale: _pressed ? 0.92 : 1.0,
+            duration: motionFor(context, DurationPrimitives.fast),
+            curve: CurvePrimitives.calm,
+            child: AnimatedContainer(
+              duration: motionFor(context, DurationPrimitives.fast),
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color:
+                    widget.selected ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
+                borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+              ),
+              alignment: Alignment.center,
+              child: widget.builder != null
+                  ? widget.builder!(iconColor)
+                  : Icon(widget.icon, size: 22, color: iconColor),
             ),
-            alignment: Alignment.center,
-            child: widget.builder != null
-                ? widget.builder!(iconColor)
-                : Icon(widget.icon, size: 22, color: iconColor),
           ),
         ),
       ),

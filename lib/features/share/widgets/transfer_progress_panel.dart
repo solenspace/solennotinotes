@@ -19,7 +19,7 @@ class TransferProgressPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = tokens.colors;
-    final peerName = _peerName(state) ?? 'peer';
+    final peerName = _peerName(state) ?? context.l10n.share_progress_unknown_peer;
     final percent = (state.fraction.clamp(0.0, 1.0) * 100).round();
     final queueSize = state.queue.length;
     final isMulti = queueSize > 1;
@@ -27,46 +27,53 @@ class TransferProgressPanel extends StatelessWidget {
         ? context.l10n.share_sheet_sending_count(state.queueIndex + 1, queueSize, percent)
         : context.l10n.share_sheet_sending_percent(percent);
 
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.spacing.lg,
-        vertical: tokens.spacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            context.l10n.share_sheet_sending_to(peerName),
-            style: tokens.text.headlineMd.copyWith(color: colors.onSurface),
-          ),
-          Gap(tokens.spacing.md),
-          ClipRRect(
-            borderRadius: tokens.shape.pillRadius,
-            child: LinearProgressIndicator(
-              value: state.fraction.clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: colors.surfaceMuted,
-              valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: context.l10n.share_progress_semantic(peerName, percent),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.spacing.lg,
+          vertical: tokens.spacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.l10n.share_sheet_sending_to(peerName),
+              style: tokens.text.headlineMd.copyWith(color: colors.onSurface),
             ),
-          ),
-          Gap(tokens.spacing.sm),
-          Text(
-            progressLine,
-            style: tokens.text.labelMd.copyWith(color: colors.onSurfaceMuted),
-          ),
-          Gap(tokens.spacing.lg),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onCancel,
-              child: Text(
-                context.l10n.common_cancel,
-                style: TextStyle(color: colors.error),
+            Gap(tokens.spacing.md),
+            ClipRRect(
+              borderRadius: tokens.shape.pillRadius,
+              child: LinearProgressIndicator(
+                value: state.fraction.clamp(0.0, 1.0),
+                minHeight: 6,
+                backgroundColor: colors.surfaceMuted,
+                valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
               ),
             ),
-          ),
-        ],
+            Gap(tokens.spacing.sm),
+            ExcludeSemantics(
+              child: Text(
+                progressLine,
+                style: tokens.text.labelMd.copyWith(color: colors.onSurfaceMuted),
+              ),
+            ),
+            Gap(tokens.spacing.lg),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onCancel,
+                child: Text(
+                  context.l10n.common_cancel,
+                  style: TextStyle(color: colors.error),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

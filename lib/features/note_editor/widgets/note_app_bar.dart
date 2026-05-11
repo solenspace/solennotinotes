@@ -41,6 +41,7 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
+        tooltip: context.l10n.editor_back_tooltip,
         icon: Icon(Icons.arrow_back_rounded, color: fg),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
@@ -60,6 +61,7 @@ class NoteAppBar extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
         PopupMenuButton<String>(
+          tooltip: context.l10n.editor_more_tooltip,
           icon: Icon(Icons.more_horiz_rounded, color: fg),
           color: scheme.surfaceContainerHigh,
           onSelected: (value) {
