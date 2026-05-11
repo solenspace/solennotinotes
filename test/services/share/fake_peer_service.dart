@@ -20,6 +20,12 @@ class FakePeerService implements PeerService {
 
   PeerStartFailed? failOnStart;
 
+  /// When set, intercepts every successful [sendBytes] call after size
+  /// validation and assignment of the transfer id. The in-process two-peer
+  /// harness ([InMemoryPeerPair]) uses this hook to deliver bytes to the
+  /// other side's [payloads] controller; production fakes leave it null.
+  void Function(String peerId, List<int> bytes, String transferId)? onSendBytes;
+
   @override
   bool get isActive => _active;
 
@@ -73,7 +79,15 @@ class FakePeerService implements PeerService {
     }
     final id = 'tx-${++_idCounter}';
     actionLog.add('sendBytes:$peerId:${bytes.length}:$id');
+    onSendBytes?.call(peerId, bytes, id);
     return id;
+  }
+
+  /// Pushes an [IncomingPayload] onto [payloads] as if the platform had
+  /// delivered it. Used by [InMemoryPeerPair] to wire the sender's
+  /// [sendBytes] to the receiver's stream.
+  void enqueueIncomingPayload(IncomingPayload payload) {
+    payloads.add(payload);
   }
 
   @override
