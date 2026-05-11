@@ -7,6 +7,8 @@ import 'package:noti_notes_app/app/logging_bloc_observer.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_bloc.dart';
 import 'package:noti_notes_app/features/home/bloc/notes_list_event.dart';
 import 'package:noti_notes_app/features/home/screen.dart';
+import 'package:noti_notes_app/features/inbox/cubit/inbox_badge_cubit.dart';
+import 'package:noti_notes_app/features/inbox/screen.dart';
 import 'package:noti_notes_app/features/note_editor/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
@@ -20,6 +22,8 @@ import 'package:noti_notes_app/repositories/notes/hive_notes_repository.dart';
 import 'package:noti_notes_app/repositories/notes/notes_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/hive_noti_identity_repository.dart';
 import 'package:noti_notes_app/repositories/noti_identity/noti_identity_repository.dart';
+import 'package:noti_notes_app/repositories/received_inbox/hive_received_inbox_repository.dart';
+import 'package:noti_notes_app/repositories/received_inbox/received_inbox_repository.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/whisper_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/screens/manage_ai_screen.dart';
@@ -55,8 +59,14 @@ void main() async {
   final notiIdentityRepository = HiveNotiIdentityRepository(keypairService: keypairService);
   final settingsRepository = HiveSettingsRepository();
   final audioRepository = FileSystemAudioRepository();
+  final receivedInboxRepository = HiveReceivedInboxRepository(notesRepository: notesRepository);
   await notesRepository.init();
   await notiIdentityRepository.init();
+  await receivedInboxRepository.init();
+  // Inbox decoder needs the documents root synchronously when the inbox
+  // route mounts; resolve it once here so the screen never blocks on a
+  // platform channel during build.
+  await primeInboxDocumentsRoot();
   // Settings init runs AFTER identity init so the one-shot
   // `appThemeColor → signaturePalette[2]` migration can read+update the
   // identity record.
@@ -101,6 +111,7 @@ void main() async {
       ttsService: ttsService,
       keypairService: keypairService,
       peerService: peerService,
+      receivedInboxRepository: receivedInboxRepository,
     ),
   );
 }
@@ -117,6 +128,7 @@ class MyApp extends StatefulWidget {
     required this.ttsService,
     required this.keypairService,
     required this.peerService,
+    required this.receivedInboxRepository,
   });
 
   final NotesRepository notesRepository;
@@ -128,6 +140,7 @@ class MyApp extends StatefulWidget {
   final TtsService ttsService;
   final KeypairService keypairService;
   final PeerService peerService;
+  final ReceivedInboxRepository receivedInboxRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -175,6 +188,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
         RepositoryProvider<KeypairService>.value(value: widget.keypairService),
         RepositoryProvider<PeerService>.value(value: widget.peerService),
+        RepositoryProvider<ReceivedInboxRepository>.value(
+          value: widget.receivedInboxRepository,
+        ),
         // Specs 19 + 21: stateless model downloader, the one authorised
         // network surface. Both `LlmReadinessCubit` and (Spec 21)
         // `WhisperReadinessCubit` resolve this single instance — each
@@ -217,6 +233,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             create: (ctx) => NotiIdentityCubit(
               repository: ctx.read<NotiIdentityRepository>(),
             )..load(),
+          ),
+          // Spec 25: app-shell badge cubit. Subscribes to the inbox
+          // repository's watch stream so the home AppBar reflects new
+          // arrivals even when the inbox screen is not mounted.
+          BlocProvider(
+            create: (ctx) => InboxBadgeCubit(
+              repository: ctx.read<ReceivedInboxRepository>(),
+            )..start(),
           ),
           // Spec 20: hoisted from `SettingsScreen` so the editor's ✦
           // button can read the same readiness state without re-probing
@@ -273,6 +297,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 UserInfoScreen.routeName: (context) => const UserInfoScreen(),
                 SettingsScreen.routeName: (context) => const SettingsScreen(),
                 ManageAiScreen.routeName: (context) => const ManageAiScreen(),
+                InboxScreen.routeName: (context) => const InboxScreen(),
               },
             );
           },

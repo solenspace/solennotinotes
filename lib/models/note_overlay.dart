@@ -12,8 +12,12 @@ import 'package:noti_notes_app/theme/noti_theme_overlay.dart';
 /// this extension. Spec 04b retires the legacy fields in favor of a single
 /// `Note.overlay: NotiThemeOverlay` value.
 ///
-/// `signatureAccent`, `signatureTagline`, and `fromIdentityId` are not
-/// stored on the legacy schema, so they remain null/empty until 04b.
+/// Spec 25 added three sender-attribution columns (`fromIdentityId`,
+/// `fromDisplayName`, `fromAccentGlyph`) so the from-sender chip survives
+/// a save/reload after Accept. `fromIdentityId` and `signatureAccent` are
+/// emitted from those columns; `signatureTagline` stays empty because the
+/// tagline is rendered by the share-preview screen directly from the
+/// inbox entry, not persisted on the Note.
 extension NoteOverlay on Note {
   NotiThemeOverlay toOverlay() {
     final hasUsableGradient = hasGradient && gradient != null && gradient!.colors.isNotEmpty;
@@ -25,6 +29,8 @@ extension NoteOverlay on Note {
       onAccent: colorBackground,
       onSurface: fontColor,
       patternKey: NotiPatternKey.fromString(patternImage),
+      signatureAccent: fromAccentGlyph,
+      fromIdentityId: fromIdentityId,
     );
   }
 }
