@@ -127,6 +127,13 @@ Imports: relative within a feature folder, absolute (`package:noti_notes_app/...
 - Golden tests for the theme system (NotiTheme variants render consistently).
 - Integration test for the share flow with two simulated peers (per integration spec).
 
+### Golden tests
+
+- Live under [`test/widget/golden/`](../test/widget/golden/) with PNGs at `test/goldens/<scene>/<variant>.png`. Landed by Spec 27 (2026-05-11) covering Home (14), Editor (21), Overlay picker (3), Share sheet (3), Inbox (3) — 44 PNGs across base bone/dark + the 12 curated palettes + the 7 patterns.
+- Goldens are **macOS-only**: regenerate on macOS with `flutter test --update-goldens test/widget/golden` before commit; reject any PR that updates golden PNGs from a non-macOS host (Skia rasterisation differs subtly across platforms; cross-platform CI is a future infra spec).
+- Goldens substitute a blank [`NotiText`](../test/widget/golden/_helpers/golden_text.dart) instead of `NotiText.forFont` because `google_fonts` fetches Inter over the network at runtime — incompatible with both `flutter test` (no network) and the offline invariant. Text therefore renders in Flutter's default Ahem font (square boxes), which is pixel-deterministic across hosts and is exactly what golden diffs want.
+- Verify with `flutter test test/widget/golden` (default mode fails on diff).
+
 ## Localization
 
 - All user-facing strings flow through `intl` ARB files.
