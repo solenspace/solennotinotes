@@ -7,9 +7,10 @@ import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 /// AppBar chip rendered when a note's overlay carries a sender identity
-/// id (i.e. the note arrived via share). Renders [SizedBox.shrink] for
-/// every locally-authored note today; the share-receive flow in spec 24
-/// populates the field that lights this up.
+/// id (i.e. the note arrived via share). Spec 25 populates the underlying
+/// `Note.fromIdentityId` + `fromDisplayName` + `fromAccentGlyph` columns
+/// on Accept; before that, every locally-authored note renders as
+/// [SizedBox.shrink].
 ///
 /// The popup menu offers two actions:
 ///   * "Keep their style" — no-op, dismisses the menu.
@@ -21,16 +22,20 @@ class FromSenderChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<NoteEditorBloc, NoteEditorState>(
       buildWhen: (a, b) =>
-          a.note?.toOverlay().fromIdentityId != b.note?.toOverlay().fromIdentityId ||
+          a.note?.fromIdentityId != b.note?.fromIdentityId ||
+          a.note?.fromDisplayName != b.note?.fromDisplayName ||
+          a.note?.fromAccentGlyph != b.note?.fromAccentGlyph ||
           a.accentOverride != b.accentOverride,
       builder: (ctx, state) {
-        final overlay = state.note?.toOverlay();
-        final fromId = overlay?.fromIdentityId;
-        if (fromId == null) return const SizedBox.shrink();
+        final note = state.note;
+        final fromId = note?.fromIdentityId;
+        if (note == null || fromId == null) return const SizedBox.shrink();
+        final overlay = note.toOverlay();
         return _ChipPopup(
           fromId: fromId,
-          accentGlyph: state.accentOverride ?? overlay?.signatureAccent,
-          accentColor: overlay?.accent,
+          displayName: note.fromDisplayName,
+          accentGlyph: state.accentOverride ?? note.fromAccentGlyph,
+          accentColor: overlay.accent,
         );
       },
     );
@@ -40,51 +45,55 @@ class FromSenderChip extends StatelessWidget {
 class _ChipPopup extends StatelessWidget {
   const _ChipPopup({
     required this.fromId,
+    required this.displayName,
     required this.accentGlyph,
     required this.accentColor,
   });
 
   final String fromId;
+  final String? displayName;
   final String? accentGlyph;
-  final Color? accentColor;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    // Display the first six characters of the id until the share-receive
-    // spec lands a real display-name lookup.
-    final shortId = fromId.length >= 6 ? fromId.substring(0, 6) : fromId;
-    return PopupMenuButton<String>(
-      tooltip: 'Sender options',
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: 'keep', child: Text('Keep their style')),
-        PopupMenuItem(value: 'mine', child: Text('Convert to mine')),
-      ],
-      onSelected: (value) {
-        if (value == 'mine') {
-          context.read<NoteEditorBloc>().add(const OverlayConvertToMine());
-        }
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: tokens.spacing.sm),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (accentGlyph != null) ...[
-              Text(
-                accentGlyph!,
-                style: tokens.text.labelLg.copyWith(
-                  color: accentColor ?? tokens.colors.accent,
+    final label = displayName?.trim().isNotEmpty == true
+        ? displayName!.trim()
+        : (fromId.length >= 6 ? fromId.substring(0, 6) : fromId);
+    return Semantics(
+      label: 'From $label, sender options',
+      button: true,
+      child: PopupMenuButton<String>(
+        tooltip: 'Sender options',
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'keep', child: Text('Keep their style')),
+          PopupMenuItem(value: 'mine', child: Text('Convert to mine')),
+        ],
+        onSelected: (value) {
+          if (value == 'mine') {
+            context.read<NoteEditorBloc>().add(const OverlayConvertToMine());
+          }
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: tokens.spacing.sm),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (accentGlyph != null) ...[
+                Text(
+                  accentGlyph!,
+                  style: tokens.text.labelLg.copyWith(color: accentColor),
                 ),
+                SizedBox(width: tokens.spacing.xs),
+              ],
+              Text(
+                'from $label',
+                style: tokens.text.labelMd.copyWith(color: tokens.colors.onSurface),
               ),
-              SizedBox(width: tokens.spacing.xs),
+              const Icon(Icons.arrow_drop_down, size: 16),
             ],
-            Text(
-              'from $shortId',
-              style: tokens.text.labelMd.copyWith(color: tokens.colors.onSurface),
-            ),
-            const Icon(Icons.arrow_drop_down, size: 16),
-          ],
+          ),
         ),
       ),
     );

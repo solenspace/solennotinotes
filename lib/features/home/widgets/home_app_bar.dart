@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
+import 'package:noti_notes_app/features/inbox/cubit/inbox_badge_cubit.dart';
+import 'package:noti_notes_app/features/inbox/screen.dart';
 import 'package:noti_notes_app/features/search/cubit/search_cubit.dart';
 import 'package:noti_notes_app/features/settings/screen.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_cubit.dart';
 import 'package:noti_notes_app/features/user_info/cubit/noti_identity_state.dart';
 import 'package:noti_notes_app/features/user_info/screen.dart';
-import 'package:noti_notes_app/theme/tokens/primitives.dart';
+import 'package:noti_notes_app/theme/tokens.dart';
 
 /// Large collapsing app bar with greeting, profile/settings actions, and a
 /// persistent search field at the bottom edge.
@@ -135,9 +137,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
-          // Exactly 100px is needed for the trailing icons (8 + 36 + 48 + 8).
+          // Trailing cluster: inbox badge (48) + profile avatar (4 + 36 + 4) + settings (48) + 8.
           // Shrinking to 0.0 effectively removes them from the layout smoothly.
-          width: _isSearching ? 0.0 : 100.0,
+          width: _isSearching ? 0.0 : 148.0,
           clipBehavior: Clip.hardEdge,
           decoration: const BoxDecoration(),
           child: SingleChildScrollView(
@@ -146,6 +148,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const _InboxBadgeButton(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: GestureDetector(
@@ -183,6 +186,30 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Inbox action with a count badge driven by [InboxBadgeCubit]. The badge
+/// hides itself at count 0 so the AppBar reads quiet for users who have
+/// never received a share. Tapping always opens the inbox screen.
+class _InboxBadgeButton extends StatelessWidget {
+  const _InboxBadgeButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final count = context.watch<InboxBadgeCubit>().state;
+    final tokens = context.tokens;
+    return IconButton(
+      tooltip: count > 0 ? 'Inbox ($count new)' : 'Inbox',
+      icon: Badge.count(
+        count: count,
+        isLabelVisible: count > 0,
+        backgroundColor: tokens.colors.accent,
+        textColor: tokens.colors.onAccent,
+        child: const Icon(Icons.inbox_outlined),
+      ),
+      onPressed: () => Navigator.of(context).pushNamed(InboxScreen.routeName),
     );
   }
 }

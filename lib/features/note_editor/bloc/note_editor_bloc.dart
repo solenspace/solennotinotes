@@ -292,11 +292,9 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
     final identity = await _identityRepository.getCurrent();
     final identityOverlay = identity.toOverlay();
     _writeOverlay(note, identityOverlay);
-    // `fromIdentityId` lives on NotiThemeOverlay, not the legacy Note schema,
-    // so there's nothing to clear on disk yet — Spec 04b promotes it to a
-    // first-class column. The chip's render gate already keys off the
-    // synthesized overlay, which now has fromIdentityId == null because
-    // legacy notes never carry one.
+    note.fromIdentityId = null;
+    note.fromDisplayName = null;
+    note.fromAccentGlyph = null;
     await _repository.save(note);
     emit(
       state.copyWith(
@@ -308,8 +306,10 @@ class NoteEditorBloc extends Bloc<NoteEditorEvent, NoteEditorState> {
   }
 
   /// Writes the parts of [overlay] that have a home in the legacy schema.
-  /// `signatureTagline`, `signatureAccent`, and `fromIdentityId` are
-  /// in-memory-only on legacy notes (see [NoteEditorState.accentOverride]).
+  /// Sender attribution (`fromIdentityId`, `fromDisplayName`,
+  /// `fromAccentGlyph`) is owned by Spec 25's accept/convert paths and
+  /// not touched here — palette/pattern picks must not silently strip the
+  /// from-sender chip.
   void _writeOverlay(Note note, NotiThemeOverlay overlay) {
     note.colorBackground = overlay.surface;
     note.fontColor = overlay.onSurface ?? clampForReadability(overlay.surface);

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:noti_notes_app/features/inbox/screen.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_cubit.dart';
 import 'package:noti_notes_app/features/settings/cubit/llm_readiness_state.dart';
 import 'package:noti_notes_app/features/settings/cubit/theme_cubit.dart';
@@ -45,6 +46,10 @@ class SettingsScreen extends StatelessWidget {
           _AppFontPicker(),
           Gap(SpacingPrimitives.xl),
           _AiAssistSection(),
+          _SectionLabel('Sharing'),
+          Gap(SpacingPrimitives.sm),
+          _InboxTile(),
+          Gap(SpacingPrimitives.xl),
           _SectionLabel('About'),
           Gap(SpacingPrimitives.sm),
           _AboutTile(),
@@ -415,6 +420,58 @@ class _VoiceTranscriptionTile extends StatelessWidget {
         'Model on this device. Audio never leaves it during transcription.',
       WhisperReadinessPhase.failed => state.failureReason ?? 'The previous attempt did not finish.',
     };
+  }
+}
+
+/// Spec 25 — opens the receiver-side inbox. The "Receive a shared note"
+/// toggle lives inside the inbox screen itself; this tile is a plain
+/// navigation row so Settings stays a destination index rather than a
+/// place where transport lifecycle hides.
+class _InboxTile extends StatelessWidget {
+  const _InboxTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+        side: BorderSide(color: scheme.outline.withValues(alpha: 0.5), width: 1.0),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+        onTap: () => Navigator.of(context).pushNamed(InboxScreen.routeName),
+        child: Padding(
+          padding: const EdgeInsets.all(SpacingPrimitives.lg),
+          child: Row(
+            children: [
+              Icon(Icons.inbox_outlined, color: scheme.onSurface),
+              const Gap(SpacingPrimitives.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Receive a shared note',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const Gap(SpacingPrimitives.xs),
+                    Text(
+                      'Review notes other devices send you. Receiving is off by default.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

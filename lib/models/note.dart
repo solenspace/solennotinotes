@@ -37,6 +37,14 @@ class Note {
 
   List<Map<String, dynamic>> todoList;
 
+  /// Sender attribution for notes received via share (Spec 25). Null on
+  /// locally-authored notes. Spec 04b folds these into a unified
+  /// `Note.overlay` value; the field names match that target shape so the
+  /// migration is mechanical.
+  String? fromIdentityId;
+  String? fromDisplayName;
+  String? fromAccentGlyph;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -61,6 +69,9 @@ class Note {
       'isPinned': isPinned,
       'sortIndex': sortIndex,
       'blocks': blocks,
+      'fromIdentityId': fromIdentityId,
+      'fromDisplayName': fromDisplayName,
+      'fromAccentGlyph': fromAccentGlyph,
     };
   }
 
@@ -82,6 +93,9 @@ class Note {
     this.isPinned = false,
     this.sortIndex,
     List<Map<String, dynamic>>? blocks,
+    this.fromIdentityId,
+    this.fromDisplayName,
+    this.fromAccentGlyph,
   }) : blocks = blocks ?? [];
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -120,6 +134,9 @@ class Note {
               .map((m) => m.cast<String, dynamic>())
               .toList()
           : null,
+      fromIdentityId: json['fromIdentityId'] as String?,
+      fromDisplayName: json['fromDisplayName'] as String?,
+      fromAccentGlyph: json['fromAccentGlyph'] as String?,
     );
   }
 }
