@@ -121,8 +121,8 @@ class NotiThemeOverlay extends Equatable {
     }
     return base.copyWith(
       patternKey: patternKey!.name,
-      bodyOpacity: 0.12,
-      headerOpacity: 1.0,
+      bodyOpacity: 0.08,
+      headerOpacity: 0.35,
       headerHeightFraction: 0.30,
     );
   }

@@ -102,8 +102,8 @@ void main() {
       final patched = overlay.applyToPatternBackdrop(NotiPatternBackdrop.none);
 
       expect(patched.patternKey, 'polygons');
-      expect(patched.bodyOpacity, 0.12);
-      expect(patched.headerOpacity, 1.0);
+      expect(patched.bodyOpacity, 0.08);
+      expect(patched.headerOpacity, 0.35);
       expect(patched.headerHeightFraction, 0.30);
     });
 
