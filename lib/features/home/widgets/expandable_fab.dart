@@ -7,7 +7,7 @@ import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 typedef ExpandableFabCallback = void Function();
 
-enum SwipeDirection { left, right }
+enum SwipeDirection { left, right, up }
 
 class ExpandableFab extends StatefulWidget {
   final ExpandableFabCallback onContent;
@@ -27,9 +27,10 @@ class ExpandableFab extends StatefulWidget {
 
 class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateMixin {
   static const double _swipeThreshold = 50.0;
-  static const double _buttonSpacing = 80.0;
+  static const double _sideButtonSpacing = 80.0;
+  static const double _upButtonSpacing = 70.0;
 
-  double _dragX = 0;
+  Offset _drag = Offset.zero;
   SwipeDirection? _selectedDirection;
   bool _hasReachedThreshold = false;
 
@@ -38,12 +39,13 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
   late Animation<double> _expandAnimation;
   late Animation<double> _leftScaleAnimation;
   late Animation<double> _rightScaleAnimation;
+  late Animation<double> _upScaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _expandController = AnimationController(
-      duration: const Duration(milliseconds: 600), // Slower for elastic bounce
+      duration: const Duration(milliseconds: 600),
       reverseDuration: DurationPrimitives.standard,
       vsync: this,
     );
@@ -55,12 +57,13 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
 
     _expandAnimation = CurvedAnimation(
       parent: _expandController,
-      curve: Curves.elasticOut, // Morph pop-out bounce
+      curve: Curves.elasticOut,
       reverseCurve: Curves.easeInCubic,
     );
 
     _leftScaleAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(_scaleController);
     _rightScaleAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(_scaleController);
+    _upScaleAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(_scaleController);
   }
 
   @override
@@ -70,15 +73,10 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     super.dispose();
   }
 
-  void _onTap() {
-    HapticFeedback.selectionClick();
-    widget.onAudio();
-  }
-
   void _onLongPressStart(LongPressStartDetails details) {
     HapticFeedback.lightImpact();
     setState(() {
-      _dragX = 0;
+      _drag = Offset.zero;
       _selectedDirection = null;
       _hasReachedThreshold = false;
     });
@@ -87,23 +85,27 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
 
   void _onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
     setState(() {
-      _dragX = details.localOffsetFromOrigin.dx;
+      _drag = details.localOffsetFromOrigin;
 
-      final absDragX = _dragX.abs();
+      final dx = _drag.dx;
+      final dy = _drag.dy;
+      final absDx = dx.abs();
+      final absDy = dy.abs();
+      final reaches = (absDx > _swipeThreshold || absDy > _swipeThreshold);
 
-      if (absDragX > _swipeThreshold && !_hasReachedThreshold) {
+      if (reaches && !_hasReachedThreshold) {
         _hasReachedThreshold = true;
         HapticFeedback.lightImpact();
       }
 
-      if (absDragX > _swipeThreshold) {
-        if (_dragX < 0) {
-          _selectedDirection = SwipeDirection.left;
-        } else {
-          _selectedDirection = SwipeDirection.right;
-        }
-      } else {
+      if (!reaches) {
         _selectedDirection = null;
+      } else if (absDy > absDx && dy < 0) {
+        _selectedDirection = SwipeDirection.up;
+      } else if (dx < 0) {
+        _selectedDirection = SwipeDirection.left;
+      } else {
+        _selectedDirection = SwipeDirection.right;
       }
     });
 
@@ -111,37 +113,35 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
   }
 
   void _updateScaleAnimations() {
-    final absDragX = _dragX.abs();
-    final progress = (absDragX / _swipeThreshold).clamp(0.0, 1.0);
+    final reference = _selectedDirection == SwipeDirection.up ? _drag.dy.abs() : _drag.dx.abs();
+    final progress = (reference / _swipeThreshold).clamp(0.0, 1.0);
 
-    if (_selectedDirection == SwipeDirection.left) {
-      _leftScaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-        CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
-      );
-      _rightScaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
-        CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
-      );
-      _scaleController.value = progress;
-    } else if (_selectedDirection == SwipeDirection.right) {
-      _rightScaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-        CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
-      );
-      _leftScaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
-        CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
-      );
-      _scaleController.value = progress;
-    } else {
-      _scaleController.value = 0;
-    }
+    _leftScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: _selectedDirection == SwipeDirection.left ? 1.1 : 0.9,
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
+    _rightScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: _selectedDirection == SwipeDirection.right ? 1.1 : 0.9,
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
+    _upScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: _selectedDirection == SwipeDirection.up ? 1.1 : 0.9,
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
+
+    _scaleController.value = _selectedDirection == null ? 0 : progress;
   }
 
   void _onLongPressEnd(LongPressEndDetails details) {
     if (_selectedDirection != null) {
       HapticFeedback.selectionClick();
-      if (_selectedDirection == SwipeDirection.left) {
-        widget.onContent();
-      } else {
-        widget.onTodo();
+      switch (_selectedDirection!) {
+        case SwipeDirection.left:
+          widget.onContent();
+        case SwipeDirection.right:
+          widget.onTodo();
+        case SwipeDirection.up:
+          widget.onAudio();
       }
     }
 
@@ -152,7 +152,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     _expandController.reverse().then((_) {
       if (mounted) {
         setState(() {
-          _dragX = 0;
+          _drag = Offset.zero;
           _selectedDirection = null;
           _hasReachedThreshold = false;
         });
@@ -167,7 +167,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
 
     return SizedBox(
       width: 240,
-      height: 140,
+      height: 200,
       child: Semantics(
         button: true,
         label: context.l10n.fab_semantic_label,
@@ -177,7 +177,6 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
           CustomSemanticsAction(label: context.l10n.fab_hint_audio): widget.onAudio,
         },
         child: GestureDetector(
-          onTap: _onTap,
           onLongPressStart: _onLongPressStart,
           onLongPressMoveUpdate: _onLongPressMoveUpdate,
           onLongPressEnd: _onLongPressEnd,
@@ -190,8 +189,7 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                 children: [
                   Positioned(
                     bottom: 4,
-                    // Originates exactly from center (120 - 22 = 98) and translates outwards
-                    left: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    left: 98.0 - (_expandAnimation.value * _sideButtonSpacing),
                     child: Transform.scale(
                       scale: _expandAnimation.value * _leftScaleAnimation.value,
                       child: _ButtonCircle(
@@ -203,11 +201,22 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                   ),
                   Positioned(
                     bottom: 4,
-                    right: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    right: 98.0 - (_expandAnimation.value * _sideButtonSpacing),
                     child: Transform.scale(
                       scale: _expandAnimation.value * _rightScaleAnimation.value,
                       child: _ButtonCircle(
                         icon: Icons.checklist,
+                        color: scheme.primary,
+                        iconColor: scheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 4 + (_expandAnimation.value * _upButtonSpacing),
+                    child: Transform.scale(
+                      scale: _expandAnimation.value * _upScaleAnimation.value,
+                      child: _ButtonCircle(
+                        icon: Icons.mic_rounded,
                         color: scheme.primary,
                         iconColor: scheme.onPrimary,
                       ),
@@ -218,10 +227,9 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                     color: scheme.primary,
                     onPrimaryColor: scheme.onPrimary,
                   ),
-                  // Left button hint (Content) - directly above button
                   Positioned(
                     bottom: 60,
-                    left: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    left: 98.0 - (_expandAnimation.value * _sideButtonSpacing),
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 100),
                       opacity: _selectedDirection == SwipeDirection.left && _hasReachedThreshold
@@ -233,10 +241,9 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                       ),
                     ),
                   ),
-                  // Right button hint (Todo) - directly above button
                   Positioned(
                     bottom: 60,
-                    right: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    right: 98.0 - (_expandAnimation.value * _sideButtonSpacing),
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 100),
                       opacity: _selectedDirection == SwipeDirection.right && _hasReachedThreshold
@@ -245,6 +252,19 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                       child: Transform.scale(
                         scale: _expandAnimation.value * _rightScaleAnimation.value,
                         child: _HintLabel(text: context.l10n.fab_hint_todo),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 60 + (_expandAnimation.value * _upButtonSpacing),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 100),
+                      opacity: _selectedDirection == SwipeDirection.up && _hasReachedThreshold
+                          ? 1.0
+                          : 0.0,
+                      child: Transform.scale(
+                        scale: _expandAnimation.value * _upScaleAnimation.value,
+                        child: _HintLabel(text: context.l10n.fab_hint_audio),
                       ),
                     ),
                   ),
