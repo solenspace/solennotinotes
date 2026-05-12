@@ -57,10 +57,17 @@ class _HomeAppBarState extends State<HomeAppBar> {
         ),
         title: LayoutBuilder(
           builder: (context, constraints) {
+            // FlexibleSpaceBar reserves horizontal room for the actions row,
+            // so the title constraint is narrower than the screen. A
+            // single-line maxLines clipped "mateo, feeling good?" and the
+            // longer time-of-day variants ("Tuesday, not monday.", ...) even
+            // when whitespace was visible to the right. Two lines accommodate
+            // every greeting in the rotation; the expandedHeight of 140
+            // leaves comfortable room for the wrapped second line.
             return Text(
               greeting,
               style: Theme.of(context).textTheme.displayMedium,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             );
           },
