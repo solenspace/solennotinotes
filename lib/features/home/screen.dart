@@ -55,6 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return result.toList();
   }
 
+  bool _hasAnyNote(NotesListState state) =>
+      state.pinnedNotes.isNotEmpty || state.unpinnedNotes.isNotEmpty;
+
+  bool _hasActiveFilter(SearchState search) =>
+      search.query.isNotEmpty || search.tags.isNotEmpty || search.filter != NoteFilter.all;
+
   @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchCubit>().state;
@@ -75,7 +81,14 @@ class _HomeScreenState extends State<HomeScreen> {
               if (isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: EmptyState(message: context.l10n.home_empty_state_message),
+                  child: EmptyState(
+                    // Distinguish zero-notes-ever from filter-excludes-all so
+                    // a user with a non-empty library doesn't get the
+                    // "write your first note" prompt mid-session.
+                    message: _hasAnyNote(state) && _hasActiveFilter(search)
+                        ? context.l10n.home_empty_state_no_match
+                        : context.l10n.home_empty_state_message,
+                  ),
                 )
               else ...[
                 if (pinned.isNotEmpty) ...[

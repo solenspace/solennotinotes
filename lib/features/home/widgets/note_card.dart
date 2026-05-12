@@ -351,7 +351,17 @@ String _composeCardSemanticLabel({
     if (note.isPinned) l10n.card_pinned_semantic,
     if (note.tags.isNotEmpty) note.tags.take(3).map((t) => '#$t').join(', '),
   ];
-  return l10n.card_note_semantic_label(title, previewLine, metaParts.join(' · '));
+  // Compose only non-empty segments so checklist-only notes (empty preview)
+  // and notes without pin/tags don't announce stray ". ." punctuation. The
+  // legacy `card_note_semantic_label` template is preserved for translators
+  // who rely on the full positional form (it stays in en.arb), but the
+  // runtime composition is segment-based per Spec 29 WCAG 4.1.2.
+  final segments = <String>[
+    l10n.card_note_semantic_prefix(title),
+    if (previewLine.isNotEmpty) previewLine,
+    if (metaParts.isNotEmpty) metaParts.join(' · '),
+  ];
+  return segments.join('. ');
 }
 
 /// Compact audio summary for the home masonry card. Shows a mic glyph plus
