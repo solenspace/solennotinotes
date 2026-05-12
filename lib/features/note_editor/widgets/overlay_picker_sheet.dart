@@ -59,7 +59,6 @@ class _OverlayPickerSheetState extends State<OverlayPickerSheet> with TickerProv
       expand: false,
       builder: (_, scroll) => Column(
         children: [
-          const _DragHandle(),
           TabBar(
             controller: _tabs,
             indicatorColor: tokens.colors.accent,
@@ -82,24 +81,6 @@ class _OverlayPickerSheetState extends State<OverlayPickerSheet> with TickerProv
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DragHandle extends StatelessWidget {
-  const _DragHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Container(
-      margin: const EdgeInsets.only(top: 8, bottom: 4),
-      width: 36,
-      height: 4,
-      decoration: BoxDecoration(
-        color: tokens.colors.divider,
-        borderRadius: tokens.shape.pillRadius,
       ),
     );
   }
