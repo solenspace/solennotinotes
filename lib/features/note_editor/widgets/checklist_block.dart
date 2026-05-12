@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import 'package:noti_notes_app/l10n/build_context_l10n.dart';
 import 'package:noti_notes_app/models/editor_block.dart';
+import 'package:noti_notes_app/theme/contrast.dart';
 import 'package:noti_notes_app/theme/tokens/primitives.dart';
 
 class _NewlineInterceptor extends TextInputFormatter {
@@ -145,7 +146,7 @@ class _ChecklistBlockWidgetState extends State<ChecklistBlockWidget> {
                     ? Icon(
                         Icons.check,
                         size: 16,
-                        color: scheme.surface,
+                        color: clampForReadability(color),
                       )
                     : null,
               ),
