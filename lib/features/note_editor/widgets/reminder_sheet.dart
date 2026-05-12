@@ -1,4 +1,3 @@
-import 'package:board_datetime_picker/board_datetime_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
@@ -25,10 +24,6 @@ class ReminderSheet extends StatefulWidget {
 }
 
 class _ReminderSheetState extends State<ReminderSheet> {
-  bool _showPicker = false;
-  DateTime _pendingDate = DateTime.now().add(const Duration(hours: 1));
-  final BoardDateTimeController _controller = BoardDateTimeController();
-
   Future<void> _ensurePermission(PermissionsService service) async {
     final status = await service.notificationsStatus();
     if (status.isUsable) return;
@@ -73,6 +68,25 @@ class _ReminderSheetState extends State<ReminderSheet> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _pickCustom() async {
+    final now = DateTime.now();
+    final initial = now.add(const Duration(hours: 1));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365 * 5)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (time == null || !mounted) return;
+    final picked = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    await _setReminder(picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<NoteEditorBloc, NoteEditorState>(
@@ -80,12 +94,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
         final hasReminder = state.note?.reminder != null;
         return SheetScaffold(
           title: context.l10n.reminder_sheet_title,
-          child: AnimatedSize(
-            duration: DurationPrimitives.standard,
-            curve: CurvePrimitives.calm,
-            alignment: Alignment.topCenter,
-            child: _showPicker ? _buildPicker(context) : _buildChips(context, hasReminder),
-          ),
+          child: _buildChips(context, hasReminder),
         );
       },
     );
@@ -130,7 +139,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
             _Chip(
               label: context.l10n.reminder_pick_custom,
               icon: Icons.calendar_month_outlined,
-              onTap: () => setState(() => _showPicker = true),
+              onTap: _pickCustom,
             ),
           ],
         ),
@@ -143,43 +152,6 @@ class _ReminderSheetState extends State<ReminderSheet> {
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _buildPicker(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 240,
-          child: BoardDateTimeBuilder(
-            controller: _controller,
-            pickerType: DateTimePickerType.datetime,
-            initialDate: _pendingDate,
-            minimumDate: DateTime.now(),
-            options: const BoardDateTimeOptions(
-              languages: BoardPickerLanguages.en(),
-            ),
-            builder: (context) => const SizedBox.shrink(),
-            onChange: (date) => _pendingDate = date,
-          ),
-        ),
-        const Gap(SpacingPrimitives.md),
-        Row(
-          children: [
-            TextButton(
-              onPressed: () => setState(() => _showPicker = false),
-              child: Text(context.l10n.common_back),
-            ),
-            const Spacer(),
-            FilledButton.icon(
-              onPressed: () => _setReminder(_pendingDate),
-              icon: const Icon(Icons.notifications_active_outlined, size: 18),
-              label: Text(context.l10n.reminder_set),
-            ),
-          ],
-        ),
       ],
     );
   }

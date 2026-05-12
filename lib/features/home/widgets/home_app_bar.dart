@@ -43,7 +43,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
     final scheme = Theme.of(context).colorScheme;
 
     return SliverAppBar(
-      expandedHeight: 140, // Reduced since search bar is no longer below
+      expandedHeight: 180,
       pinned: true,
       stretch: true,
       backgroundColor: scheme.surface,
@@ -59,8 +59,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
           builder: (context, constraints) {
             return Text(
               greeting,
-              style: Theme.of(context).textTheme.displayMedium,
-              maxLines: 1,
+              style: Theme.of(context).textTheme.headlineMedium,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             );
           },

@@ -90,14 +90,20 @@ class NotiThemeOverlay extends Equatable {
   /// rather than flat — `lerp(surface, base.surfaceElevated, 0.4)` gives a
   /// noticeable but subtle lift.
   NotiColors applyToColors(NotiColors base) {
+    final resolvedOnSurface = onSurface ?? clampForReadability(surface);
+    final safeOnSurface = isAccessibleBody(resolvedOnSurface, surface)
+        ? resolvedOnSurface
+        : clampForReadability(surface);
+    final safeOnAccent =
+        isAccessibleBody(onAccent, accent) ? onAccent : clampForReadability(accent);
     return base.copyWith(
       surface: surface,
       surfaceVariant: surfaceVariant,
       surfaceElevated: Color.lerp(surface, base.surfaceElevated, 0.4)!,
       surfaceMuted: Color.lerp(surface, base.surfaceMuted, 0.6)!,
-      onSurface: onSurface ?? clampForReadability(surface),
+      onSurface: safeOnSurface,
       accent: accent,
-      onAccent: onAccent,
+      onAccent: safeOnAccent,
       focus: accent,
     );
   }
@@ -115,8 +121,8 @@ class NotiThemeOverlay extends Equatable {
     }
     return base.copyWith(
       patternKey: patternKey!.name,
-      bodyOpacity: 0.12,
-      headerOpacity: 1.0,
+      bodyOpacity: 0.08,
+      headerOpacity: 0.35,
       headerHeightFraction: 0.30,
     );
   }

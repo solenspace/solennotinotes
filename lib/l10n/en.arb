@@ -19,6 +19,7 @@
 
   "home_search_hint": "Search notes...",
   "home_empty_state_message": "Tap + to write your first note",
+  "home_empty_state_no_match": "No notes match your filters",
   "home_section_pinned": "Pinned",
   "home_section_notes": "Notes",
   "home_section_all_notes": "All notes",
@@ -52,6 +53,12 @@
       "meta": { "type": "String" }
     }
   },
+  "card_note_semantic_prefix": "Note: {title}",
+  "@card_note_semantic_prefix": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
   "card_note_untitled_semantic": "Untitled note",
   "card_checklist_item_semantic": "Checklist item: {text}, {state}",
   "@card_checklist_item_semantic": {
@@ -71,7 +78,8 @@
   "fab_hint_hold_and_swipe": "Hold and swipe",
   "fab_hint_content": "Content",
   "fab_hint_todo": "Todo",
-  "fab_semantic_label": "New note. Hold and swipe left for text, right for checklist.",
+  "fab_hint_audio": "Audio",
+  "fab_semantic_label": "New note. Tap to record audio. Hold and swipe left for text, right for checklist.",
 
   "editor_back_tooltip": "Back",
   "editor_more_tooltip": "More actions",
@@ -374,7 +382,7 @@
   "profile_image_source_gallery": "Choose from gallery",
   "profile_image_source_camera": "Take a photo",
   "profile_name_hint": "Your name",
-  "profile_notes_count": "{count} notes on this device",
+  "profile_notes_count": "{count, plural, =0{No notes on this device yet} =1{1 note on this device} other{{count} notes on this device}}",
   "@profile_notes_count": {
     "placeholders": { "count": { "type": "int" } }
   },

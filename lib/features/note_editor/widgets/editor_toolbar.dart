@@ -87,68 +87,76 @@ class EditorToolbar extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            _ToolButton(
-              icon: currentBlockIsChecklist
-                  ? Icons.check_box_rounded
-                  : Icons.check_box_outline_blank_rounded,
-              tooltip: context.l10n.toolbar_toggle_checklist,
-              selected: currentBlockIsChecklist,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onToggleChecklist();
-              },
-            ),
-            const Gap(SpacingPrimitives.xs),
-            _ToolButton(
-              icon: Icons.image_outlined,
-              tooltip: context.l10n.toolbar_add_image,
-              onTap: onAddImage,
-            ),
-            if (audioCaptureButton != null) ...[
-              const Gap(SpacingPrimitives.xs),
-              audioCaptureButton!,
-            ],
-            if (dictationButton != null) ...[
-              const Gap(SpacingPrimitives.xs),
-              dictationButton!,
-            ],
-            if (readAloudButton != null) ...[
-              const Gap(SpacingPrimitives.xs),
-              readAloudButton!,
-            ],
-            if (assistButton != null) ...[
-              const Gap(SpacingPrimitives.xs),
-              assistButton!,
-            ],
-            if (shareButton != null) ...[
-              const Gap(SpacingPrimitives.xs),
-              shareButton!,
-            ],
-            const Gap(SpacingPrimitives.xs),
-            _ToolButton(
-              tooltip: context.l10n.toolbar_style_tooltip,
-              onTap: onOpenStyleSheet,
-              onLongPress: onResetOverlay,
-              builder: (color) => SvgPicture.asset(
-                'lib/assets/icons/brush.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _ToolButton(
+                      icon: currentBlockIsChecklist
+                          ? Icons.check_box_rounded
+                          : Icons.check_box_outline_blank_rounded,
+                      tooltip: context.l10n.toolbar_toggle_checklist,
+                      selected: currentBlockIsChecklist,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onToggleChecklist();
+                      },
+                    ),
+                    const Gap(SpacingPrimitives.xs),
+                    _ToolButton(
+                      icon: Icons.image_outlined,
+                      tooltip: context.l10n.toolbar_add_image,
+                      onTap: onAddImage,
+                    ),
+                    if (audioCaptureButton != null) ...[
+                      const Gap(SpacingPrimitives.xs),
+                      audioCaptureButton!,
+                    ],
+                    if (dictationButton != null) ...[
+                      const Gap(SpacingPrimitives.xs),
+                      dictationButton!,
+                    ],
+                    if (readAloudButton != null) ...[
+                      const Gap(SpacingPrimitives.xs),
+                      readAloudButton!,
+                    ],
+                    if (assistButton != null) ...[
+                      const Gap(SpacingPrimitives.xs),
+                      assistButton!,
+                    ],
+                    if (shareButton != null) ...[
+                      const Gap(SpacingPrimitives.xs),
+                      shareButton!,
+                    ],
+                    const Gap(SpacingPrimitives.xs),
+                    _ToolButton(
+                      tooltip: context.l10n.toolbar_style_tooltip,
+                      onTap: onOpenStyleSheet,
+                      onLongPress: onResetOverlay,
+                      builder: (color) => SvgPicture.asset(
+                        'lib/assets/icons/brush.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                      ),
+                    ),
+                    const Gap(SpacingPrimitives.xs),
+                    _ToolButton(
+                      icon: Icons.notifications_outlined,
+                      tooltip: context.l10n.toolbar_reminder,
+                      onTap: onOpenReminderSheet,
+                    ),
+                    const Gap(SpacingPrimitives.xs),
+                    _ToolButton(
+                      icon: Icons.tag_rounded,
+                      tooltip: context.l10n.toolbar_tags,
+                      onTap: onOpenTagSheet,
+                    ),
+                  ],
+                ),
               ),
             ),
-            const Gap(SpacingPrimitives.xs),
-            _ToolButton(
-              icon: Icons.notifications_outlined,
-              tooltip: context.l10n.toolbar_reminder,
-              onTap: onOpenReminderSheet,
-            ),
-            const Gap(SpacingPrimitives.xs),
-            _ToolButton(
-              icon: Icons.tag_rounded,
-              tooltip: context.l10n.toolbar_tags,
-              onTap: onOpenTagSheet,
-            ),
-            const Spacer(),
             TextButton(
               onPressed: onDoneEditing,
               child: Text(context.l10n.common_done),

@@ -12,6 +12,7 @@ import 'package:noti_notes_app/models/editor_block.dart';
 import 'package:noti_notes_app/models/note.dart';
 import 'package:noti_notes_app/models/note_overlay.dart';
 import 'package:noti_notes_app/theme/curated_palettes.dart';
+import 'package:noti_notes_app/theme/noti_pattern_key.dart';
 import 'package:noti_notes_app/theme/tokens.dart';
 
 import '../bloc/notes_list_bloc.dart';
@@ -113,9 +114,9 @@ class _NoteCardState extends State<NoteCard> {
               gradient: note.hasGradient ? note.gradient : null,
               borderRadius:
                   BorderRadius.circular(RadiusPrimitives.sm), // Neo-brutalist tight radius
-              image: note.patternImage != null
+              image: NotiPatternKey.fromString(note.patternImage) != null
                   ? DecorationImage(
-                      image: AssetImage(note.patternImage!),
+                      image: AssetImage(NotiPatternKey.fromString(note.patternImage)!.assetPath),
                       fit: BoxFit.cover,
                       opacity: 0.4,
                       colorFilter: ColorFilter.mode(
@@ -351,7 +352,12 @@ String _composeCardSemanticLabel({
     if (note.isPinned) l10n.card_pinned_semantic,
     if (note.tags.isNotEmpty) note.tags.take(3).map((t) => '#$t').join(', '),
   ];
-  return l10n.card_note_semantic_label(title, previewLine, metaParts.join(' · '));
+  final segments = <String>[
+    l10n.card_note_semantic_prefix(title),
+    if (previewLine.isNotEmpty) previewLine,
+    if (metaParts.isNotEmpty) metaParts.join(' · '),
+  ];
+  return segments.join('. ');
 }
 
 /// Compact audio summary for the home masonry card. Shows a mic glyph plus

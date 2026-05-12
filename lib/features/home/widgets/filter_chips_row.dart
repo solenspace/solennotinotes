@@ -48,6 +48,8 @@ class FilterChipsRow extends StatelessWidget {
             showCheckmark: false,
             backgroundColor: colorScheme.surfaceContainerHighest,
             selectedColor: colorScheme.primary,
+            visualDensity: VisualDensity.compact,
+            labelPadding: const EdgeInsets.only(left: 4, right: 6),
           );
         },
       ),

@@ -153,10 +153,13 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
         : note.blocks.map(EditorBlock.fromMap).toList();
     _initialized = true;
     if (note.title.isEmpty && note.blocks.isEmpty) {
-      // New note → autofocus the first block after the first frame.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _blocks.isEmpty) return;
-        _focusBlock(_blocks.first.id);
+        if (widget.noteType == NoteType.audio) {
+          context.read<NoteEditorBloc>().add(const AudioCaptureRequested());
+        } else {
+          _focusBlock(_blocks.first.id);
+        }
       });
     }
   }
@@ -482,7 +485,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
 
     return AnimatedTheme(
       data: themed,
-      duration: baseTokens.motion.pattern,
+      duration: baseTokens.motion.standard,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           statusBarColor: patchedColors.surface,
@@ -532,6 +535,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                 bodyOpacity: patchedPattern.bodyOpacity,
                 headerOpacity: patchedPattern.headerOpacity,
                 headerHeightFraction: patchedPattern.headerHeightFraction,
+                ink: tokens.colors.onSurface,
                 child: SafeArea(
                   child: Column(
                     children: [
@@ -897,6 +901,7 @@ class _PatternedBackdrop extends StatelessWidget {
     required this.bodyOpacity,
     required this.headerOpacity,
     required this.headerHeightFraction,
+    required this.ink,
     required this.child,
   });
 
@@ -904,6 +909,7 @@ class _PatternedBackdrop extends StatelessWidget {
   final double bodyOpacity;
   final double headerOpacity;
   final double headerHeightFraction;
+  final Color ink;
   final Widget child;
 
   @override
@@ -932,9 +938,12 @@ class _PatternedBackdrop extends StatelessWidget {
               ],
             ).createShader(rect),
             blendMode: BlendMode.dstIn,
-            child: Image.asset(
-              patternKey!.assetPath,
-              fit: BoxFit.cover,
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(ink.withValues(alpha: 0.5), BlendMode.srcIn),
+              child: Image.asset(
+                patternKey!.assetPath,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),
