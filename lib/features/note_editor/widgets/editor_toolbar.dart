@@ -85,13 +85,6 @@ class EditorToolbar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        // Tool cluster scrolls horizontally; Done stays anchored to the right.
-        // With every optional slot rendered (audio + dictation + read-aloud +
-        // assist + share) the flat Row overflowed common 360–390 dp widths by
-        // ~46 px, blowing the yellow debug stripe on screen. Scrolling the
-        // icon strip preserves the steady-state visual (Done always reachable)
-        // and gives every optional affordance room without resorting to a
-        // two-row Wrap that would shift block layout.
         child: Row(
           children: [
             Expanded(

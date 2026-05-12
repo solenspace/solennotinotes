@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -14,11 +12,13 @@ enum SwipeDirection { left, right }
 class ExpandableFab extends StatefulWidget {
   final ExpandableFabCallback onContent;
   final ExpandableFabCallback onTodo;
+  final ExpandableFabCallback onAudio;
 
   const ExpandableFab({
     super.key,
     required this.onContent,
     required this.onTodo,
+    required this.onAudio,
   });
 
   @override
@@ -38,8 +38,6 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
   late Animation<double> _expandAnimation;
   late Animation<double> _leftScaleAnimation;
   late Animation<double> _rightScaleAnimation;
-
-  bool _showHint = false;
 
   @override
   void initState() {
@@ -72,20 +70,9 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     super.dispose();
   }
 
-  Future<void> _onTap() async {
-    unawaited(HapticFeedback.lightImpact());
-    setState(() => _showHint = true);
-
-    _expandController.duration = const Duration(milliseconds: 150);
-    await _expandController.animateTo(0.4, curve: Curves.easeOut);
-
-    _expandController.duration = const Duration(milliseconds: 200);
-    await _expandController.reverse();
-
-    _expandController.duration = const Duration(milliseconds: 600);
-
-    await Future<void>.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _showHint = false);
+  void _onTap() {
+    HapticFeedback.selectionClick();
+    widget.onAudio();
   }
 
   void _onLongPressStart(LongPressStartDetails details) {
@@ -180,17 +167,14 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
 
     return SizedBox(
       width: 240,
-      height: 140, // Increased height to accommodate hints above buttons
+      height: 140,
       child: Semantics(
         button: true,
         label: context.l10n.fab_semantic_label,
-        // Screen-reader / switch-control users get two distinct activations:
-        // a tap reveals the inline hint, and a customAction labelled by
-        // `fab_hint_content` / `fab_hint_todo` calls each branch directly so
-        // long-press + swipe is not the only reachable path.
         customSemanticsActions: {
           CustomSemanticsAction(label: context.l10n.fab_hint_content): widget.onContent,
           CustomSemanticsAction(label: context.l10n.fab_hint_todo): widget.onTodo,
+          CustomSemanticsAction(label: context.l10n.fab_hint_audio): widget.onAudio,
         },
         child: GestureDetector(
           onTap: _onTap,
@@ -233,37 +217,6 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
                     expandProgress: _expandAnimation.value,
                     color: scheme.primary,
                     onPrimaryColor: scheme.onPrimary,
-                  ),
-                  // "Hold and swipe" tooltip
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutBack,
-                    bottom: _showHint ? 70 : 40,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _showHint ? 1.0 : 0.0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: scheme.onSurface,
-                          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                          boxShadow: [
-                            BoxShadow(
-                              color: scheme.onSurface.withValues(alpha: 0.15),
-                              offset: const Offset(3, 3),
-                              blurRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          context.l10n.fab_hint_hold_and_swipe,
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: scheme.surface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                    ),
                   ),
                   // Left button hint (Content) - directly above button
                   Positioned(

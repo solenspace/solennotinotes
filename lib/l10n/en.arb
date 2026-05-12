@@ -78,7 +78,8 @@
   "fab_hint_hold_and_swipe": "Hold and swipe",
   "fab_hint_content": "Content",
   "fab_hint_todo": "Todo",
-  "fab_semantic_label": "New note. Hold and swipe left for text, right for checklist.",
+  "fab_hint_audio": "Audio",
+  "fab_semantic_label": "New note. Tap to record audio. Hold and swipe left for text, right for checklist.",
 
   "editor_back_tooltip": "Back",
   "editor_more_tooltip": "More actions",

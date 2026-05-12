@@ -82,9 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: EmptyState(
-                    // Distinguish zero-notes-ever from filter-excludes-all so
-                    // a user with a non-empty library doesn't get the
-                    // "write your first note" prompt mid-session.
                     message: _hasAnyNote(state) && _hasActiveFilter(search)
                         ? context.l10n.home_empty_state_no_match
                         : context.l10n.home_empty_state_message,
@@ -153,6 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 await Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
                     builder: (_) => const NoteEditorScreen(noteType: NoteType.todo),
+                  ),
+                );
+                if (mounted) setState(() {});
+              },
+              onAudio: () async {
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const NoteEditorScreen(noteType: NoteType.audio),
                   ),
                 );
                 if (mounted) setState(() {});

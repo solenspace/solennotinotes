@@ -157,8 +157,8 @@ class _DictationGlyph extends StatelessWidget {
             curve: CurvePrimitives.calm,
             child: AnimatedContainer(
               duration: DurationPrimitives.fast,
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: dictating ? scheme.primary.withValues(alpha: 0.15) : Colors.transparent,
                 borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
