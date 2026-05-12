@@ -132,10 +132,11 @@ class _AudioBlockViewState extends State<AudioBlockView> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final semanticLabel = _playing
-        ? 'Audio playing, ${_formatDuration(_position.inMilliseconds)} of '
-            '${_formatDuration(widget.block.durationMs)}. Long-press for options.'
-        : 'Audio paused, ${_formatDuration(widget.block.durationMs)} total. '
-            'Long-press for options.';
+        ? context.l10n.audio_block_semantic_playing(
+            _formatDuration(_position.inMilliseconds),
+            _formatDuration(widget.block.durationMs),
+          )
+        : context.l10n.audio_block_semantic_paused(_formatDuration(widget.block.durationMs));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: SpacingPrimitives.sm),
       child: Semantics(
@@ -155,7 +156,8 @@ class _AudioBlockViewState extends State<AudioBlockView> {
             child: Row(
               children: [
                 IconButton(
-                  tooltip: _playing ? 'Pause' : 'Play',
+                  tooltip:
+                      _playing ? context.l10n.audio_pause_tooltip : context.l10n.audio_play_tooltip,
                   onPressed: _toggle,
                   icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded),
                   color: scheme.onSurface,

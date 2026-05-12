@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import 'package:noti_notes_app/l10n/build_context_l10n.dart';
@@ -180,112 +181,124 @@ class _ExpandableFabState extends State<ExpandableFab> with TickerProviderStateM
     return SizedBox(
       width: 240,
       height: 140, // Increased height to accommodate hints above buttons
-      child: GestureDetector(
-        onTap: _onTap,
-        onLongPressStart: _onLongPressStart,
-        onLongPressMoveUpdate: _onLongPressMoveUpdate,
-        onLongPressEnd: _onLongPressEnd,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_expandController, _scaleController]),
-          builder: (context, child) {
-            return Stack(
-              alignment: Alignment.bottomCenter,
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  bottom: 4,
-                  // Originates exactly from center (120 - 22 = 98) and translates outwards
-                  left: 98.0 - (_expandAnimation.value * _buttonSpacing),
-                  child: Transform.scale(
-                    scale: _expandAnimation.value * _leftScaleAnimation.value,
-                    child: _ButtonCircle(
-                      icon: Icons.edit_note,
-                      color: scheme.primary,
-                      iconColor: scheme.onPrimary,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 4,
-                  right: 98.0 - (_expandAnimation.value * _buttonSpacing),
-                  child: Transform.scale(
-                    scale: _expandAnimation.value * _rightScaleAnimation.value,
-                    child: _ButtonCircle(
-                      icon: Icons.checklist,
-                      color: scheme.primary,
-                      iconColor: scheme.onPrimary,
-                    ),
-                  ),
-                ),
-                CenterButton(
-                  expandProgress: _expandAnimation.value,
-                  color: scheme.primary,
-                  onPrimaryColor: scheme.onPrimary,
-                ),
-                // "Hold and swipe" tooltip
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutBack,
-                  bottom: _showHint ? 70 : 40,
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 200),
-                    opacity: _showHint ? 1.0 : 0.0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: scheme.onSurface,
-                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                        boxShadow: [
-                          BoxShadow(
-                            color: scheme.onSurface.withValues(alpha: 0.15),
-                            offset: const Offset(3, 3),
-                            blurRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        context.l10n.fab_hint_hold_and_swipe,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: scheme.surface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Left button hint (Content) - directly above button
-                Positioned(
-                  bottom: 60,
-                  left: 98.0 - (_expandAnimation.value * _buttonSpacing),
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 100),
-                    opacity: _selectedDirection == SwipeDirection.left && _hasReachedThreshold
-                        ? 1.0
-                        : 0.0,
+      child: Semantics(
+        button: true,
+        label: context.l10n.fab_semantic_label,
+        // Screen-reader / switch-control users get two distinct activations:
+        // a tap reveals the inline hint, and a customAction labelled by
+        // `fab_hint_content` / `fab_hint_todo` calls each branch directly so
+        // long-press + swipe is not the only reachable path.
+        customSemanticsActions: {
+          CustomSemanticsAction(label: context.l10n.fab_hint_content): widget.onContent,
+          CustomSemanticsAction(label: context.l10n.fab_hint_todo): widget.onTodo,
+        },
+        child: GestureDetector(
+          onTap: _onTap,
+          onLongPressStart: _onLongPressStart,
+          onLongPressMoveUpdate: _onLongPressMoveUpdate,
+          onLongPressEnd: _onLongPressEnd,
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_expandController, _scaleController]),
+            builder: (context, child) {
+              return Stack(
+                alignment: Alignment.bottomCenter,
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    bottom: 4,
+                    // Originates exactly from center (120 - 22 = 98) and translates outwards
+                    left: 98.0 - (_expandAnimation.value * _buttonSpacing),
                     child: Transform.scale(
                       scale: _expandAnimation.value * _leftScaleAnimation.value,
-                      child: _HintLabel(text: context.l10n.fab_hint_content),
+                      child: _ButtonCircle(
+                        icon: Icons.edit_note,
+                        color: scheme.primary,
+                        iconColor: scheme.onPrimary,
+                      ),
                     ),
                   ),
-                ),
-                // Right button hint (Todo) - directly above button
-                Positioned(
-                  bottom: 60,
-                  right: 98.0 - (_expandAnimation.value * _buttonSpacing),
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 100),
-                    opacity: _selectedDirection == SwipeDirection.right && _hasReachedThreshold
-                        ? 1.0
-                        : 0.0,
+                  Positioned(
+                    bottom: 4,
+                    right: 98.0 - (_expandAnimation.value * _buttonSpacing),
                     child: Transform.scale(
                       scale: _expandAnimation.value * _rightScaleAnimation.value,
-                      child: _HintLabel(text: context.l10n.fab_hint_todo),
+                      child: _ButtonCircle(
+                        icon: Icons.checklist,
+                        color: scheme.primary,
+                        iconColor: scheme.onPrimary,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                  CenterButton(
+                    expandProgress: _expandAnimation.value,
+                    color: scheme.primary,
+                    onPrimaryColor: scheme.onPrimary,
+                  ),
+                  // "Hold and swipe" tooltip
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutBack,
+                    bottom: _showHint ? 70 : 40,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _showHint ? 1.0 : 0.0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: scheme.onSurface,
+                          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                          boxShadow: [
+                            BoxShadow(
+                              color: scheme.onSurface.withValues(alpha: 0.15),
+                              offset: const Offset(3, 3),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          context.l10n.fab_hint_hold_and_swipe,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: scheme.surface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Left button hint (Content) - directly above button
+                  Positioned(
+                    bottom: 60,
+                    left: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 100),
+                      opacity: _selectedDirection == SwipeDirection.left && _hasReachedThreshold
+                          ? 1.0
+                          : 0.0,
+                      child: Transform.scale(
+                        scale: _expandAnimation.value * _leftScaleAnimation.value,
+                        child: _HintLabel(text: context.l10n.fab_hint_content),
+                      ),
+                    ),
+                  ),
+                  // Right button hint (Todo) - directly above button
+                  Positioned(
+                    bottom: 60,
+                    right: 98.0 - (_expandAnimation.value * _buttonSpacing),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 100),
+                      opacity: _selectedDirection == SwipeDirection.right && _hasReachedThreshold
+                          ? 1.0
+                          : 0.0,
+                      child: Transform.scale(
+                        scale: _expandAnimation.value * _rightScaleAnimation.value,
+                        child: _HintLabel(text: context.l10n.fab_hint_todo),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

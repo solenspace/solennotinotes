@@ -23,6 +23,9 @@
   "home_section_notes": "Notes",
   "home_section_all_notes": "All notes",
   "home_settings_tooltip": "Settings",
+  "home_search_open_tooltip": "Search notes",
+  "home_search_close_tooltip": "Close search",
+  "home_profile_tooltip": "Profile",
   "home_inbox_tooltip": "Inbox",
   "home_inbox_tooltip_count": "Inbox ({count} new)",
   "@home_inbox_tooltip_count": {
@@ -40,6 +43,25 @@
   "@card_checklist_more_count": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "card_pinned_semantic": "pinned",
+  "card_note_semantic_label": "Note: {title}. {preview}. {meta}",
+  "@card_note_semantic_label": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "preview": { "type": "String" },
+      "meta": { "type": "String" }
+    }
+  },
+  "card_note_untitled_semantic": "Untitled note",
+  "card_checklist_item_semantic": "Checklist item: {text}, {state}",
+  "@card_checklist_item_semantic": {
+    "placeholders": {
+      "text": { "type": "String" },
+      "state": { "type": "String" }
+    }
+  },
+  "card_checklist_state_checked": "checked",
+  "card_checklist_state_unchecked": "unchecked",
 
   "menu_untitled_note": "Untitled note",
   "menu_pin": "Pin",
@@ -49,7 +71,10 @@
   "fab_hint_hold_and_swipe": "Hold and swipe",
   "fab_hint_content": "Content",
   "fab_hint_todo": "Todo",
+  "fab_semantic_label": "New note. Hold and swipe left for text, right for checklist.",
 
+  "editor_back_tooltip": "Back",
+  "editor_more_tooltip": "More actions",
   "editor_pin_tooltip": "Pin",
   "editor_unpin_tooltip": "Unpin",
   "editor_title_hint": "Title",
@@ -78,6 +103,19 @@
   "audio_transcribe": "Transcribe",
   "audio_re_record": "Re-record",
   "audio_recording_exceeded_cap": "Recording exceeded 10 MB cap",
+  "audio_play_tooltip": "Play",
+  "audio_pause_tooltip": "Pause",
+  "audio_block_semantic_playing": "Audio playing, {position} of {total}. Long-press for options.",
+  "@audio_block_semantic_playing": {
+    "placeholders": {
+      "position": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "audio_block_semantic_paused": "Audio paused, {total} total. Long-press for options.",
+  "@audio_block_semantic_paused": {
+    "placeholders": { "total": { "type": "String" } }
+  },
 
   "dictation_start": "Dictate",
   "dictation_stop": "Stop dictation",
@@ -86,6 +124,8 @@
 
   "read_aloud_start": "Read note aloud",
   "read_aloud_stop": "Stop reading",
+  "read_aloud_pause_tooltip": "Pause reading",
+  "read_aloud_resume_tooltip": "Resume reading",
   "read_aloud_reading": "Reading aloud",
   "read_aloud_block_count": "Reading block {current} of {total}",
   "@read_aloud_block_count": {
@@ -427,5 +467,16 @@
     }
   },
 
-  "settings_font_specimen": "The quick brown fox jumps over the lazy dog"
+  "settings_font_specimen": "The quick brown fox jumps over the lazy dog",
+
+  "image_block_delete_tooltip": "Delete image",
+  "profile_image_picker_label": "Change profile photo",
+  "share_progress_unknown_peer": "the connected device",
+  "share_progress_semantic": "Sending to {name}, {percent} percent complete.",
+  "@share_progress_semantic": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  }
 }

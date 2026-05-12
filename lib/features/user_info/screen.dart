@@ -68,29 +68,36 @@ class UserInfoScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () => _pickProfileImage(context),
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                    border: Border.all(color: scheme.outline, width: 1.0),
-                    image: identity.profilePicture != null
-                        ? DecorationImage(
-                            image: FileImage(File(identity.profilePicture!.path)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+              Semantics(
+                button: true,
+                label: context.l10n.profile_image_picker_label,
+                child: Tooltip(
+                  message: context.l10n.profile_image_picker_label,
+                  child: GestureDetector(
+                    onTap: () => _pickProfileImage(context),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                        border: Border.all(color: scheme.outline, width: 1.0),
+                        image: identity.profilePicture != null
+                            ? DecorationImage(
+                                image: FileImage(File(identity.profilePicture!.path)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: identity.profilePicture == null
+                          ? Icon(
+                              Icons.person_outline,
+                              size: 40,
+                              color: scheme.onSurfaceVariant,
+                            )
+                          : null,
+                    ),
                   ),
-                  child: identity.profilePicture == null
-                      ? Icon(
-                          Icons.person_outline,
-                          size: 40,
-                          color: scheme.onSurfaceVariant,
-                        )
-                      : null,
                 ),
               ),
               const Gap(SpacingPrimitives.lg),

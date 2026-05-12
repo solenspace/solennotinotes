@@ -78,231 +78,280 @@ class _NoteCardState extends State<NoteCard> {
         note.title.isNotEmpty;
 
     final preview = textBlocks.map((b) => b.text).where((t) => t.isNotEmpty).join('\n');
+    final cardSemanticLabel = _composeCardSemanticLabel(
+      context: context,
+      note: note,
+      preview: preview,
+      hasContent: hasContent,
+    );
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      onLongPress: () {
-        HapticFeedback.selectionClick();
-        widget.onLongPress();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: DurationPrimitives.fast,
-        curve: CurvePrimitives.calm,
-        child: Container(
-          decoration: BoxDecoration(
-            color: note.hasGradient ? null : activeBgColor,
-            gradient: note.hasGradient ? note.gradient : null,
-            borderRadius: BorderRadius.circular(RadiusPrimitives.sm), // Neo-brutalist tight radius
-            image: note.patternImage != null
-                ? DecorationImage(
-                    image: AssetImage(note.patternImage!),
-                    fit: BoxFit.cover,
-                    opacity: 0.4,
-                    colorFilter: ColorFilter.mode(
-                      activeBgColor,
-                      BlendMode.softLight,
-                    ),
-                  )
-                : null,
-            border: Border.all(
-              color: brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.black.withValues(alpha: 0.15),
-              width: 1.0, // Thin, sharp border matching the component
-            ),
-          ),
-          padding: const EdgeInsets.all(SpacingPrimitives.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  NoteOverlayDot(overlay: note.toOverlay()),
-                  if (note.isPinned)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Icon(
-                        Icons.push_pin,
-                        size: 14,
-                        color: textColor.withValues(alpha: 0.7),
+    return Semantics(
+      button: true,
+      label: cardSemanticLabel,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        // Long-press enters multi-select. Under accessibleNavigation a tap
+        // alternative is wired via the screen's menu sheet — but a long-press
+        // double-tap path stays for screen-reader users via the standard
+        // VoiceOver/TalkBack "Activate" + "More actions" gesture: a11y users
+        // get an explicit semantic action so the gesture is reachable
+        // without depending on the long-press timing.
+        onLongPress: () {
+          HapticFeedback.selectionClick();
+          widget.onLongPress();
+        },
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1.0,
+          duration: motionFor(context, DurationPrimitives.fast),
+          curve: CurvePrimitives.calm,
+          child: Container(
+            decoration: BoxDecoration(
+              color: note.hasGradient ? null : activeBgColor,
+              gradient: note.hasGradient ? note.gradient : null,
+              borderRadius:
+                  BorderRadius.circular(RadiusPrimitives.sm), // Neo-brutalist tight radius
+              image: note.patternImage != null
+                  ? DecorationImage(
+                      image: AssetImage(note.patternImage!),
+                      fit: BoxFit.cover,
+                      opacity: 0.4,
+                      colorFilter: ColorFilter.mode(
+                        activeBgColor,
+                        BlendMode.softLight,
                       ),
-                    ),
-                ],
+                    )
+                  : null,
+              border: Border.all(
+                color: brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.15),
+                width: 1.0, // Thin, sharp border matching the component
               ),
-              if (imageBlocks.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                  child: Image.file(
-                    File(imageBlocks.first.path),
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 60,
-                      color: textColor.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-                const Gap(SpacingPrimitives.sm),
-              ],
-              if (note.title.isNotEmpty)
-                Text(
-                  note.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: textColor,
-                      ),
-                ),
-              if (preview.isNotEmpty) ...[
-                if (note.title.isNotEmpty) const Gap(SpacingPrimitives.xs),
-                Text(
-                  preview,
-                  maxLines: 6,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: textColor.withValues(alpha: 0.85),
-                      ),
-                ),
-              ],
-              if (checklistBlocks.isNotEmpty) ...[
-                const Gap(SpacingPrimitives.xs),
-                ...checklistBlocks.take(4).map(
-                      (b) => GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          // Locate this block in the original list and toggle it
-                          final updatedBlocks = note.blocks.map((map) {
-                            if (map['id'] == b.id) {
-                              return {
-                                ...map,
-                                'checked': !b.checked,
-                              };
-                            }
-                            return map;
-                          }).toList();
-                          context
-                              .read<NotesListBloc>()
-                              .add(NoteBlocksReplaced(note.id, updatedBlocks));
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(
-                                b.checked ? Icons.check_box : Icons.check_box_outline_blank,
-                                size: 18,
-                                color: textColor.withValues(alpha: 0.85),
-                              ),
-                              const Gap(SpacingPrimitives.sm),
-                              Expanded(
-                                child: Text(
-                                  b.text.isEmpty ? context.l10n.card_untitled_task : b.text,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: textColor.withValues(
-                                          alpha: b.checked ? 0.5 : 0.85,
-                                        ),
-                                        decoration: b.checked ? TextDecoration.lineThrough : null,
-                                      ),
-                                ),
-                              ),
-                            ],
+            ),
+            padding: const EdgeInsets.all(SpacingPrimitives.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    NoteOverlayDot(overlay: note.toOverlay()),
+                    if (note.isPinned)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Semantics(
+                          label: context.l10n.card_pinned_semantic,
+                          child: Icon(
+                            Icons.push_pin,
+                            size: 14,
+                            color: textColor.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
-                    ),
-                if (checklistBlocks.length > 4)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      context.l10n.card_checklist_more_count(checklistBlocks.length - 4),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: textColor.withValues(alpha: 0.6),
-                          ),
-                    ),
-                  ),
-              ],
-              if (audioBlocks.isNotEmpty) ...[
-                const Gap(SpacingPrimitives.xs),
-                _AudioSummary(audioBlocks: audioBlocks, textColor: textColor),
-              ],
-              if (note.tags.isNotEmpty) ...[
-                const Gap(SpacingPrimitives.sm),
-                Wrap(
-                  spacing: SpacingPrimitives.xs,
-                  runSpacing: SpacingPrimitives.xs,
-                  children: note.tags.take(3).map((t) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: textColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
-                        border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1.0),
-                      ),
-                      child: Text(
-                        context.l10n.tag_chip_label(t),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: textColor,
-                            ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-              if (note.reminder != null) ...[
-                const Gap(SpacingPrimitives.sm),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.notifications_active_outlined,
-                      size: 12,
-                      color: textColor.withValues(alpha: 0.7),
-                    ),
-                    const Gap(SpacingPrimitives.xs),
-                    Text(
-                      DateFormat('MMM d · HH:mm').format(note.reminder!),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: textColor.withValues(alpha: 0.7),
-                          ),
-                    ),
                   ],
                 ),
-              ],
-              if (!hasContent)
+                if (imageBlocks.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                    child: Image.file(
+                      File(imageBlocks.first.path),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 60,
+                        color: textColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  const Gap(SpacingPrimitives.sm),
+                ],
+                if (note.title.isNotEmpty)
+                  Text(
+                    note.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: textColor,
+                        ),
+                  ),
+                if (preview.isNotEmpty) ...[
+                  if (note.title.isNotEmpty) const Gap(SpacingPrimitives.xs),
+                  Text(
+                    preview,
+                    maxLines: 6,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: textColor.withValues(alpha: 0.85),
+                        ),
+                  ),
+                ],
+                if (checklistBlocks.isNotEmpty) ...[
+                  const Gap(SpacingPrimitives.xs),
+                  ...checklistBlocks.take(4).map(
+                        (b) => Semantics(
+                          button: true,
+                          toggled: b.checked,
+                          label: context.l10n.card_checklist_item_semantic(
+                            b.text.isEmpty ? context.l10n.card_untitled_task : b.text,
+                            b.checked
+                                ? context.l10n.card_checklist_state_checked
+                                : context.l10n.card_checklist_state_unchecked,
+                          ),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              // Locate this block in the original list and toggle it
+                              final updatedBlocks = note.blocks.map((map) {
+                                if (map['id'] == b.id) {
+                                  return {
+                                    ...map,
+                                    'checked': !b.checked,
+                                  };
+                                }
+                                return map;
+                              }).toList();
+                              context
+                                  .read<NotesListBloc>()
+                                  .add(NoteBlocksReplaced(note.id, updatedBlocks));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    b.checked ? Icons.check_box : Icons.check_box_outline_blank,
+                                    size: 18,
+                                    color: textColor.withValues(alpha: 0.85),
+                                  ),
+                                  const Gap(SpacingPrimitives.sm),
+                                  Expanded(
+                                    child: Text(
+                                      b.text.isEmpty ? context.l10n.card_untitled_task : b.text,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: textColor.withValues(
+                                              alpha: b.checked ? 0.5 : 0.85,
+                                            ),
+                                            decoration:
+                                                b.checked ? TextDecoration.lineThrough : null,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  if (checklistBlocks.length > 4)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        context.l10n.card_checklist_more_count(checklistBlocks.length - 4),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: textColor.withValues(alpha: 0.6),
+                            ),
+                      ),
+                    ),
+                ],
+                if (audioBlocks.isNotEmpty) ...[
+                  const Gap(SpacingPrimitives.xs),
+                  _AudioSummary(audioBlocks: audioBlocks, textColor: textColor),
+                ],
+                if (note.tags.isNotEmpty) ...[
+                  const Gap(SpacingPrimitives.sm),
+                  Wrap(
+                    spacing: SpacingPrimitives.xs,
+                    runSpacing: SpacingPrimitives.xs,
+                    children: note.tags.take(3).map((t) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: textColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
+                          border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1.0),
+                        ),
+                        child: Text(
+                          context.l10n.tag_chip_label(t),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: textColor,
+                              ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+                if (note.reminder != null) ...[
+                  const Gap(SpacingPrimitives.sm),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.notifications_active_outlined,
+                        size: 12,
+                        color: textColor.withValues(alpha: 0.7),
+                      ),
+                      const Gap(SpacingPrimitives.xs),
+                      Text(
+                        DateFormat('MMM d · HH:mm').format(note.reminder!),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: textColor.withValues(alpha: 0.7),
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (!hasContent)
+                  Text(
+                    context.l10n.card_empty_note,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: textColor.withValues(alpha: 0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                  ),
+                const Gap(SpacingPrimitives.sm),
                 Text(
-                  context.l10n.card_empty_note,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: textColor.withValues(alpha: 0.5),
-                        fontStyle: FontStyle.italic,
+                  DateFormat('MMM d').format(note.dateCreated),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: textColor.withValues(alpha: 0.55),
                       ),
                 ),
-              const Gap(SpacingPrimitives.sm),
-              Text(
-                DateFormat('MMM d').format(note.dateCreated),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: textColor.withValues(alpha: 0.55),
-                    ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+String _composeCardSemanticLabel({
+  required BuildContext context,
+  required Note note,
+  required String preview,
+  required bool hasContent,
+}) {
+  final l10n = context.l10n;
+  final title = note.title.trim().isNotEmpty ? note.title.trim() : l10n.card_note_untitled_semantic;
+  final previewLine = preview.trim().isEmpty
+      ? (hasContent ? '' : l10n.card_empty_note)
+      : (preview.length <= 80 ? preview.trim() : '${preview.substring(0, 80).trim()}…');
+  final metaParts = <String>[
+    if (note.isPinned) l10n.card_pinned_semantic,
+    if (note.tags.isNotEmpty) note.tags.take(3).map((t) => '#$t').join(', '),
+  ];
+  return l10n.card_note_semantic_label(title, previewLine, metaParts.join(' · '));
 }
 
 /// Compact audio summary for the home masonry card. Shows a mic glyph plus
