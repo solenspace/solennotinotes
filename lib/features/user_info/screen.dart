@@ -191,7 +191,7 @@ class _SignaturePlumbing extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(RadiusPrimitives.sm),
                   border: Border.all(
-                    color: selected ? scheme.primary : scheme.outline,
+                    color: selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.25),
                     width: selected ? 2 : 1,
                   ),
                 ),
