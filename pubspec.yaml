@@ -72,6 +72,14 @@ dependencies:
   # tools/forbidden_imports_lint to lib/services/share/share_codec.dart.
   archive: ^4.0.1
 
+# QA Android-build fix: record 5.2.1 resolves record_platform_interface 1.5.0,
+# which adds startStream and changes hasPermission's signature. record_linux 0.7.2
+# does not implement those, so the Dart kernel snapshot fails for any non-Linux
+# Flutter build. Override to the version that catches up to the interface.
+# record_linux is desktop-Linux-only; this has no runtime effect on Android/iOS.
+dependency_overrides:
+  record_linux: ^1.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
